@@ -11,9 +11,9 @@ const TYPE_ICONS = {
   sondage: BarChart3
 }
 
-function getInitials(profile) {
-  if (profile.co_resident_id && profile.co_resident_name) {
-    return `${profile.first_name?.[0] || ''}&${profile.co_resident_name?.[0] || ''}`
+function getInitials(profile, coName) {
+  if (profile.co_resident_id && coName) {
+    return `${profile.first_name?.[0] || ''}&${coName?.[0] || ''}`
   }
   const f = profile.first_name?.[0] || ''
   const l = profile.last_name?.[0] || ''
@@ -64,12 +64,17 @@ export default function PostCard({ post, onUpdated }) {
   const [pollVotes, setPollVotes] = useState([])
   const [userVote, setUserVote] = useState(null)
 
+  const [coResidentName, setCoResidentName] = useState(null)
   const timeAgo = formatTimeAgo(created_at)
 
   useEffect(() => {
     fetchLikes()
     fetchComments()
     if (type === 'sondage') fetchPoll()
+    if (profile?.co_resident_id) {
+      supabase.from('profiles').select('first_name').eq('id', profile.co_resident_id).single()
+        .then(({ data }) => { if (data) setCoResidentName(data.first_name) })
+    }
   }, [post.id])
 
   async function fetchLikes() {
