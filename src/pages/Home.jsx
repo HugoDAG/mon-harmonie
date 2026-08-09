@@ -115,7 +115,7 @@ export default function Home() {
         <button
           onClick={() => setShowCreate(true)}
           style={{
-            position: 'fixed', bottom: 80, right: 'calc(50% - 220px)',
+            position: 'fixed', bottom: 90, right: 20,
             width: 52, height: 52, borderRadius: '50%',
             background: 'var(--blue-600)', color: '#fff',
             border: 'none', boxShadow: '0 4px 12px rgba(37,99,235,0.4)',
