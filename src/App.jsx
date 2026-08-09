@@ -8,7 +8,7 @@ import Documents from './pages/Documents'
 import Bookings from './pages/Bookings'
 import Profile from './pages/Profile'
 import PostsByType from './pages/PostsByType'
-import Placeholder from './pages/Placeholder'
+import CalendarPage from './pages/CalendarPage'
 
 function PrivateRoute({ children }) {
   const { user, loading } = useAuth()
@@ -35,8 +35,7 @@ export default function App() {
           <Route path="/documents" element={<PrivateRoute><Documents /></PrivateRoute>} />
           <Route path="/bookings" element={<PrivateRoute><Bookings /></PrivateRoute>} />
           <Route path="/profile" element={<PrivateRoute><Profile /></PrivateRoute>} />
-          <Route path="/messages" element={<PrivateRoute><Placeholder title="Messages" /></PrivateRoute>} />
-          <Route path="/calendar" element={<PrivateRoute><Placeholder title="Calendrier" /></PrivateRoute>} />
+          <Route path="/calendar" element={<PrivateRoute><CalendarPage /></PrivateRoute>} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>
