@@ -7,7 +7,7 @@ import CreatePost from '../components/CreatePost'
 import BottomNav from '../components/BottomNav'
 import {
   AlertTriangle, CalendarCheck, FileText, BarChart3,
-  Plus, Building, Home as HomeIcon, Sun, Users2, Megaphone
+  Plus, Building, Home as HomeIcon, Sun, Users2, Megaphone, Search
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 
@@ -18,6 +18,7 @@ export default function Home() {
   const [posts, setPosts] = useState([])
   const [loading, setLoading] = useState(true)
   const [showCreate, setShowCreate] = useState(false)
+  const [search, setSearch] = useState('')
 
   useEffect(() => { fetchPosts() }, [channel, profile])
 
@@ -29,7 +30,7 @@ export default function Home() {
       .from('posts')
       .select('*, profile:profiles(id, first_name, last_name, building, role, co_resident_id)')
       .order('created_at', { ascending: false })
-      .limit(20)
+      .limit(50)
 
     if (channel === CHANNELS.BUILDING) {
       query = query.eq('building', profile.building).eq('channel', CHANNELS.BUILDING)
@@ -41,6 +42,15 @@ export default function Home() {
     setPosts(data || [])
     setLoading(false)
   }
+
+  const filteredPosts = posts.filter(p => {
+    if (!search.trim()) return true
+    const s = search.toLowerCase()
+    return p.content?.toLowerCase().includes(s) ||
+      p.profile?.first_name?.toLowerCase().includes(s) ||
+      p.profile?.last_name?.toLowerCase().includes(s) ||
+      p.type?.toLowerCase().includes(s)
+  })
 
   const quickActions = [
     { icon: AlertTriangle, label: 'Signalements', path: '/posts/signalement' },
@@ -54,7 +64,6 @@ export default function Home() {
   return (
     <div className="app-shell">
       <div className="page-content">
-        {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
           <div>
             <h1 style={{ fontSize: 20, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -69,7 +78,6 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Channel switch */}
         <div className="channel-switch">
           <button
             className={`channel-btn ${channel === CHANNELS.BUILDING ? 'active' : ''}`}
@@ -85,7 +93,6 @@ export default function Home() {
           </button>
         </div>
 
-        {/* Quick actions */}
         <div className="quick-grid">
           {quickActions.map(({ icon: Icon, label, path }) => (
             <button key={label} className="quick-item" onClick={() => navigate(path)}>
@@ -95,23 +102,31 @@ export default function Home() {
           ))}
         </div>
 
-        {/* Feed */}
         <div className="section-header">
           <h2>Fil d'actualité</h2>
         </div>
 
+        <div style={{ position: 'relative', marginBottom: 12 }}>
+          <Search size={16} style={{ position: 'absolute', left: 12, top: 11, color: 'var(--gray-400)' }} />
+          <input
+            style={{ width: '100%', padding: '10px 12px 10px 36px', border: '1px solid var(--gray-200)', borderRadius: 'var(--radius)', fontSize: 13, background: 'var(--gray-50)' }}
+            placeholder="Rechercher une publication…"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+          />
+        </div>
+
         {loading ? (
           <p style={{ textAlign: 'center', color: 'var(--gray-400)', padding: 32 }}>Chargement…</p>
-        ) : posts.length === 0 ? (
+        ) : filteredPosts.length === 0 ? (
           <div style={{ textAlign: 'center', color: 'var(--gray-400)', padding: 32 }}>
-            <p style={{ fontSize: 14 }}>Aucune publication pour le moment</p>
-            <p style={{ fontSize: 12, marginTop: 4 }}>Soyez le premier à publier !</p>
+            <p style={{ fontSize: 14 }}>{search ? 'Aucun résultat' : 'Aucune publication pour le moment'}</p>
+            {!search && <p style={{ fontSize: 12, marginTop: 4 }}>Soyez le premier à publier !</p>}
           </div>
         ) : (
-          posts.map(post => <PostCard key={post.id} post={post} onUpdated={fetchPosts} />)
+          filteredPosts.map(post => <PostCard key={post.id} post={post} onUpdated={fetchPosts} />)
         )}
 
-        {/* FAB */}
         <button
           onClick={() => setShowCreate(true)}
           style={{
