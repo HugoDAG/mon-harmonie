@@ -57,7 +57,7 @@ input, select, textarea { font-family: inherit; }
 .page-content {
   flex: 1;
   padding: 16px;
-  padding-bottom: 80px;
+  padding-bottom: 70px;
 }
 
 /* Bottom nav */
@@ -72,7 +72,7 @@ input, select, textarea { font-family: inherit; }
   border-top: 1px solid var(--gray-200);
   display: flex;
   justify-content: space-around;
-  padding: 8px 0 env(safe-area-inset-bottom, 8px);
+  padding: 6px 0 env(safe-area-inset-bottom, 4px);
   z-index: 50;
 }
 
