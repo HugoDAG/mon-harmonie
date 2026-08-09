@@ -7,6 +7,7 @@ import Directory from './pages/Directory'
 import Documents from './pages/Documents'
 import Bookings from './pages/Bookings'
 import Profile from './pages/Profile'
+import PostsByType from './pages/PostsByType'
 import Placeholder from './pages/Placeholder'
 
 function PrivateRoute({ children }) {
@@ -29,13 +30,13 @@ export default function App() {
           <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
           <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
           <Route path="/" element={<PrivateRoute><Home /></PrivateRoute>} />
+          <Route path="/posts/:type" element={<PrivateRoute><PostsByType /></PrivateRoute>} />
           <Route path="/directory" element={<PrivateRoute><Directory /></PrivateRoute>} />
           <Route path="/documents" element={<PrivateRoute><Documents /></PrivateRoute>} />
           <Route path="/bookings" element={<PrivateRoute><Bookings /></PrivateRoute>} />
           <Route path="/profile" element={<PrivateRoute><Profile /></PrivateRoute>} />
           <Route path="/messages" element={<PrivateRoute><Placeholder title="Messages" /></PrivateRoute>} />
           <Route path="/calendar" element={<PrivateRoute><Placeholder title="Calendrier" /></PrivateRoute>} />
-          <Route path="/polls" element={<PrivateRoute><Placeholder title="Sondages" /></PrivateRoute>} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>
