@@ -9,6 +9,7 @@ import Bookings from './pages/Bookings'
 import Profile from './pages/Profile'
 import PostsByType from './pages/PostsByType'
 import CalendarPage from './pages/CalendarPage'
+import Rules from './pages/Rules'
 
 function PrivateRoute({ children }) {
   const { user, loading } = useAuth()
@@ -36,6 +37,7 @@ export default function App() {
           <Route path="/bookings" element={<PrivateRoute><Bookings /></PrivateRoute>} />
           <Route path="/profile" element={<PrivateRoute><Profile /></PrivateRoute>} />
           <Route path="/calendar" element={<PrivateRoute><CalendarPage /></PrivateRoute>} />
+          <Route path="/rules" element={<PrivateRoute><Rules /></PrivateRoute>} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>
