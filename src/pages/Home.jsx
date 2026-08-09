@@ -7,7 +7,7 @@ import CreatePost from '../components/CreatePost'
 import BottomNav from '../components/BottomNav'
 import {
   AlertTriangle, CalendarCheck, FileText, BarChart3,
-  Plus, Building, Home as HomeIcon, Sun
+  Plus, Building, Home as HomeIcon, Sun, Users2, Megaphone
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 
@@ -43,10 +43,12 @@ export default function Home() {
   }
 
   const quickActions = [
-    { icon: AlertTriangle, label: 'Signaler', action: () => setShowCreate(true) },
+    { icon: AlertTriangle, label: 'Signalements', path: '/posts/signalement' },
+    { icon: Users2, label: 'Voisinage', path: '/posts/voisinage' },
+    { icon: Megaphone, label: 'Annonces', path: '/posts/annonce' },
+    { icon: BarChart3, label: 'Sondages', path: '/posts/sondage' },
     { icon: CalendarCheck, label: 'Réserver', path: '/bookings' },
-    { icon: FileText, label: 'Documents', path: '/documents' },
-    { icon: BarChart3, label: 'Sondages', path: '/polls' }
+    { icon: FileText, label: 'Documents', path: '/documents' }
   ]
 
   return (
@@ -85,8 +87,8 @@ export default function Home() {
 
         {/* Quick actions */}
         <div className="quick-grid">
-          {quickActions.map(({ icon: Icon, label, path, action }) => (
-            <button key={label} className="quick-item" onClick={() => action ? action() : navigate(path)}>
+          {quickActions.map(({ icon: Icon, label, path }) => (
+            <button key={label} className="quick-item" onClick={() => navigate(path)}>
               <Icon size={22} />
               {label}
             </button>
