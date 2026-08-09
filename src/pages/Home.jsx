@@ -139,18 +139,6 @@ export default function Home() {
           />
         </div>
 
-        {/* Welcome new residents */}
-        {newResidents.length > 0 && showWelcome && (
-          <div style={{ background: 'var(--green-50)', border: '1px solid var(--green-500)', borderRadius: 'var(--radius-lg)', padding: '12px 14px', marginBottom: 12 }}>
-            <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--green-600)', marginBottom: 4 }}>🎉 Bienvenue aux nouveaux résidents !</div>
-            {newResidents.map((r, i) => (
-              <div key={i} style={{ fontSize: 13, color: 'var(--green-600)' }}>
-                {r.first_name} — Bâtiment {r.building}
-              </div>
-            ))}
-          </div>
-        )}
-
         {/* Posts */}
         {loading ? (
           <p style={{ textAlign: 'center', color: 'var(--gray-400)', padding: 32 }}>Chargement…</p>
@@ -160,7 +148,23 @@ export default function Home() {
             {!search && <p style={{ fontSize: 12, marginTop: 4 }}>Soyez le premier à publier !</p>}
           </div>
         ) : (
-          filteredPosts.map(post => <PostCard key={post.id} post={post} onUpdated={fetchPosts} />)
+          <>
+            {filteredPosts.map((post, index) => (
+              <div key={post.id}>
+                <PostCard post={post} onUpdated={fetchPosts} />
+                {index === 0 && newResidents.length > 0 && showWelcome && (
+                  <div style={{ background: 'var(--green-50)', border: '1px solid var(--green-500)', borderRadius: 'var(--radius-lg)', padding: '12px 14px', marginBottom: 12 }}>
+                    <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--green-600)', marginBottom: 4 }}>🎉 Bienvenue aux nouveaux résidents !</div>
+                    {newResidents.map((r, i) => (
+                      <div key={i} style={{ fontSize: 13, color: 'var(--green-600)' }}>
+                        {r.first_name} — Bâtiment {r.building}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+          </>
         )}
 
         {/* FAB */}
