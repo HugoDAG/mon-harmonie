@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { POST_TYPE_LABELS } from '../lib/constants'
-import { AlertTriangle, Megaphone, Users, BarChart3, Pencil, Check, X, Trash2, ThumbsUp, MessageCircle, Send, ChevronDown, ChevronUp } from 'lucide-react'
+import { AlertTriangle, Megaphone, Users, BarChart3, Pencil, Check, X, Trash2, ThumbsUp, MessageCircle, Send } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/AuthContext'
 
@@ -20,10 +20,10 @@ function getInitials(profile, coName) {
   return `${f}${l}`
 }
 
-function getDisplayName(profile) {
+function getDisplayName(profile, coName) {
   const lastName = profile.last_name ? `${profile.last_name[0]}.` : ''
-  if (profile.co_resident_id && profile.co_resident_name) {
-    return `${profile.first_name} & ${profile.co_resident_name}`
+  if (profile.co_resident_id && coName) {
+    return `${profile.first_name} & ${coName}`
   }
   return `${profile.first_name} ${lastName}`
 }
@@ -49,6 +49,9 @@ export default function PostCard({ post, onUpdated }) {
   const [saving, setSaving] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
 
+  // Co-resident
+  const [coResidentName, setCoResidentName] = useState(null)
+
   // Likes
   const [likes, setLikes] = useState([])
   const [liked, setLiked] = useState(false)
@@ -64,7 +67,6 @@ export default function PostCard({ post, onUpdated }) {
   const [pollVotes, setPollVotes] = useState([])
   const [userVote, setUserVote] = useState(null)
 
-  const [coResidentName, setCoResidentName] = useState(null)
   const timeAgo = formatTimeAgo(created_at)
 
   useEffect(() => {
@@ -158,12 +160,12 @@ export default function PostCard({ post, onUpdated }) {
     <div className="card">
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
         <div className="avatar" style={{ background: avatarStyle.bg, color: avatarStyle.color }}>
-          {isSyndic ? 'SY' : getInitials(profile)}
+          {isSyndic ? 'SY' : getInitials(profile, coResidentName)}
         </div>
         <div style={{ flex: 1 }}>
           <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap' }}>
             <span style={{ fontSize: 14, fontWeight: 500 }}>
-              {isSyndic ? 'Syndic' : getDisplayName(profile)}
+              {isSyndic ? 'Syndic' : getDisplayName(profile, coResidentName)}
             </span>
             {!isSyndic && profile?.building && (
               <span className="building-tag">{profile.building}</span>
