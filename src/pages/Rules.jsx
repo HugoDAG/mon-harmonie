@@ -17,9 +17,9 @@ export default function Rules() {
 
         <div style={{ textAlign: 'center', padding: 40 }}>
           <Clock size={40} color="var(--gray-300)" style={{ marginBottom: 12 }} />
-          <h2 style={{ fontSize: 16, fontWeight: 600, color: 'var(--gray-700)', marginBottom: 8 }}>En attente du règlement de copropriété</h2>
+          <h2 style={{ fontSize: 16, fontWeight: 600, color: 'var(--gray-700)', marginBottom: 8 }}>Pas encore de règlement</h2>
           <p style={{ fontSize: 13, color: 'var(--gray-400)', lineHeight: 1.6 }}>
-            La résidence étant en construction, le règlement de copropriété sera ajouté ici dès sa réception.
+            Nous n'avons pas encore reçu le règlement de copropriété. Il sera disponible ici dès réception.
           </p>
         </div>
       </div>
