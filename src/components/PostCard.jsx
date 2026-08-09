@@ -12,8 +12,8 @@ const TYPE_ICONS = {
 }
 
 function getInitials(profile) {
-  if (profile.co_resident_id) {
-    return `${profile.first_name?.[0] || ''}+`
+  if (profile.co_resident_id && profile.co_resident_name) {
+    return `${profile.first_name?.[0] || ''}&${profile.co_resident_name?.[0] || ''}`
   }
   const f = profile.first_name?.[0] || ''
   const l = profile.last_name?.[0] || ''
@@ -22,9 +22,11 @@ function getInitials(profile) {
 
 function getDisplayName(profile) {
   const lastName = profile.last_name ? `${profile.last_name[0]}.` : ''
+  if (profile.co_resident_id && profile.co_resident_name) {
+    return `${profile.first_name} & ${profile.co_resident_name}`
+  }
   return `${profile.first_name} ${lastName}`
 }
-
 const AVATAR_COLORS = {
   annonce: { bg: 'var(--blue-50)', color: 'var(--blue-600)' },
   signalement: { bg: 'var(--amber-50)', color: 'var(--amber-600)' },
