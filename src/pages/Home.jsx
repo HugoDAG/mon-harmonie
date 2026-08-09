@@ -20,6 +20,7 @@ export default function Home() {
   const [showCreate, setShowCreate] = useState(false)
   const [search, setSearch] = useState('')
   const [newResidents, setNewResidents] = useState([])
+  const [showWelcome, setShowWelcome] = useState(true)
 
   useEffect(() => {
     async function fetchNewResidents() {
@@ -33,6 +34,8 @@ export default function Home() {
       setNewResidents(data || [])
     }
     fetchNewResidents()
+    const timer = setTimeout(() => setShowWelcome(false), 60000)
+    return () => clearTimeout(timer)
   }, [])
 
   useEffect(() => { fetchPosts() }, [channel, profile])
@@ -117,7 +120,7 @@ export default function Home() {
           ))}
         </div>
 
-        {newResidents.length > 0 && (
+        {newResidents.length > 0 && showWelcome && (
           <div style={{ background: 'var(--green-50)', border: '1px solid var(--green-500)', borderRadius: 'var(--radius-lg)', padding: '12px 14px', marginBottom: 16 }}>
             <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--green-600)', marginBottom: 4 }}>🎉 Bienvenue aux nouveaux résidents !</div>
             {newResidents.map((r, i) => (
