@@ -72,9 +72,12 @@ export default function Register() {
             <input type="email" value={form.email} onChange={update('email')} placeholder="hugo@email.com" required />
           </div>
 
-          <div className="form-group">
+        <div className="form-group">
             <label>Mot de passe</label>
-            <input type="password" value={form.password} onChange={update('password')} placeholder="••••••••" required minLength={6} />
+            <div style={{ position: 'relative' }}>
+              <input type={showPassword ? 'text' : 'password'} value={form.password} onChange={update('password')} placeholder="••••••••" required minLength={6} />
+              <button type="button" onClick={() => setShowPassword(s => !s)} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: 'var(--gray-400)', fontSize: 18, cursor: 'pointer' }}>{showPassword ? '🙈' : '👁️'}</button>
+            </div>
           </div>
 
           <div className="form-group">
