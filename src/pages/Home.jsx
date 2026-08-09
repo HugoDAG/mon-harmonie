@@ -24,11 +24,11 @@ export default function Home() {
 
   useEffect(() => {
     async function fetchNewResidents() {
-      const threeDaysAgo = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString()
+      const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
       const { data } = await supabase
         .from('profiles')
         .select('first_name, building, created_at')
-        .gte('created_at', threeDaysAgo)
+        .gte('created_at', oneDayAgo)
         .neq('id', user?.id)
         .order('created_at', { ascending: false })
       setNewResidents(data || [])
@@ -82,6 +82,7 @@ export default function Home() {
   return (
     <div className="app-shell">
       <div className="page-content">
+        {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
           <div>
             <h1 style={{ fontSize: 20, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -96,6 +97,7 @@ export default function Home() {
           </div>
         </div>
 
+        {/* Channel switch */}
         <div className="channel-switch">
           <button
             className={`channel-btn ${channel === CHANNELS.BUILDING ? 'active' : ''}`}
@@ -111,6 +113,7 @@ export default function Home() {
           </button>
         </div>
 
+        {/* Quick actions */}
         <div className="quick-grid">
           {quickActions.map(({ icon: Icon, label, path }) => (
             <button key={label} className="quick-item" onClick={() => navigate(path)}>
@@ -120,20 +123,12 @@ export default function Home() {
           ))}
         </div>
 
-        {newResidents.length > 0 && showWelcome && (
-          <div style={{ background: 'var(--green-50)', border: '1px solid var(--green-500)', borderRadius: 'var(--radius-lg)', padding: '12px 14px', marginBottom: 16 }}>
-            <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--green-600)', marginBottom: 4 }}>🎉 Bienvenue aux nouveaux résidents !</div>
-            {newResidents.map((r, i) => (
-              <div key={i} style={{ fontSize: 13, color: 'var(--green-600)' }}>
-                {r.first_name} — Bâtiment {r.building}
-              </div>
-            ))}
-          </div>
-        )}
+        {/* Feed header */}
         <div className="section-header">
           <h2>Fil d'actualité</h2>
         </div>
 
+        {/* Search */}
         <div style={{ position: 'relative', marginBottom: 12 }}>
           <Search size={16} style={{ position: 'absolute', left: 12, top: 11, color: 'var(--gray-400)' }} />
           <input
@@ -144,6 +139,19 @@ export default function Home() {
           />
         </div>
 
+        {/* Welcome new residents */}
+        {newResidents.length > 0 && showWelcome && (
+          <div style={{ background: 'var(--green-50)', border: '1px solid var(--green-500)', borderRadius: 'var(--radius-lg)', padding: '12px 14px', marginBottom: 12 }}>
+            <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--green-600)', marginBottom: 4 }}>🎉 Bienvenue aux nouveaux résidents !</div>
+            {newResidents.map((r, i) => (
+              <div key={i} style={{ fontSize: 13, color: 'var(--green-600)' }}>
+                {r.first_name} — Bâtiment {r.building}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Posts */}
         {loading ? (
           <p style={{ textAlign: 'center', color: 'var(--gray-400)', padding: 32 }}>Chargement…</p>
         ) : filteredPosts.length === 0 ? (
@@ -155,6 +163,7 @@ export default function Home() {
           filteredPosts.map(post => <PostCard key={post.id} post={post} onUpdated={fetchPosts} />)
         )}
 
+        {/* FAB */}
         <button
           onClick={() => setShowCreate(true)}
           style={{
