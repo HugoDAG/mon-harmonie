@@ -12,13 +12,28 @@ import {
 import { useNavigate } from 'react-router-dom'
 
 export default function Home() {
-  const { profile } = useAuth()
+  const { user, profile } = useAuth()
   const navigate = useNavigate()
   const [channel, setChannel] = useState(CHANNELS.BUILDING)
   const [posts, setPosts] = useState([])
   const [loading, setLoading] = useState(true)
   const [showCreate, setShowCreate] = useState(false)
   const [search, setSearch] = useState('')
+  const [newResidents, setNewResidents] = useState([])
+
+  useEffect(() => {
+    async function fetchNewResidents() {
+      const threeDaysAgo = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString()
+      const { data } = await supabase
+        .from('profiles')
+        .select('first_name, building, created_at')
+        .gte('created_at', threeDaysAgo)
+        .neq('id', user?.id)
+        .order('created_at', { ascending: false })
+      setNewResidents(data || [])
+    }
+    fetchNewResidents()
+  }, [])
 
   useEffect(() => { fetchPosts() }, [channel, profile])
 
@@ -102,6 +117,16 @@ export default function Home() {
           ))}
         </div>
 
+        {newResidents.length > 0 && (
+          <div style={{ background: 'var(--green-50)', border: '1px solid var(--green-500)', borderRadius: 'var(--radius-lg)', padding: '12px 14px', marginBottom: 16 }}>
+            <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--green-600)', marginBottom: 4 }}>🎉 Bienvenue aux nouveaux résidents !</div>
+            {newResidents.map((r, i) => (
+              <div key={i} style={{ fontSize: 13, color: 'var(--green-600)' }}>
+                {r.first_name} — Bâtiment {r.building}
+              </div>
+            ))}
+          </div>
+        )}
         <div className="section-header">
           <h2>Fil d'actualité</h2>
         </div>
