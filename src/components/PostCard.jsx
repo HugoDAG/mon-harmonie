@@ -296,4 +296,6 @@ function formatTimeAgo(dateStr) {
   if (diffMins < 60) return `Il y a ${diffMins} min`
   if (diffHours < 24) return `Il y a ${diffHours}h`
   if (diffDays === 1) return 'Hier'
-  if (diffDays
+  if (diffDays < 7) return `Il y a ${diffDays} jours`
+  return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })
+}
