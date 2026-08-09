@@ -88,7 +88,7 @@ export default function Register() {
           <div className="form-group">
             <label>Lier un co-résident <span style={{ fontSize: 11, color: 'var(--gray-400)', fontWeight: 400 }}>(optionnel)</span></label>
             <input type="email" value={form.coResidentEmail} onChange={update('coResidentEmail')} placeholder="Email du co-résident" />
-            <p className="form-hint">Publiez ensemble : "Hugo & Amélie — C2"</p>
+            <p className="form-hint">Publiez ensemble en tant que co-résidents</p>
           </div>
 
           <button type="submit" className="btn btn-primary" disabled={loading}>
