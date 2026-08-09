@@ -1,0 +1,43 @@
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { AuthProvider, useAuth } from './lib/AuthContext'
+import Home from './pages/Home'
+import Login from './pages/Login'
+import Register from './pages/Register'
+import Directory from './pages/Directory'
+import Documents from './pages/Documents'
+import Bookings from './pages/Bookings'
+import Profile from './pages/Profile'
+import Placeholder from './pages/Placeholder'
+
+function PrivateRoute({ children }) {
+  const { user, loading } = useAuth()
+  if (loading) return <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', color: '#9ca3af' }}>Chargement…</div>
+  return user ? children : <Navigate to="/login" />
+}
+
+function PublicRoute({ children }) {
+  const { user, loading } = useAuth()
+  if (loading) return null
+  return user ? <Navigate to="/" /> : children
+}
+
+export default function App() {
+  return (
+    <AuthProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
+          <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
+          <Route path="/" element={<PrivateRoute><Home /></PrivateRoute>} />
+          <Route path="/directory" element={<PrivateRoute><Directory /></PrivateRoute>} />
+          <Route path="/documents" element={<PrivateRoute><Documents /></PrivateRoute>} />
+          <Route path="/bookings" element={<PrivateRoute><Bookings /></PrivateRoute>} />
+          <Route path="/profile" element={<PrivateRoute><Profile /></PrivateRoute>} />
+          <Route path="/messages" element={<PrivateRoute><Placeholder title="Messages" /></PrivateRoute>} />
+          <Route path="/calendar" element={<PrivateRoute><Placeholder title="Calendrier" /></PrivateRoute>} />
+          <Route path="/polls" element={<PrivateRoute><Placeholder title="Sondages" /></PrivateRoute>} />
+        </Routes>
+      </BrowserRouter>
+    </AuthProvider>
+  )
+}
