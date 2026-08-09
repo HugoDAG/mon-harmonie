@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../lib/AuthContext'
-import { Building2 } from 'lucide-react'
+import { Building2, Eye, EyeOff } from 'lucide-react'
 import { BUILDINGS } from '../lib/constants'
 
 export default function Register() {
@@ -9,9 +9,9 @@ export default function Register() {
     firstName: '', lastName: '', email: '', password: '',
     building: '', coResidentEmail: ''
   })
+  const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
-  const [showPassword, setShowPassword] = useState(false)
   const { signUp } = useAuth()
   const navigate = useNavigate()
 
@@ -44,7 +44,6 @@ export default function Register() {
           </p>
         </div>
 
-        {/* Step dots */}
         <div style={{ display: 'flex', justifyContent: 'center', gap: 6, marginBottom: 20 }}>
           <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--blue-500)' }} />
           <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--gray-300)' }} />
@@ -73,11 +72,13 @@ export default function Register() {
             <input type="email" value={form.email} onChange={update('email')} placeholder="hugo@email.com" required />
           </div>
 
-        <div className="form-group">
+          <div className="form-group">
             <label>Mot de passe</label>
             <div style={{ position: 'relative' }}>
-              <input type={showPassword ? 'text' : 'password'} value={form.password} onChange={update('password')} placeholder="••••••••" required minLength={6} />
-              <button type="button" onClick={() => setShowPassword(s => !s)} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: 'var(--gray-400)', fontSize: 18, cursor: 'pointer' }}>{showPassword ? '🙈' : '👁️'}</button>
+              <input type={showPassword ? 'text' : 'password'} value={form.password} onChange={update('password')} placeholder="••••••••" required minLength={6} style={{ paddingRight: 44 }} />
+              <button type="button" onClick={() => setShowPassword(s => !s)} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: 'var(--gray-400)', cursor: 'pointer' }}>
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
             </div>
           </div>
 
