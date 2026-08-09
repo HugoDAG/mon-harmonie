@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../lib/AuthContext'
 import { supabase } from '../lib/supabase'
+import { useNavigate } from 'react-router-dom'
 import BottomNav from '../components/BottomNav'
-import { LogOut, Building, Mail, User, Users, LinkIcon } from 'lucide-react'
+import { LogOut, Building, Mail, LinkIcon, Users, Book, ChevronRight } from 'lucide-react'
 
 export default function Profile() {
   const { profile, signOut } = useAuth()
+  const navigate = useNavigate()
   const [coResidentName, setCoResidentName] = useState(null)
 
   useEffect(() => {
@@ -69,6 +71,20 @@ export default function Profile() {
             </div>
           </div>
         </div>
+
+        <button onClick={() => navigate('/rules')} className="card" style={{
+          display: 'flex', alignItems: 'center', gap: 12, width: '100%', cursor: 'pointer',
+          textAlign: 'left', border: '1px solid var(--gray-200)', background: '#fff', marginTop: 4
+        }}>
+          <div style={{ width: 36, height: 36, borderRadius: 'var(--radius)', background: 'var(--blue-50)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Book size={18} color="var(--blue-500)" />
+          </div>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 14, fontWeight: 500 }}>Règles de la copropriété</div>
+            <div style={{ fontSize: 12, color: 'var(--gray-400)' }}>Horaires, déchets, parking…</div>
+          </div>
+          <ChevronRight size={18} color="var(--gray-300)" />
+        </button>
 
         <button
           onClick={signOut}
