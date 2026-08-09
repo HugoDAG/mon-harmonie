@@ -73,7 +73,7 @@ export default function PostsByType() {
             <p style={{ fontSize: 14 }}>Aucun {typeInfo.label.toLowerCase()} pour le moment</p>
           </div>
         ) : (
-          posts.map(post => <PostCard key={post.id} post={post} />)
+          posts.map(post => <PostCard key={post.id} post={post} onUpdated={fetchPosts} />)
         )}
       </div>
       <BottomNav />
