@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { POST_TYPE_LABELS } from '../lib/constants'
-import { AlertTriangle, Megaphone, Users, BarChart3, Pencil, Check, X } from 'lucide-react'
+import { AlertTriangle, Megaphone, Users, BarChart3, Pencil, Check, X, Trash2 } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/AuthContext'
 
@@ -34,7 +34,7 @@ const AVATAR_COLORS = {
 
 export default function PostCard({ post, onUpdated }) {
   const { user } = useAuth()
-  const { profile, type, content, created_at } = post
+  const { profile, type, content, image_url, created_at } = post
   const typeInfo = POST_TYPE_LABELS[type] || POST_TYPE_LABELS.annonce
   const Icon = TYPE_ICONS[type] || Megaphone
   const avatarStyle = AVATAR_COLORS[type] || AVATAR_COLORS.annonce
@@ -44,6 +44,7 @@ export default function PostCard({ post, onUpdated }) {
   const [editing, setEditing] = useState(false)
   const [editContent, setEditContent] = useState(content)
   const [saving, setSaving] = useState(false)
+  const [confirmDelete, setConfirmDelete] = useState(false)
 
   const timeAgo = formatTimeAgo(created_at)
 
@@ -53,6 +54,11 @@ export default function PostCard({ post, onUpdated }) {
     await supabase.from('posts').update({ content: editContent.trim() }).eq('id', post.id)
     setSaving(false)
     setEditing(false)
+    onUpdated?.()
+  }
+
+  async function handleDelete() {
+    await supabase.from('posts').delete().eq('id', post.id)
     onUpdated?.()
   }
 
@@ -74,13 +80,26 @@ export default function PostCard({ post, onUpdated }) {
           <div style={{ fontSize: 12, color: 'var(--gray-400)' }}>{timeAgo}</div>
         </div>
         {isOwner && !editing && (
-          <button onClick={() => { setEditing(true); setEditContent(content) }} style={{ background: 'none', border: 'none', color: 'var(--gray-400)', cursor: 'pointer' }}>
-            <Pencil size={16} />
-          </button>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button onClick={() => { setEditing(true); setEditContent(content) }} style={{ background: 'none', border: 'none', color: 'var(--gray-400)', cursor: 'pointer' }}>
+              <Pencil size={16} />
+            </button>
+            <button onClick={() => setConfirmDelete(true)} style={{ background: 'none', border: 'none', color: 'var(--gray-400)', cursor: 'pointer' }}>
+              <Trash2 size={16} />
+            </button>
+          </div>
         )}
       </div>
 
-      {editing ? (
+      {confirmDelete ? (
+        <div style={{ background: 'var(--red-50)', padding: 12, borderRadius: 'var(--radius)', textAlign: 'center' }}>
+          <p style={{ fontSize: 13, color: 'var(--red-500)', marginBottom: 10 }}>Supprimer cette publication ?</p>
+          <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
+            <button onClick={() => setConfirmDelete(false)} className="btn btn-secondary" style={{ padding: '6px 16px', fontSize: 13 }}>Annuler</button>
+            <button onClick={handleDelete} className="btn" style={{ padding: '6px 16px', fontSize: 13, background: 'var(--red-500)', color: '#fff', border: 'none', borderRadius: 'var(--radius)' }}>Supprimer</button>
+          </div>
+        </div>
+      ) : editing ? (
         <div>
           <textarea
             value={editContent}
@@ -92,12 +111,17 @@ export default function PostCard({ post, onUpdated }) {
               <X size={14} /> Annuler
             </button>
             <button onClick={handleSave} className="btn btn-primary" disabled={saving} style={{ padding: '6px 12px', fontSize: 13, width: 'auto' }}>
-              <Check size={14} /> {saving ? 'Enregistrement…' : 'Enregistrer'}
+              <Check size={14} /> {saving ? '…' : 'Enregistrer'}
             </button>
           </div>
         </div>
       ) : (
-        <p style={{ fontSize: 14, color: 'var(--gray-600)', lineHeight: 1.6 }}>{content}</p>
+        <>
+          <p style={{ fontSize: 14, color: 'var(--gray-600)', lineHeight: 1.6 }}>{content}</p>
+          {image_url && (
+            <img src={image_url} alt="" style={{ width: '100%', borderRadius: 'var(--radius)', marginTop: 10, maxHeight: 300, objectFit: 'cover' }} />
+          )}
+        </>
       )}
 
       <div style={{ marginTop: 10 }}>
