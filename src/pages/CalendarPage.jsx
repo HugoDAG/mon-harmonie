@@ -88,14 +88,17 @@ export default function CalendarPage() {
                 {EVENT_TYPES.map(t => <option key={t.key} value={t.key}>{t.label}</option>)}
               </select>
             </div>
-            <div style={{ display: 'flex', gap: 12 }}>
-              <div className="form-group" style={{ flex: 1 }}>
-                <label>Date</label>
-                <input type="date" value={form.event_date} onChange={e => setForm(f => ({ ...f, event_date: e.target.value }))} required />
-              </div>
-              <div className="form-group" style={{ flex: 1 }}>
-                <label>Heure (optionnel)</label>
-                <input type="time" value={form.event_time} onChange={e => setForm(f => ({ ...f, event_time: e.target.value }))} />
+            <div className="form-group">
+              <label>Date</label>
+              <input type="date" value={form.event_date} onChange={e => setForm(f => ({ ...f, event_date: e.target.value }))} required />
+            </div>
+            <div className="form-group">
+              <label>Heure (optionnel)</label>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                <input type="time" value={form.event_time} onChange={e => setForm(f => ({ ...f, event_time: e.target.value }))} style={{ flex: 1 }} />
+                {form.event_time && (
+                  <button type="button" onClick={() => setForm(f => ({ ...f, event_time: '' }))} style={{ background: 'none', border: 'none', color: 'var(--gray-400)', cursor: 'pointer', fontSize: 18 }}>✕</button>
+                )}
               </div>
             </div>
             <div className="form-group">
