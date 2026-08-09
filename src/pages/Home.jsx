@@ -42,8 +42,8 @@ export default function Home() {
     setLoading(false)
   }
 
-  const quickActions = [
-    { icon: AlertTriangle, label: 'Signaler', path: '/new-post?type=signalement' },
+ const quickActions = [
+    { icon: AlertTriangle, label: 'Signaler', action: () => setShowCreate(true) },
     { icon: CalendarCheck, label: 'Réserver', path: '/bookings' },
     { icon: FileText, label: 'Documents', path: '/documents' },
     { icon: BarChart3, label: 'Sondages', path: '/polls' }
@@ -86,7 +86,7 @@ export default function Home() {
         {/* Quick actions */}
         <div className="quick-grid">
           {quickActions.map(({ icon: Icon, label, path }) => (
-            <button key={label} className="quick-item" onClick={() => navigate(path)}>
+            <button key={label} className="quick-item" onClick={() => action ? action() : navigate(path)}>
               <Icon size={22} />
               {label}
             </button>
