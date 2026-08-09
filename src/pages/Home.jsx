@@ -43,7 +43,7 @@ export default function Home() {
 
     let query = supabase
       .from('posts')
-      .select('*, profile:profiles(id, first_name, last_name, building, role, co_resident_id, co_resident_name:get_co_resident_name(co_resident_id))')
+      .select('*, profile:profiles(id, first_name, last_name, building, role, co_resident_id)')
       .order('created_at', { ascending: false })
       .limit(50)
 
