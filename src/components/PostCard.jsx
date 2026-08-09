@@ -1,5 +1,8 @@
+import { useState } from 'react'
 import { POST_TYPE_LABELS } from '../lib/constants'
-import { AlertTriangle, Megaphone, Users, BarChart3 } from 'lucide-react'
+import { AlertTriangle, Megaphone, Users, BarChart3, Pencil, Check, X } from 'lucide-react'
+import { supabase } from '../lib/supabase'
+import { useAuth } from '../lib/AuthContext'
 
 const TYPE_ICONS = {
   annonce: Megaphone,
@@ -9,10 +12,8 @@ const TYPE_ICONS = {
 }
 
 function getInitials(profile) {
-  if (profile.co_resident) {
-    const first = profile.first_name?.[0] || ''
-    const coFirst = profile.co_resident.first_name?.[0] || ''
-    return `${first}&${coFirst}`
+  if (profile.co_resident_id) {
+    return `${profile.first_name?.[0] || ''}+`
   }
   const f = profile.first_name?.[0] || ''
   const l = profile.last_name?.[0] || ''
@@ -21,9 +22,6 @@ function getInitials(profile) {
 
 function getDisplayName(profile) {
   const lastName = profile.last_name ? `${profile.last_name[0]}.` : ''
-  if (profile.co_resident) {
-    return `${profile.first_name} & ${profile.co_resident.first_name}`
-  }
   return `${profile.first_name} ${lastName}`
 }
 
@@ -34,14 +32,29 @@ const AVATAR_COLORS = {
   sondage: { bg: 'var(--purple-50)', color: 'var(--purple-500)' }
 }
 
-export default function PostCard({ post }) {
-  const { profile, type, content, channel, created_at } = post
+export default function PostCard({ post, onUpdated }) {
+  const { user } = useAuth()
+  const { profile, type, content, created_at } = post
   const typeInfo = POST_TYPE_LABELS[type] || POST_TYPE_LABELS.annonce
   const Icon = TYPE_ICONS[type] || Megaphone
   const avatarStyle = AVATAR_COLORS[type] || AVATAR_COLORS.annonce
   const isSyndic = profile?.role === 'syndic'
+  const isOwner = user?.id === post.user_id
+
+  const [editing, setEditing] = useState(false)
+  const [editContent, setEditContent] = useState(content)
+  const [saving, setSaving] = useState(false)
 
   const timeAgo = formatTimeAgo(created_at)
+
+  async function handleSave() {
+    if (!editContent.trim()) return
+    setSaving(true)
+    await supabase.from('posts').update({ content: editContent.trim() }).eq('id', post.id)
+    setSaving(false)
+    setEditing(false)
+    onUpdated?.()
+  }
 
   return (
     <div className="card">
@@ -60,9 +73,32 @@ export default function PostCard({ post }) {
           </div>
           <div style={{ fontSize: 12, color: 'var(--gray-400)' }}>{timeAgo}</div>
         </div>
+        {isOwner && !editing && (
+          <button onClick={() => { setEditing(true); setEditContent(content) }} style={{ background: 'none', border: 'none', color: 'var(--gray-400)', cursor: 'pointer' }}>
+            <Pencil size={16} />
+          </button>
+        )}
       </div>
 
-      <p style={{ fontSize: 14, color: 'var(--gray-600)', lineHeight: 1.6 }}>{content}</p>
+      {editing ? (
+        <div>
+          <textarea
+            value={editContent}
+            onChange={e => setEditContent(e.target.value)}
+            style={{ width: '100%', padding: '8px 10px', border: '1px solid var(--gray-300)', borderRadius: 'var(--radius)', fontSize: 14, fontFamily: 'inherit', resize: 'vertical', minHeight: 60 }}
+          />
+          <div style={{ display: 'flex', gap: 8, marginTop: 8, justifyContent: 'flex-end' }}>
+            <button onClick={() => setEditing(false)} className="btn btn-secondary" style={{ padding: '6px 12px', fontSize: 13 }}>
+              <X size={14} /> Annuler
+            </button>
+            <button onClick={handleSave} className="btn btn-primary" disabled={saving} style={{ padding: '6px 12px', fontSize: 13, width: 'auto' }}>
+              <Check size={14} /> {saving ? 'Enregistrement…' : 'Enregistrer'}
+            </button>
+          </div>
+        </div>
+      ) : (
+        <p style={{ fontSize: 14, color: 'var(--gray-600)', lineHeight: 1.6 }}>{content}</p>
+      )}
 
       <div style={{ marginTop: 10 }}>
         <span className="tag" style={{ background: typeInfo.bg, color: typeInfo.color }}>
