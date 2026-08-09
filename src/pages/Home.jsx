@@ -108,7 +108,7 @@ export default function Home() {
             <p style={{ fontSize: 12, marginTop: 4 }}>Soyez le premier à publier !</p>
           </div>
         ) : (
-          posts.map(post => <PostCard key={post.id} post={post} />)
+          posts.map(post => <PostCard key={post.id} post={post} onUpdated={fetchPosts} />)
         )}
 
         {/* FAB */}
