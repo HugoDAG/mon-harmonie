@@ -3,15 +3,22 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/AuthContext'
 import { BUILDINGS } from '../lib/constants'
 import BottomNav from '../components/BottomNav'
-import { Search, Phone, Mail, Plus, X, Trash2, Pencil, Check } from 'lucide-react'
+import { Search, Phone, Mail, Plus, X, Trash2, Pencil, Shield, ChevronDown } from 'lucide-react'
 
 const ROLE_OPTIONS = [
   { value: 'syndic', label: 'Syndic' },
   { value: 'gardien', label: 'Gardien' },
   { value: 'conseil', label: 'Conseil Syndical' },
   { value: 'prestataire', label: 'Prestataire' },
-  { value: 'urgence', label: 'Numéro d\'urgence' },
+  { value: 'urgence', label: "Numéro d'urgence" },
   { value: 'autre', label: 'Autre' }
+]
+
+const PROMOTE_OPTIONS = [
+  { value: 'resident', label: 'Résident' },
+  { value: 'conseil', label: 'Conseil Syndical' },
+  { value: 'syndic', label: 'Syndic' },
+  { value: 'admin', label: 'Administrateur' }
 ]
 
 const ROLE_COLORS = {
@@ -21,6 +28,12 @@ const ROLE_COLORS = {
   prestataire: { color: 'var(--amber-500)', bg: 'var(--amber-50)' },
   urgence: { color: 'var(--red-500)', bg: 'var(--red-50)' },
   autre: { color: 'var(--gray-500)', bg: 'var(--gray-50)' }
+}
+
+const ROLE_BADGES = {
+  conseil: { label: 'Conseil', color: 'var(--purple-500)', bg: 'var(--purple-50)' },
+  syndic: { label: 'Syndic', color: 'var(--blue-500)', bg: 'var(--blue-50)' },
+  admin: { label: 'Admin', color: 'var(--red-500)', bg: 'var(--red-50)' }
 }
 
 export default function Directory() {
@@ -33,20 +46,18 @@ export default function Directory() {
   const [showForm, setShowForm] = useState(false)
   const [editingContact, setEditingContact] = useState(null)
   const [form, setForm] = useState({ name: '', role_label: 'gardien', phone: '', email: '', building: '' })
+  const [promotingId, setPromotingId] = useState(null)
 
   const canEdit = profile?.role === 'syndic' || profile?.role === 'admin' || profile?.role === 'conseil'
 
-  useEffect(() => {
-    fetchAll()
-  }, [buildingFilter])
+  useEffect(() => { fetchAll() }, [buildingFilter])
 
   async function fetchAll() {
     setLoading(true)
     const [{ data: contactsData }, { data: residentsData }] = await Promise.all([
       supabase.from('directory_contacts').select('*').order('role_label').order('name'),
-      supabase.from('profiles').select('id, first_name, last_name, building, role, phone, email, co_resident_id')
+      supabase.from('profiles').select('id, first_name, last_name, building, role')
         .eq('visible_in_directory', true)
-        .eq('role', 'resident')
         .order('building').order('first_name')
     ])
     setContacts(contactsData || [])
@@ -123,11 +134,17 @@ export default function Directory() {
     fetchAll()
   }
 
-  async function handleDelete(id) {
+  async function handleDeleteContact(id) {
     if (confirm('Supprimer ce contact ?')) {
       await supabase.from('directory_contacts').delete().eq('id', id)
       fetchAll()
     }
+  }
+
+  async function handlePromote(residentId, newRole) {
+    await supabase.from('profiles').update({ role: newRole }).eq('id', residentId)
+    setPromotingId(null)
+    fetchAll()
   }
 
   return (
@@ -238,7 +255,7 @@ export default function Directory() {
                             <button onClick={() => openEditForm(c)} style={{ width: 32, height: 32, borderRadius: '50%', background: 'var(--gray-50)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', cursor: 'pointer' }}>
                               <Pencil size={14} color="var(--gray-400)" />
                             </button>
-                            <button onClick={() => handleDelete(c.id)} style={{ width: 32, height: 32, borderRadius: '50%', background: 'var(--red-50)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', cursor: 'pointer' }}>
+                            <button onClick={() => handleDeleteContact(c.id)} style={{ width: 32, height: 32, borderRadius: '50%', background: 'var(--red-50)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', cursor: 'pointer' }}>
                               <Trash2 size={14} color="var(--red-500)" />
                             </button>
                           </>
@@ -256,17 +273,52 @@ export default function Directory() {
                 <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--gray-400)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1 }}>
                   Bâtiment {building}
                 </div>
-                {people.map(r => (
-                  <div key={r.id} className="card" style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px' }}>
-                    <div className="avatar" style={{ background: 'var(--blue-50)', color: 'var(--blue-600)' }}>
-                      {r.first_name?.[0]}{r.last_name?.[0]}
+                {people.map(r => {
+                  const badge = ROLE_BADGES[r.role]
+                  return (
+                    <div key={r.id} className="card" style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px' }}>
+                      <div className="avatar" style={{ background: badge ? badge.bg : 'var(--blue-50)', color: badge ? badge.color : 'var(--blue-600)' }}>
+                        {r.first_name?.[0]}{r.last_name?.[0]}
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <span style={{ fontSize: 14, fontWeight: 500 }}>{r.first_name} {r.last_name?.[0]}.</span>
+                          {badge && (
+                            <span style={{ fontSize: 10, fontWeight: 500, color: badge.color, background: badge.bg, padding: '2px 8px', borderRadius: 99 }}>{badge.label}</span>
+                          )}
+                        </div>
+                        <div style={{ fontSize: 12, color: 'var(--gray-400)' }}>Bâtiment {r.building}</div>
+                      </div>
+                      {canEdit && (
+                        <div style={{ position: 'relative' }}>
+                          <button onClick={() => setPromotingId(promotingId === r.id ? null : r.id)} style={{ width: 32, height: 32, borderRadius: '50%', background: 'var(--gray-50)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', cursor: 'pointer' }}>
+                            <Shield size={14} color="var(--gray-400)" />
+                          </button>
+                          {promotingId === r.id && (
+                            <div style={{
+                              position: 'absolute', right: 0, top: 36, background: '#fff',
+                              border: '1px solid var(--gray-200)', borderRadius: 'var(--radius)',
+                              boxShadow: 'var(--shadow)', zIndex: 10, minWidth: 160, overflow: 'hidden'
+                            }}>
+                              {PROMOTE_OPTIONS.map(opt => (
+                                <button key={opt.value} onClick={() => handlePromote(r.id, opt.value)}
+                                  style={{
+                                    display: 'block', width: '100%', padding: '10px 14px', border: 'none',
+                                    background: r.role === opt.value ? 'var(--blue-50)' : '#fff',
+                                    color: r.role === opt.value ? 'var(--blue-600)' : 'var(--gray-700)',
+                                    fontSize: 13, textAlign: 'left', cursor: 'pointer',
+                                    fontWeight: r.role === opt.value ? 600 : 400
+                                  }}>
+                                  {opt.label} {r.role === opt.value && '✓'}
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontSize: 14, fontWeight: 500 }}>{r.first_name} {r.last_name?.[0]}.</div>
-                      <div style={{ fontSize: 12, color: 'var(--gray-400)' }}>Bâtiment {r.building}</div>
-                    </div>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
             ))}
 
