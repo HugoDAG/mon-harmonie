@@ -94,7 +94,7 @@ input, select, textarea { font-family: inherit; }
   justify-content: space-around;
   padding: 4px 0 calc(env(safe-area-inset-bottom, 0px) + 4px);
   z-index: 50;
-  border-radius: 20px 20px 0 0;
+  border-radius: 12px 12px 0 0;
 }
 
 .nav-item {
