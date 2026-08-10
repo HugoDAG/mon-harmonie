@@ -4,10 +4,10 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/AuthContext'
 import { POST_TYPES, CHANNELS } from '../lib/constants'
 
-export default function CreatePost({ onClose, onCreated }) {
+export default function CreatePost({ onClose, onCreated, defaultType }) {
   const { user, profile } = useAuth()
   const [content, setContent] = useState('')
-  const [type, setType] = useState(POST_TYPES.VOISINAGE)
+  const [type, setType] = useState(defaultType || POST_TYPES.VOISINAGE)
   const [channel, setChannel] = useState(CHANNELS.BUILDING)
   const [image, setImage] = useState(null)
   const [imagePreview, setImagePreview] = useState(null)
@@ -16,10 +16,7 @@ export default function CreatePost({ onClose, onCreated }) {
 
   function handleImageChange(e) {
     const file = e.target.files[0]
-    if (file) {
-      setImage(file)
-      setImagePreview(URL.createObjectURL(file))
-    }
+    if (file) { setImage(file); setImagePreview(URL.createObjectURL(file)) }
   }
 
   function updatePollOption(index, value) {
@@ -64,16 +61,11 @@ export default function CreatePost({ onClose, onCreated }) {
     }).select().single()
 
     if (!error && type === 'sondage' && postData) {
-      const options = pollOptions
-        .filter(o => o.trim())
-        .map((label, i) => ({ post_id: postData.id, label: label.trim(), position: i }))
+      const options = pollOptions.filter(o => o.trim()).map((label, i) => ({ post_id: postData.id, label: label.trim(), position: i }))
       await supabase.from('poll_options').insert(options)
     }
 
-    if (!error) {
-      onCreated?.()
-      onClose()
-    }
+    if (!error) { onCreated?.(); onClose() }
     setLoading(false)
   }
 
@@ -83,12 +75,12 @@ export default function CreatePost({ onClose, onCreated }) {
       display: 'flex', alignItems: 'flex-end', justifyContent: 'center', zIndex: 100
     }}>
       <div style={{
-        background: '#fff', borderRadius: '16px 16px 0 0', width: '100%',
+        background: 'var(--white)', borderRadius: '16px 16px 0 0', width: '100%',
         maxWidth: 480, padding: '16px 16px 24px', maxHeight: '85vh', overflow: 'auto'
       }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-          <h2 style={{ fontSize: 17, fontWeight: 600 }}>Nouvelle publication</h2>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--gray-400)' }}>
+          <h2 style={{ fontSize: 17, fontWeight: 600, fontFamily: "'Cinzel', serif", color: 'var(--green-dark)' }}>Nouvelle publication</h2>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--text-muted)' }}>
             <X size={22} />
           </button>
         </div>
@@ -97,14 +89,8 @@ export default function CreatePost({ onClose, onCreated }) {
           <div className="form-group">
             <label>Canal de diffusion</label>
             <div className="channel-switch">
-              <button type="button"
-                className={`channel-btn ${channel === CHANNELS.BUILDING ? 'active' : ''}`}
-                onClick={() => setChannel(CHANNELS.BUILDING)}
-              >Mon bâtiment ({profile?.building})</button>
-              <button type="button"
-                className={`channel-btn ${channel === CHANNELS.RESIDENCE ? 'active' : ''}`}
-                onClick={() => setChannel(CHANNELS.RESIDENCE)}
-              >Résidence</button>
+              <button type="button" className={`channel-btn ${channel === CHANNELS.BUILDING ? 'active' : ''}`} onClick={() => setChannel(CHANNELS.BUILDING)}>Mon bâtiment ({profile?.building})</button>
+              <button type="button" className={`channel-btn ${channel === CHANNELS.RESIDENCE ? 'active' : ''}`} onClick={() => setChannel(CHANNELS.RESIDENCE)}>Résidence</button>
             </div>
           </div>
 
@@ -119,12 +105,10 @@ export default function CreatePost({ onClose, onCreated }) {
           </div>
 
           <div className="form-group">
-            <label>{type === 'sondage' ? 'Question du sondage' : 'Message'}</label>
-            <textarea
-              value={content} onChange={e => setContent(e.target.value)}
-              placeholder={type === 'sondage' ? 'Posez votre question…' : 'Écrivez votre message…'}
-              rows={3} required
-            />
+            <label>{type === 'sondage' ? 'Question du sondage' : type === 'signalement' ? 'Description du problème' : 'Message'}</label>
+            <textarea value={content} onChange={e => setContent(e.target.value)}
+              placeholder={type === 'sondage' ? 'Posez votre question...' : type === 'signalement' ? 'Décrivez le problème rencontré...' : 'Écrivez votre message...'}
+              rows={4} required />
           </div>
 
           {type === 'sondage' && (
@@ -132,21 +116,17 @@ export default function CreatePost({ onClose, onCreated }) {
               <label>Options du sondage</label>
               {pollOptions.map((opt, i) => (
                 <div key={i} style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
-                  <input
-                    value={opt} onChange={e => updatePollOption(i, e.target.value)}
-                    placeholder={`Option ${i + 1}`}
-                    style={{ flex: 1, padding: '8px 10px', border: '1px solid var(--gray-300)', borderRadius: 'var(--radius)', fontSize: 13 }}
-                  />
+                  <input value={opt} onChange={e => updatePollOption(i, e.target.value)} placeholder={`Option ${i + 1}`}
+                    style={{ flex: 1, padding: '8px 10px', border: '1px solid var(--border)', borderRadius: 'var(--radius)', fontSize: 13 }} />
                   {pollOptions.length > 2 && (
-                    <button type="button" onClick={() => removePollOption(i)} style={{ background: 'none', border: 'none', color: 'var(--gray-400)', cursor: 'pointer' }}>
+                    <button type="button" onClick={() => removePollOption(i)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}>
                       <Trash2 size={16} />
                     </button>
                   )}
                 </div>
               ))}
               {pollOptions.length < 6 && (
-                <button type="button" onClick={addPollOption}
-                  style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', color: 'var(--blue-500)', fontSize: 13, cursor: 'pointer', padding: '4px 0' }}>
+                <button type="button" onClick={addPollOption} style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', color: 'var(--green-sage)', fontSize: 13, cursor: 'pointer', padding: '4px 0' }}>
                   <Plus size={14} /> Ajouter une option
                 </button>
               )}
@@ -158,8 +138,8 @@ export default function CreatePost({ onClose, onCreated }) {
               <label>Photo (optionnel)</label>
               <label style={{
                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                padding: 12, border: '1px dashed var(--gray-300)', borderRadius: 'var(--radius)',
-                cursor: 'pointer', color: 'var(--gray-400)', fontSize: 13
+                padding: 12, border: '1px dashed var(--border)', borderRadius: 'var(--radius)',
+                cursor: 'pointer', color: 'var(--text-muted)', fontSize: 13
               }}>
                 <Camera size={18} />
                 {image ? image.name : 'Ajouter une photo'}
@@ -179,7 +159,7 @@ export default function CreatePost({ onClose, onCreated }) {
 
           <button type="submit" className="btn btn-primary" disabled={loading}>
             <Send size={16} />
-            {loading ? 'Publication…' : 'Publier'}
+            {loading ? 'Publication...' : type === 'signalement' ? 'Envoyer le signalement' : 'Publier'}
           </button>
         </form>
       </div>
