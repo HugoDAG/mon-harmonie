@@ -1,15 +1,18 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/AuthContext'
-import BottomNav from '../components/BottomNav'
-import { FileText, Upload, ChevronRight, ArrowLeft, X, Download } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
+import BottomNav from '../components/BottomNav'
+import { FileText, Upload, Download, ArrowLeft, X, File } from 'lucide-react'
 
 const DOC_CATEGORIES = [
-  { key: 'reglement', label: 'Règlement intérieur' },
-  { key: 'pv', label: "PV d'assemblées générales" },
-  { key: 'contrat', label: 'Contrats' },
-  { key: 'autre', label: 'Autres documents' }
+  { key: 'reglement', label: 'Règlement de copropriété', icon: '📋' },
+  { key: 'pv', label: 'Procès-verbaux AG', icon: '📝' },
+  { key: 'plans', label: 'Plans de la résidence', icon: '🗺️' },
+  { key: 'notices', label: 'Notices équipements', icon: '🔧' },
+  { key: 'contrat', label: 'Contrats', icon: '📄' },
+  { key: 'info', label: 'Informations pratiques', icon: '📌' },
+  { key: 'autre', label: 'Autres documents', icon: '📁' }
 ]
 
 export default function Documents() {
@@ -23,15 +26,10 @@ export default function Documents() {
 
   const canUpload = profile?.role === 'syndic' || profile?.role === 'admin' || profile?.role === 'conseil'
 
-  useEffect(() => {
-    fetchDocs()
-  }, [])
+  useEffect(() => { fetchDocs() }, [])
 
   async function fetchDocs() {
-    const { data } = await supabase
-      .from('documents')
-      .select('*')
-      .order('created_at', { ascending: false })
+    const { data } = await supabase.from('documents').select('*').order('created_at', { ascending: false })
     setDocs(data || [])
     setLoading(false)
   }
@@ -44,41 +42,20 @@ export default function Documents() {
     const fileExt = form.file.name.split('.').pop()
     const fileName = `${Date.now()}-${form.title.replace(/\s+/g, '-')}.${fileExt}`
 
-    const { error: uploadError } = await supabase.storage
-      .from('documents')
-      .upload(fileName, form.file)
+    const { error: uploadError } = await supabase.storage.from('documents').upload(fileName, form.file)
+    if (uploadError) { alert('Erreur : ' + uploadError.message); setUploading(false); return }
 
-    if (uploadError) {
-      alert('Erreur lors du téléversement : ' + uploadError.message)
-      setUploading(false)
-      return
-    }
+    const { data: urlData } = supabase.storage.from('documents').getPublicUrl(fileName)
 
-    const { data: urlData } = supabase.storage
-      .from('documents')
-      .getPublicUrl(fileName)
-
-    const { error: dbError } = await supabase.from('documents').insert({
-      title: form.title,
-      category: form.category,
-      file_url: urlData.publicUrl,
-      uploaded_by: user.id
+    await supabase.from('documents').insert({
+      title: form.title, category: form.category,
+      file_url: urlData.publicUrl, uploaded_by: user.id
     })
 
-    if (dbError) {
-      alert('Erreur : ' + dbError.message)
-    } else {
-      setShowUpload(false)
-      setForm({ title: '', category: 'autre', file: null })
-      fetchDocs()
-    }
+    setShowUpload(false)
+    setForm({ title: '', category: 'autre', file: null })
+    fetchDocs()
     setUploading(false)
-  }
-
-  function handleDownload(doc) {
-    if (doc.file_url) {
-      window.open(doc.file_url, '_blank')
-    }
   }
 
   return (
@@ -86,10 +63,10 @@ export default function Documents() {
       <div className="page-content">
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <button onClick={() => navigate('/')} style={{ background: 'none', border: 'none', color: 'var(--gray-500)', padding: 4 }}>
+            <button onClick={() => navigate('/')} style={{ background: 'none', border: 'none', color: 'var(--green-dark)', padding: 4 }}>
               <ArrowLeft size={22} />
             </button>
-            <h1 style={{ fontSize: 20, fontWeight: 600 }}>Documents</h1>
+            <h1 style={{ fontSize: 20, fontWeight: 600, fontFamily: "'Cinzel', serif", color: 'var(--green-dark)' }}>Documents</h1>
           </div>
           {canUpload && (
             <button className="btn btn-secondary" onClick={() => setShowUpload(s => !s)} style={{ fontSize: 13 }}>
@@ -116,47 +93,57 @@ export default function Documents() {
               <input type="file" onChange={e => setForm(f => ({ ...f, file: e.target.files[0] }))} required accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.png" />
             </div>
             <button type="submit" className="btn btn-primary" disabled={uploading}>
-              <Upload size={16} />
-              {uploading ? 'Envoi en cours…' : 'Téléverser'}
+              <Upload size={16} /> {uploading ? 'Envoi...' : 'Téléverser'}
             </button>
           </form>
         )}
 
         {loading ? (
-          <p style={{ textAlign: 'center', color: 'var(--gray-400)', padding: 32 }}>Chargement…</p>
+          <p style={{ textAlign: 'center', color: 'var(--text-muted)', padding: 32 }}>Chargement...</p>
         ) : (
           DOC_CATEGORIES.map(cat => {
             const catDocs = docs.filter(d => d.category === cat.key)
-            if (catDocs.length === 0) return null
             return (
-              <div key={cat.key} style={{ marginBottom: 20 }}>
-                <h2 style={{ fontSize: 13, fontWeight: 600, color: 'var(--gray-400)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1 }}>
-                  {cat.label}
-                </h2>
-                {catDocs.map(doc => (
-                  <div key={doc.id} className="card" style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', cursor: 'pointer' }} onClick={() => handleDownload(doc)}>
-                    <div style={{ width: 36, height: 36, borderRadius: 'var(--radius)', background: 'var(--blue-50)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <FileText size={18} color="var(--blue-500)" />
+              <div key={cat.key} style={{ marginBottom: 4 }}>
+                <div className="card" style={{
+                  display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px',
+                  cursor: catDocs.length > 0 ? 'pointer' : 'default',
+                  opacity: catDocs.length > 0 ? 1 : 0.6
+                }}
+                  onClick={() => catDocs.length > 0 && catDocs[0].file_url && window.open(catDocs[0].file_url, '_blank')}
+                >
+                  <span style={{ fontSize: 24 }}>{cat.icon}</span>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-dark)' }}>{cat.label}</div>
+                    <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+                      {catDocs.length > 0
+                        ? `${catDocs.length} document${catDocs.length > 1 ? 's' : ''}`
+                        : 'Aucun document'
+                      }
                     </div>
+                  </div>
+                  {catDocs.length > 0 && <Download size={16} color="var(--text-muted)" />}
+                </div>
+                {catDocs.length > 1 && catDocs.slice(1).map(doc => (
+                  <div key={doc.id} style={{
+                    display: 'flex', alignItems: 'center', gap: 10, padding: '10px 16px 10px 52px',
+                    borderBottom: '1px solid var(--border-light)', cursor: 'pointer'
+                  }}
+                    onClick={() => doc.file_url && window.open(doc.file_url, '_blank')}
+                  >
+                    <File size={14} color="var(--text-muted)" />
                     <div style={{ flex: 1 }}>
-                      <div style={{ fontSize: 14, fontWeight: 500 }}>{doc.title}</div>
-                      <div style={{ fontSize: 12, color: 'var(--gray-400)' }}>
+                      <div style={{ fontSize: 13, color: 'var(--text-dark)' }}>{doc.title}</div>
+                      <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>
                         {new Date(doc.created_at).toLocaleDateString('fr-FR')}
                       </div>
                     </div>
-                    <Download size={18} color="var(--gray-300)" />
+                    <Download size={14} color="var(--text-muted)" />
                   </div>
                 ))}
               </div>
             )
           })
-        )}
-
-        {!loading && docs.length === 0 && (
-          <div style={{ textAlign: 'center', color: 'var(--gray-400)', padding: 32 }}>
-            <FileText size={32} style={{ marginBottom: 8, opacity: 0.5 }} />
-            <p style={{ fontSize: 14 }}>Aucun document pour le moment</p>
-          </div>
         )}
       </div>
       <BottomNav />
