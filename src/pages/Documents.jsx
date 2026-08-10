@@ -5,14 +5,16 @@ import { useNavigate } from 'react-router-dom'
 import BottomNav from '../components/BottomNav'
 import { FileText, Upload, Download, ArrowLeft, X, File } from 'lucide-react'
 
+const FOLDER_IMG = 'https://lorpxeojlganrirzksff.supabase.co/storage/v1/object/public/documents/dossier%20transparent.png'
+
 const DOC_CATEGORIES = [
-  { key: 'reglement', label: 'Règlement de copropriété', icon: '📋' },
-  { key: 'pv', label: 'Procès-verbaux AG', icon: '📝' },
-  { key: 'plans', label: 'Plans de la résidence', icon: '🗺️' },
-  { key: 'notices', label: 'Notices équipements', icon: '🔧' },
-  { key: 'contrat', label: 'Contrats', icon: '📄' },
-  { key: 'info', label: 'Informations pratiques', icon: '📌' },
-  { key: 'autre', label: 'Autres documents', icon: '📁' }
+  { key: 'reglement', label: 'Règlement de copropriété' },
+  { key: 'pv', label: 'Procès-verbaux AG' },
+  { key: 'plans', label: 'Plans de la résidence' },
+  { key: 'notices', label: 'Notices équipements' },
+  { key: 'contrat', label: 'Contrats' },
+  { key: 'info', label: 'Informations pratiques' },
+  { key: 'autre', label: 'Autres documents' }
 ]
 
 export default function Documents() {
