@@ -130,7 +130,7 @@ export default function Profile() {
                   padding: '14px 16px', background: 'var(--white)',
                   border: 'none', cursor: 'pointer', textAlign: 'left'
                 }}>
-                  <img src={img} alt={label} style={{ width: 56, height: 56, objectFit: 'contain', flexShrink: 0 }} />
+                  <img src={img} alt={label} style={{ width: 68, height: 68, objectFit: 'contain', flexShrink: 0 }} />
                   <div style={{ flex: 1 }}>
                     <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-dark)' }}>{label}</div>
                   </div>
