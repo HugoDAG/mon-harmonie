@@ -69,11 +69,11 @@ export default function Home() {
     return p.content?.toLowerCase().includes(s) || p.profile?.first_name?.toLowerCase().includes(s) || p.profile?.last_name?.toLowerCase().includes(s) || p.type?.toLowerCase().includes(s)
   })
 
-  const quickActions = [
+ const quickActions = [
     { icon: AlertTriangle, label: 'Signalements', path: '/posts/signalement' },
     { icon: Megaphone, label: 'Annonces', path: '/posts/annonce' },
-    { icon: CalendarCheck, label: 'Réserver', path: '/bookings' },
-    { icon: Users2, label: 'Voisinage', path: '/posts/voisinage' },
+    { icon: null, label: 'Réserver', path: '/bookings', img: 'https://lorpxeojlganrirzksff.supabase.co/storage/v1/object/public/documents/reserver.png' },
+    { icon: null, label: 'Voisinage', path: '/posts/voisinage', img: 'https://lorpxeojlganrirzksff.supabase.co/storage/v1/object/public/documents/voisinage.png' },
     { icon: BarChart3, label: 'Sondages', path: '/posts/sondage' },
     { icon: FileText, label: 'Documents', path: '/documents' }
   ]
@@ -121,7 +121,7 @@ export default function Home() {
             display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)',
             gap: 10, marginBottom: 24
           }}>
-            {quickActions.map(({ icon: Icon, label, path }) => (
+            {quickActions.map(({ icon: Icon, label, path, img }) => (
               <button key={label} onClick={() => navigate(path)} style={{
                 display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8,
                 padding: '16px 8px', borderRadius: 16,
@@ -133,7 +133,11 @@ export default function Home() {
                   background: 'var(--green-dark-10)',
                   display: 'flex', alignItems: 'center', justifyContent: 'center'
                 }}>
-                  <Icon size={20} color="var(--green-sage)" />
+                  {img ? (
+                    <img src={img} alt={label} style={{ width: 24, height: 24, objectFit: 'contain' }} />
+                  ) : (
+                    <Icon size={20} color="var(--green-sage)" />
+                  )}
                 </div>
                 <span style={{ fontSize: 11, fontWeight: 500, color: 'var(--text-medium)' }}>{label}</span>
               </button>
