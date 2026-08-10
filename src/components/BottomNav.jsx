@@ -6,7 +6,7 @@ const NAV_ITEMS = [
   { path: '/calendar', icon: Calendar, label: 'Calendrier' },
   { path: 'fab', icon: Plus, label: '' },
   { path: '/directory', icon: Users, label: 'Annuaire' },
-  { path: '/profile', icon: User, label: 'Profil' }
+  { path: '/profile', icon: User, label: 'Mon compte' }
 ]
 
 export default function BottomNav({ onPlusClick }) {
