@@ -129,7 +129,7 @@ export default function Home() {
                 cursor: 'pointer', transition: 'all 0.15s'
               }}>
                 {img ? (
-                  <img src={img} alt={label} style={{ width: 80, height: 80, objectFit: 'contain' }} />
+                  <img src={img} alt={label} style={{ width: '100%', height: '100%', objectFit: 'contain', padding: 4 }} />
                 ) : (
                   <div style={{
                     width: 40, height: 40, borderRadius: 12,
