@@ -2,78 +2,99 @@ import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/AuthContext'
 import BottomNav from '../components/BottomNav'
-import { Calendar, Plus, X, Info } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Plus, X } from 'lucide-react'
 
 const EVENT_TYPES = [
-  { key: 'ag', label: 'Assemblée Générale', color: 'var(--blue-500)', bg: 'var(--blue-50)' },
+  { key: 'ag', label: 'Assemblée Générale', color: 'var(--terracotta)', bg: 'rgba(196,121,78,0.1)' },
   { key: 'conseil', label: 'Conseil Syndical', color: 'var(--purple-500)', bg: 'var(--purple-50)' },
   { key: 'travaux', label: 'Travaux', color: 'var(--amber-500)', bg: 'var(--amber-50)' },
-  { key: 'activite', label: 'Activité', color: 'var(--green-500)', bg: 'var(--green-50)' },
-  { key: 'info', label: 'Information', color: 'var(--gray-500)', bg: 'var(--gray-50)' }
+  { key: 'activite', label: 'Activité', color: 'var(--green-sage)', bg: 'var(--green-sage-10)' },
+  { key: 'info', label: 'Information', color: 'var(--text-light)', bg: 'var(--cream)' }
 ]
+
+const DAYS = ['L', 'M', 'M', 'J', 'V', 'S', 'D']
+const MONTHS = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre']
 
 export default function CalendarPage() {
   const { profile } = useAuth()
   const [events, setEvents] = useState([])
   const [loading, setLoading] = useState(true)
+  const [currentDate, setCurrentDate] = useState(new Date())
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0])
   const [showForm, setShowForm] = useState(false)
   const [form, setForm] = useState({ title: '', description: '', event_date: '', event_time: '', event_type: 'info' })
 
   const canCreate = profile?.role === 'syndic' || profile?.role === 'admin' || profile?.role === 'conseil'
 
-  useEffect(() => { fetchEvents() }, [])
+  useEffect(() => { fetchEvents() }, [currentDate])
 
   async function fetchEvents() {
-    const { data } = await supabase
-      .from('events')
-      .select('*')
-      .gte('event_date', new Date().toISOString().split('T')[0])
-      .order('event_date')
-      .order('event_time')
+    const year = currentDate.getFullYear()
+    const month = currentDate.getMonth()
+    const start = new Date(year, month, 1).toISOString().split('T')[0]
+    const end = new Date(year, month + 1, 0).toISOString().split('T')[0]
+
+    const { data } = await supabase.from('events').select('*').gte('event_date', start).lte('event_date', end).order('event_date').order('event_time')
     setEvents(data || [])
     setLoading(false)
   }
 
   async function handleCreate(e) {
     e.preventDefault()
-    await supabase.from('events').insert({
-      ...form,
-      event_time: form.event_time || null,
-      created_by: profile.id
-    })
+    await supabase.from('events').insert({ ...form, event_time: form.event_time || null, created_by: profile.id })
     setShowForm(false)
     setForm({ title: '', description: '', event_date: '', event_time: '', event_type: 'info' })
     fetchEvents()
   }
 
-  function groupByMonth(events) {
-    return events.reduce((acc, ev) => {
-      const date = new Date(ev.event_date)
-      const key = date.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })
-      if (!acc[key]) acc[key] = []
-      acc[key].push(ev)
-      return acc
-    }, {})
+  function prevMonth() {
+    setCurrentDate(d => new Date(d.getFullYear(), d.getMonth() - 1, 1))
+  }
+  function nextMonth() {
+    setCurrentDate(d => new Date(d.getFullYear(), d.getMonth() + 1, 1))
   }
 
-  const grouped = groupByMonth(events)
+  function getDaysInMonth() {
+    const year = currentDate.getFullYear()
+    const month = currentDate.getMonth()
+    const firstDay = new Date(year, month, 1)
+    const lastDay = new Date(year, month + 1, 0)
+    const startPad = (firstDay.getDay() + 6) % 7
+    const days = []
+
+    for (let i = 0; i < startPad; i++) days.push(null)
+    for (let d = 1; d <= lastDay.getDate(); d++) days.push(d)
+    return days
+  }
+
+  function getDateStr(day) {
+    if (!day) return ''
+    const y = currentDate.getFullYear()
+    const m = String(currentDate.getMonth() + 1).padStart(2, '0')
+    const d = String(day).padStart(2, '0')
+    return `${y}-${m}-${d}`
+  }
+
+  function hasEvents(day) {
+    return events.some(e => e.event_date === getDateStr(day))
+  }
+
+  const today = new Date().toISOString().split('T')[0]
+  const selectedEvents = events.filter(e => e.event_date === selectedDate)
+  const calendarDays = getDaysInMonth()
 
   return (
     <div className="app-shell">
       <div className="page-content">
+        {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-          <h1 style={{ fontSize: 20, fontWeight: 600 }}>Calendrier</h1>
+          <h1 style={{ fontSize: 20, fontWeight: 600, fontFamily: "'Cinzel', serif", color: 'var(--green-dark)' }}>Calendrier</h1>
           {canCreate && (
             <button className="btn btn-secondary" onClick={() => setShowForm(s => !s)} style={{ fontSize: 13 }}>
               {showForm ? <X size={16} /> : <Plus size={16} />}
               {showForm ? 'Annuler' : 'Ajouter'}
             </button>
           )}
-        </div>
-
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 12px', background: 'var(--blue-50)', borderRadius: 'var(--radius)', marginBottom: 16, fontSize: 12, color: 'var(--blue-600)' }}>
-          <Info size={14} />
-          À titre informatif — consultez vos convocations pour les détails officiels.
         </div>
 
         {showForm && (
@@ -97,66 +118,104 @@ export default function CalendarPage() {
               <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                 <input type="time" value={form.event_time} onChange={e => setForm(f => ({ ...f, event_time: e.target.value }))} style={{ flex: 1 }} />
                 {form.event_time && (
-                  <button type="button" onClick={() => setForm(f => ({ ...f, event_time: '' }))} style={{ background: 'none', border: 'none', color: 'var(--gray-400)', cursor: 'pointer', fontSize: 18 }}>✕</button>
+                  <button type="button" onClick={() => setForm(f => ({ ...f, event_time: '' }))} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: 18 }}>✕</button>
                 )}
               </div>
             </div>
             <div className="form-group">
               <label>Description (optionnel)</label>
-              <textarea value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} placeholder="Détails, lieu, ordre du jour…" rows={3} />
+              <textarea value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} placeholder="Détails, lieu, ordre du jour..." rows={3} />
             </div>
-            <button type="submit" className="btn btn-primary">Créer l'événement</button>
+            <button type="submit" className="btn btn-primary">Créer</button>
           </form>
         )}
 
-        {loading ? (
-          <p style={{ textAlign: 'center', color: 'var(--gray-400)', padding: 32 }}>Chargement…</p>
-        ) : events.length === 0 ? (
-          <div style={{ textAlign: 'center', color: 'var(--gray-400)', padding: 32 }}>
-            <Calendar size={32} style={{ marginBottom: 8, opacity: 0.5 }} />
-            <p style={{ fontSize: 14 }}>Aucun événement à venir</p>
+        {/* Calendar grid */}
+        <div className="card" style={{ padding: '16px', marginBottom: 16 }}>
+          {/* Month nav */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+            <button onClick={prevMonth} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4 }}>
+              <ChevronLeft size={20} color="var(--green-dark)" />
+            </button>
+            <span style={{ fontSize: 16, fontWeight: 600, fontFamily: "'Cinzel', serif", color: 'var(--green-dark)' }}>
+              {MONTHS[currentDate.getMonth()]} {currentDate.getFullYear()}
+            </span>
+            <button onClick={nextMonth} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4 }}>
+              <ChevronRight size={20} color="var(--green-dark)" />
+            </button>
           </div>
-        ) : (
-          Object.entries(grouped).map(([month, evts]) => (
-            <div key={month} style={{ marginBottom: 20 }}>
-              <h2 style={{ fontSize: 13, fontWeight: 600, color: 'var(--gray-400)', marginBottom: 10, textTransform: 'capitalize' }}>
-                {month}
-              </h2>
-              {evts.map(ev => {
-                const typeInfo = EVENT_TYPES.find(t => t.key === ev.event_type) || EVENT_TYPES[4]
-                const date = new Date(ev.event_date)
-                return (
-                  <div key={ev.id} className="card" style={{ display: 'flex', gap: 12, padding: '12px 14px' }}>
-                    <div style={{ width: 44, textAlign: 'center', flexShrink: 0 }}>
-                      <div style={{ fontSize: 11, color: 'var(--gray-400)', textTransform: 'uppercase' }}>
-                        {date.toLocaleDateString('fr-FR', { weekday: 'short' })}
-                      </div>
-                      <div style={{ fontSize: 22, fontWeight: 600, color: 'var(--gray-800)' }}>
-                        {date.getDate()}
-                      </div>
-                    </div>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-                        <span style={{ fontSize: 14, fontWeight: 500 }}>{ev.title}</span>
-                        <span className="tag" style={{ background: typeInfo.bg, color: typeInfo.color, fontSize: 10 }}>
-                          {typeInfo.label}
-                        </span>
-                      </div>
-                      {ev.event_time && (
-                        <div style={{ fontSize: 12, color: 'var(--gray-400)', marginBottom: 2 }}>
-                          {ev.event_time.slice(0, 5)}
-                        </div>
-                      )}
-                      {ev.description && (
-                        <p style={{ fontSize: 13, color: 'var(--gray-500)', lineHeight: 1.5 }}>{ev.description}</p>
-                      )}
-                    </div>
+
+          {/* Day headers */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 0, marginBottom: 8 }}>
+            {DAYS.map((d, i) => (
+              <div key={i} style={{ textAlign: 'center', fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', padding: '4px 0' }}>{d}</div>
+            ))}
+          </div>
+
+          {/* Days */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 2 }}>
+            {calendarDays.map((day, i) => {
+              if (!day) return <div key={i} />
+              const dateStr = getDateStr(day)
+              const isToday = dateStr === today
+              const isSelected = dateStr === selectedDate
+              const hasEvt = hasEvents(day)
+              return (
+                <button key={i} onClick={() => setSelectedDate(dateStr)} style={{
+                  width: '100%', aspectRatio: '1', borderRadius: '50%',
+                  border: 'none', cursor: 'pointer',
+                  background: isSelected ? 'var(--green-dark)' : isToday ? 'var(--cream)' : 'transparent',
+                  color: isSelected ? '#fff' : isToday ? 'var(--green-dark)' : 'var(--text-dark)',
+                  fontWeight: isToday || isSelected ? 600 : 400,
+                  fontSize: 14, position: 'relative',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center'
+                }}>
+                  {day}
+                  {hasEvt && (
+                    <div style={{
+                      position: 'absolute', bottom: 2, left: '50%', transform: 'translateX(-50%)',
+                      width: 5, height: 5, borderRadius: '50%',
+                      background: isSelected ? '#fff' : 'var(--terracotta)'
+                    }} />
+                  )}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+
+        {/* Selected date events */}
+        <div style={{ marginBottom: 16 }}>
+          <h2 style={{ fontSize: 14, fontWeight: 600, color: 'var(--green-dark)', marginBottom: 10, fontFamily: "'Cinzel', serif" }}>
+            {new Date(selectedDate + 'T00:00:00').toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}
+          </h2>
+
+          {selectedEvents.length === 0 ? (
+            <p style={{ fontSize: 13, color: 'var(--text-muted)', padding: '16px 0' }}>Aucun événement ce jour</p>
+          ) : (
+            selectedEvents.map(ev => {
+              const typeInfo = EVENT_TYPES.find(t => t.key === ev.event_type) || EVENT_TYPES[4]
+              return (
+                <div key={ev.id} style={{
+                  display: 'flex', gap: 12, padding: '12px 14px', marginBottom: 8,
+                  borderLeft: `3px solid ${typeInfo.color}`, background: typeInfo.bg,
+                  borderRadius: '0 var(--radius) var(--radius) 0'
+                }}>
+                  <div>
+                    <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-dark)', marginBottom: 2 }}>{ev.title}</div>
+                    {ev.event_time && (
+                      <div style={{ fontSize: 12, color: 'var(--text-light)' }}>{ev.event_time.slice(0, 5)}</div>
+                    )}
+                    {ev.description && (
+                      <p style={{ fontSize: 12, color: 'var(--text-light)', marginTop: 4, lineHeight: 1.5 }}>{ev.description}</p>
+                    )}
+                    <span style={{ fontSize: 10, color: typeInfo.color, fontWeight: 500 }}>{typeInfo.label}</span>
                   </div>
-                )
-              })}
-            </div>
-          ))
-        )}
+                </div>
+              )
+            })
+          )}
+        </div>
       </div>
       <BottomNav />
     </div>
