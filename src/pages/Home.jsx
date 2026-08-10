@@ -71,7 +71,7 @@ export default function Home() {
 
  const quickActions = [
     { icon: AlertTriangle, label: 'Signalements', path: '/posts/signalement' },
-    { icon: Megaphone, label: 'Annonces', path: '/posts/annonce' },
+    { icon: null, label: 'Annonces', path: '/posts/annonce', img: 'https://lorpxeojlganrirzksff.supabase.co/storage/v1/object/public/documents/annonce%20trans.png' },
     { icon: null, label: 'Réserver', path: '/bookings', img: 'https://lorpxeojlganrirzksff.supabase.co/storage/v1/object/public/documents/reserver.png' },
     { icon: null, label: 'Voisinage', path: '/posts/voisinage', img: 'https://lorpxeojlganrirzksff.supabase.co/storage/v1/object/public/documents/voisinage.png' },
     { icon: BarChart3, label: 'Sondages', path: '/posts/sondage' },
