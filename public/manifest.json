@@ -4,10 +4,10 @@
   "description": "Application de la résidence Harmonie — Aix-en-Provence",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#2563eb",
+  "background_color": "#F2E9DC",
+  "theme_color": "#4A5B3A",
   "icons": [
-    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" }
+    { "src": "https://lorpxeojlganrirzksff.supabase.co/storage/v1/object/public/documents/Logo.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "https://lorpxeojlganrirzksff.supabase.co/storage/v1/object/public/documents/Logo.png", "sizes": "512x512", "type": "image/png" }
   ]
 }
