@@ -21,6 +21,33 @@ export default function Home() {
   const [search, setSearch] = useState('')
   const [newResidents, setNewResidents] = useState([])
   const [showWelcome, setShowWelcome] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
+  const [touchStart, setTouchStart] = useState(null)
+  const [pullDistance, setPullDistance] = useState(0)
+
+  function handleTouchStart(e) {
+    if (window.scrollY === 0) {
+      setTouchStart(e.touches[0].clientY)
+    }
+  }
+
+  function handleTouchMove(e) {
+    if (touchStart === null) return
+    const distance = e.touches[0].clientY - touchStart
+    if (distance > 0 && distance < 150) {
+      setPullDistance(distance)
+    }
+  }
+
+  async function handleTouchEnd() {
+    if (pullDistance > 80) {
+      setRefreshing(true)
+      await fetchPosts()
+      setRefreshing(false)
+    }
+    setTouchStart(null)
+    setPullDistance(0)
+  }
 
   useEffect(() => {
     async function fetchNewResidents() {
@@ -80,7 +107,17 @@ export default function Home() {
   ]
 
   return (
-    <div className="app-shell">
+    <div className="app-shell" onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd}>
+      {pullDistance > 0 && (
+        <div style={{ textAlign: 'center', padding: 8, color: 'var(--blue-500)', fontSize: 12, transition: 'all 0.2s' }}>
+          {pullDistance > 80 ? '↑ Relâchez pour actualiser' : '↓ Tirez pour actualiser'}
+        </div>
+      )}
+      {refreshing && (
+        <div style={{ textAlign: 'center', padding: 8, color: 'var(--blue-500)', fontSize: 12 }}>
+          Actualisation…
+        </div>
+      )}
       <div className="page-content">
         {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
