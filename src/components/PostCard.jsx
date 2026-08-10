@@ -130,12 +130,15 @@ export default function PostCard({ post, onUpdated }) {
     }
   }
 
-  async function handleVote(optionId) {
+ async function handleVote(optionId) {
     if (userVote) {
       await supabase.from('poll_votes').delete().eq('option_id', userVote).eq('user_id', user.id)
     }
     if (userVote !== optionId) {
-      await supabase.from('poll_votes').insert({ option_id: optionId, user_id: user.id })
+      const { error } = await supabase.from('poll_votes').insert({ option_id: optionId, user_id: user.id })
+      if (error) {
+        alert('Un vote a déjà été enregistré pour votre logement')
+      }
     }
     fetchPoll()
   }
