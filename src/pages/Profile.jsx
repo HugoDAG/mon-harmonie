@@ -4,7 +4,14 @@ import { supabase } from '../lib/supabase'
 import { useNavigate } from 'react-router-dom'
 import BottomNav from '../components/BottomNav'
 import ChangePassword from '../components/ChangePassword'
-import { LogOut, Building, Mail, LinkIcon, Users, Book, ChevronRight, AlertTriangle, HelpCircle, FileText, Bell, CalendarCheck, User, Settings } from 'lucide-react'
+import { LogOut, User, AlertTriangle, Megaphone, FileText, Book, HelpCircle, ChevronDown, LinkIcon, Building, Mail, Lock } from 'lucide-react'
+
+const STATUS_LABELS = {
+  open: '🆕 Nouveau',
+  in_progress: '⏳ En cours',
+  resolved: '✅ Résolu',
+  rejected: '❌ Rejeté'
+}
 
 export default function Profile() {
   const { user, profile, signOut } = useAuth()
@@ -13,20 +20,42 @@ export default function Profile() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [deleteText, setDeleteText] = useState('')
   const [deleting, setDeleting] = useState(false)
-  const [showPasswordChange, setShowPasswordChange] = useState(false)
+  const [openSection, setOpenSection] = useState(null)
+  const [mySignalements, setMySignalements] = useState([])
+  const [myAnnonces, setMyAnnonces] = useState([])
+  const [loadingSignalements, setLoadingSignalements] = useState(false)
+  const [loadingAnnonces, setLoadingAnnonces] = useState(false)
 
   useEffect(() => {
     if (profile?.co_resident_id) {
-      supabase
-        .from('profiles')
-        .select('first_name, last_name')
-        .eq('id', profile.co_resident_id)
-        .single()
-        .then(({ data }) => {
-          if (data) setCoResidentName(`${data.first_name} ${data.last_name?.[0] || ''}.`)
-        })
+      supabase.from('profiles').select('first_name, last_name').eq('id', profile.co_resident_id).single()
+        .then(({ data }) => { if (data) setCoResidentName(`${data.first_name} ${data.last_name?.[0] || ''}.`) })
     }
   }, [profile])
+
+  function toggleSection(section) {
+    if (openSection === section) {
+      setOpenSection(null)
+    } else {
+      setOpenSection(section)
+      if (section === 'signalements' && mySignalements.length === 0) fetchMySignalements()
+      if (section === 'annonces' && myAnnonces.length === 0) fetchMyAnnonces()
+    }
+  }
+
+  async function fetchMySignalements() {
+    setLoadingSignalements(true)
+    const { data } = await supabase.from('posts').select('*').eq('user_id', user.id).eq('type', 'signalement').order('created_at', { ascending: false })
+    setMySignalements(data || [])
+    setLoadingSignalements(false)
+  }
+
+  async function fetchMyAnnonces() {
+    setLoadingAnnonces(true)
+    const { data } = await supabase.from('posts').select('*').eq('user_id', user.id).eq('type', 'annonce').order('created_at', { ascending: false })
+    setMyAnnonces(data || [])
+    setLoadingAnnonces(false)
+  }
 
   async function handleDeleteAccount() {
     if (deleteText !== 'SUPPRIMER') return
@@ -43,16 +72,17 @@ export default function Profile() {
     navigate('/login')
   }
 
-  const menuItems = [
-    { icon: User, label: 'Mes informations', subtitle: `${profile?.first_name} ${profile?.last_name} · Bât. ${profile?.building}`, action: null },
-    { icon: LinkIcon, label: 'Co-résident', subtitle: coResidentName ? `Lié avec ${coResidentName}` : 'Aucun co-résident lié', action: null, badge: coResidentName ? 'Lié' : null },
-    { icon: AlertTriangle, label: 'Mes signalements', subtitle: 'Voir mes signalements envoyés', action: () => navigate('/posts/signalement?tab=mine') },
-    { icon: CalendarCheck, label: 'Mes réservations', subtitle: 'Espaces communs réservés', action: () => navigate('/bookings') },
-    { icon: FileText, label: 'Mes documents', subtitle: 'Documents de la copropriété', action: () => navigate('/documents') },
-    { icon: Bell, label: 'Mes notifications', subtitle: 'Préférences de notification', action: null },
-    { icon: Book, label: 'Règles de la copropriété', subtitle: 'Horaires, déchets, parking...', action: () => navigate('/rules') },
-    { icon: HelpCircle, label: "Guide d'utilisation", subtitle: 'Comment utiliser Mon Harmonie', action: () => navigate('/guide') },
-    { icon: Settings, label: 'Paramètres', subtitle: 'Mot de passe, confidentialité', action: () => setShowPasswordChange(s => !s) }
+  function formatDate(dateStr) {
+    return new Date(dateStr).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })
+  }
+
+  const sections = [
+    { key: 'infos', icon: User, label: 'Mes informations' },
+    { key: 'signalements', icon: AlertTriangle, label: 'Mes signalements' },
+    { key: 'annonces', icon: Megaphone, label: 'Mes annonces' },
+    { key: 'documents', icon: FileText, label: 'Mes documents', action: () => navigate('/documents') },
+    { key: 'regles', icon: Book, label: 'Règles de la copropriété', action: () => navigate('/rules') },
+    { key: 'guide', icon: HelpCircle, label: "Guide d'utilisation", action: () => navigate('/guide') }
   ]
 
   return (
@@ -89,43 +119,142 @@ export default function Profile() {
           </div>
         </div>
 
-        {/* Menu items */}
+        {/* Menu sections */}
         <div style={{ marginBottom: 16 }}>
-          {menuItems.map((item, i) => {
-            const ItemIcon = item.icon
+          {sections.map(({ key, icon: SIcon, label, action }) => {
+            const isOpen = openSection === key
+            const isLink = !!action
             return (
-              <button key={i} onClick={item.action || undefined} style={{
-                display: 'flex', alignItems: 'center', gap: 12, width: '100%',
-                padding: '14px 16px', background: 'var(--white)',
-                border: 'none', borderBottom: '1px solid var(--border-light)',
-                cursor: item.action ? 'pointer' : 'default', textAlign: 'left'
-              }}>
-                <div style={{
-                  width: 36, height: 36, borderRadius: 10,
-                  background: 'var(--cream)', display: 'flex',
-                  alignItems: 'center', justifyContent: 'center', flexShrink: 0
+              <div key={key} style={{ borderBottom: '1px solid var(--border-light)' }}>
+                <button onClick={() => isLink ? action() : toggleSection(key)} style={{
+                  display: 'flex', alignItems: 'center', gap: 12, width: '100%',
+                  padding: '14px 16px', background: 'var(--white)',
+                  border: 'none', cursor: 'pointer', textAlign: 'left'
                 }}>
-                  <ItemIcon size={18} color="var(--green-sage)" />
-                </div>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-dark)' }}>{item.label}</div>
-                  <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{item.subtitle}</div>
-                </div>
-                {item.badge && (
-                  <span style={{ fontSize: 10, fontWeight: 500, color: 'var(--green-500)', background: 'var(--green-50)', padding: '2px 8px', borderRadius: 99 }}>{item.badge}</span>
+                  <div style={{
+                    width: 36, height: 36, borderRadius: 10,
+                    background: 'var(--cream)', display: 'flex',
+                    alignItems: 'center', justifyContent: 'center', flexShrink: 0
+                  }}>
+                    <SIcon size={18} color="var(--green-sage)" />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-dark)' }}>{label}</div>
+                  </div>
+                  {isLink ? (
+                    <ChevronDown size={16} color="var(--text-muted)" style={{ transform: 'rotate(-90deg)' }} />
+                  ) : (
+                    <ChevronDown size={16} color="var(--text-muted)" style={{ transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }} />
+                  )}
+                </button>
+
+                {/* Mes informations */}
+                {key === 'infos' && isOpen && (
+                  <div style={{ padding: '0 16px 16px', background: 'var(--white)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 0', borderBottom: '1px solid var(--border-light)' }}>
+                      <User size={16} color="var(--text-muted)" />
+                      <div>
+                        <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>Nom</div>
+                        <div style={{ fontSize: 14, fontWeight: 500 }}>{profile?.first_name} {profile?.last_name}</div>
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 0', borderBottom: '1px solid var(--border-light)' }}>
+                      <Building size={16} color="var(--text-muted)" />
+                      <div>
+                        <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>Bâtiment</div>
+                        <div style={{ fontSize: 14, fontWeight: 500 }}>{profile?.building}</div>
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 0', borderBottom: '1px solid var(--border-light)' }}>
+                      <Mail size={16} color="var(--text-muted)" />
+                      <div>
+                        <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>Email</div>
+                        <div style={{ fontSize: 14 }}>{profile?.email}</div>
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 0', borderBottom: '1px solid var(--border-light)' }}>
+                      <LinkIcon size={16} color="var(--text-muted)" />
+                      <div>
+                        <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>Co-résident</div>
+                        {coResidentName ? (
+                          <div style={{ fontSize: 14, fontWeight: 500, display: 'flex', alignItems: 'center', gap: 6 }}>
+                            {coResidentName}
+                            <span style={{ fontSize: 10, color: 'var(--green-500)', background: 'var(--green-50)', padding: '2px 8px', borderRadius: 99 }}>Lié</span>
+                          </div>
+                        ) : (
+                          <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>Aucun co-résident lié</div>
+                        )}
+                      </div>
+                    </div>
+                    <div style={{ marginTop: 12 }}>
+                      <ChangePassword />
+                    </div>
+                  </div>
                 )}
-                {item.action && <ChevronRight size={16} color="var(--text-muted)" />}
-              </button>
+
+                {/* Mes signalements */}
+                {key === 'signalements' && isOpen && (
+                  <div style={{ padding: '0 16px 16px', background: 'var(--white)' }}>
+                    {loadingSignalements ? (
+                      <p style={{ fontSize: 13, color: 'var(--text-muted)', padding: '12px 0' }}>Chargement...</p>
+                    ) : mySignalements.length === 0 ? (
+                      <p style={{ fontSize: 13, color: 'var(--text-muted)', padding: '12px 0' }}>Aucun signalement envoyé</p>
+                    ) : (
+                      mySignalements.map(s => (
+                        <div key={s.id} style={{
+                          display: 'flex', alignItems: 'center', gap: 10, padding: '10px 0',
+                          borderBottom: '1px solid var(--border-light)'
+                        }}>
+                          <div style={{ flex: 1 }}>
+                            <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-dark)' }}>
+                              {s.content.length > 60 ? s.content.slice(0, 60) + '...' : s.content}
+                            </div>
+                            <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>
+                              {formatDate(s.created_at)}
+                            </div>
+                          </div>
+                          <span style={{ fontSize: 11, whiteSpace: 'nowrap' }}>
+                            {STATUS_LABELS[s.status || 'open']}
+                          </span>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                )}
+
+                {/* Mes annonces */}
+                {key === 'annonces' && isOpen && (
+                  <div style={{ padding: '0 16px 16px', background: 'var(--white)' }}>
+                    {loadingAnnonces ? (
+                      <p style={{ fontSize: 13, color: 'var(--text-muted)', padding: '12px 0' }}>Chargement...</p>
+                    ) : myAnnonces.length === 0 ? (
+                      <p style={{ fontSize: 13, color: 'var(--text-muted)', padding: '12px 0' }}>Aucune annonce publiée</p>
+                    ) : (
+                      myAnnonces.map(a => (
+                        <div key={a.id} style={{
+                          display: 'flex', alignItems: 'center', gap: 10, padding: '10px 0',
+                          borderBottom: '1px solid var(--border-light)'
+                        }}>
+                          <div style={{ flex: 1 }}>
+                            <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-dark)' }}>
+                              {a.content.length > 60 ? a.content.slice(0, 60) + '...' : a.content}
+                            </div>
+                            <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>
+                              {formatDate(a.created_at)} · {a.channel === 'building' ? `Bât. ${a.building}` : 'Résidence'}
+                            </div>
+                          </div>
+                          {a.image_url && (
+                            <img src={a.image_url} alt="" style={{ width: 40, height: 40, borderRadius: 8, objectFit: 'cover' }} />
+                          )}
+                        </div>
+                      ))
+                    )}
+                  </div>
+                )}
+              </div>
             )
           })}
         </div>
-
-        {/* Password change */}
-        {showPasswordChange && (
-          <div style={{ marginBottom: 16 }}>
-            <ChangePassword />
-          </div>
-        )}
 
         {/* Logout */}
         <button onClick={signOut} style={{
