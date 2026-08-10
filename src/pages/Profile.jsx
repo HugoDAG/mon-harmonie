@@ -3,7 +3,8 @@ import { useAuth } from '../lib/AuthContext'
 import { supabase } from '../lib/supabase'
 import { useNavigate } from 'react-router-dom'
 import BottomNav from '../components/BottomNav'
-import { LogOut, Building, Mail, LinkIcon, Users, Book, ChevronRight, Trash2, AlertTriangle } from 'lucide-react'
+import ChangePassword from '../components/ChangePassword'
+import { LogOut, Building, Mail, LinkIcon, Users, Book, ChevronRight, AlertTriangle } from 'lucide-react'
 
 export default function Profile() {
   const { user, profile, signOut } = useAuth()
@@ -30,12 +31,10 @@ export default function Profile() {
     if (deleteText !== 'SUPPRIMER') return
     setDeleting(true)
 
-    // Supprimer le lien co-résident
     if (profile?.co_resident_id) {
       await supabase.from('profiles').update({ co_resident_id: null }).eq('id', profile.co_resident_id)
     }
 
-    // Supprimer les données
     await supabase.from('comments').delete().eq('user_id', user.id)
     await supabase.from('post_likes').delete().eq('user_id', user.id)
     await supabase.from('posts').delete().eq('user_id', user.id)
@@ -109,6 +108,8 @@ export default function Profile() {
           <ChevronRight size={18} color="var(--gray-300)" />
         </button>
 
+        <ChangePassword />
+
         <button
           onClick={signOut}
           className="btn"
@@ -121,7 +122,6 @@ export default function Profile() {
           <LogOut size={16} /> Se déconnecter
         </button>
 
-        {/* Suppression de compte */}
         <div style={{ marginTop: 32, borderTop: '1px solid var(--gray-200)', paddingTop: 20 }}>
           {!showDeleteConfirm ? (
             <button onClick={() => setShowDeleteConfirm(true)}
