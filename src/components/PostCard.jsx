@@ -22,9 +22,7 @@ function getInitials(profile, coName) {
   if (profile.co_resident_id && coName) {
     return `${profile.first_name?.[0] || ''}&${coName?.[0] || ''}`
   }
-  const f = profile.first_name?.[0] || ''
-  const l = profile.last_name?.[0] || ''
-  return `${f}${l}`
+  return `${profile.first_name?.[0] || ''}${profile.last_name?.[0] || ''}`
 }
 
 function getDisplayName(profile, coName) {
@@ -57,17 +55,13 @@ export default function PostCard({ post, onUpdated }) {
   const [saving, setSaving] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [showStatusMenu, setShowStatusMenu] = useState(false)
-
   const [coResidentName, setCoResidentName] = useState(null)
-
   const [likes, setLikes] = useState([])
   const [liked, setLiked] = useState(false)
-
   const [comments, setComments] = useState([])
   const [showComments, setShowComments] = useState(false)
   const [newComment, setNewComment] = useState('')
   const [sendingComment, setSendingComment] = useState(false)
-
   const [pollOptions, setPollOptions] = useState([])
   const [pollVotes, setPollVotes] = useState([])
   const [userVote, setUserVote] = useState(null)
@@ -211,25 +205,24 @@ export default function PostCard({ post, onUpdated }) {
             style={{ width: '100%', padding: '8px 10px', border: '1px solid var(--gray-300)', borderRadius: 'var(--radius)', fontSize: 14, fontFamily: 'inherit', resize: 'vertical', minHeight: 60 }} />
           <div style={{ display: 'flex', gap: 8, marginTop: 8, justifyContent: 'flex-end' }}>
             <button onClick={() => setEditing(false)} className="btn btn-secondary" style={{ padding: '6px 12px', fontSize: 13 }}><X size={14} /> Annuler</button>
-            <button onClick={handleSave} className="btn btn-primary" disabled={saving} style={{ padding: '6px 12px', fontSize: 13, width: 'auto' }}><Check size={14} /> {saving ? '…' : 'Enregistrer'}</button>
+            <button onClick={handleSave} className="btn btn-primary" disabled={saving} style={{ padding: '6px 12px', fontSize: 13, width: 'auto' }}><Check size={14} /> {saving ? '...' : 'Enregistrer'}</button>
           </div>
         </div>
       ) : (
-        <>
+        <div>
           <p style={{ fontSize: 14, color: 'var(--gray-600)', lineHeight: 1.6 }}>{content}</p>
           {image_url && (
             <img src={image_url} alt="" style={{ width: '100%', borderRadius: 'var(--radius)', marginTop: 10, maxHeight: 300, objectFit: 'cover' }} />
           )}
-        </>
+        </div>
       )}
 
-      {/* Statut signalement */}
       {type === 'signalement' && (
         <div style={{ marginTop: 10, position: 'relative' }}>
           {canChangeStatus ? (
             <button onClick={() => setShowStatusMenu(s => !s)}
               style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '4px 10px', borderRadius: 99, border: '1px solid ' + currentStatus.color, background: currentStatus.bg, color: currentStatus.color, fontSize: 12, fontWeight: 500, cursor: 'pointer' }}>
-              {currentStatus.label} ▾
+              {currentStatus.label}
             </button>
           ) : (
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '4px 10px', borderRadius: 99, background: currentStatus.bg, color: currentStatus.color, fontSize: 12, fontWeight: 500 }}>
@@ -249,7 +242,6 @@ export default function PostCard({ post, onUpdated }) {
         </div>
       )}
 
-      {/* Poll */}
       {type === 'sondage' && pollOptions.length > 0 && (
         <div style={{ marginTop: 12 }}>
           {pollOptions.map(opt => {
@@ -264,7 +256,7 @@ export default function PostCard({ post, onUpdated }) {
                   borderRadius: 'var(--radius)', marginBottom: 6, background: 'var(--gray-50)',
                   cursor: 'pointer', position: 'relative', overflow: 'hidden', textAlign: 'left'
                 }}>
-                <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: `${pct}%`, background: isMyVote ? 'rgba(59,130,246,0.1)' : 'rgba(0,0,0,0.03)', transition: 'width 0.3s' }} />
+                <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: pct + '%', background: isMyVote ? 'rgba(59,130,246,0.1)' : 'rgba(0,0,0,0.03)', transition: 'width 0.3s' }} />
                 <span style={{ flex: 1, fontSize: 13, fontWeight: isMyVote ? 600 : 400, position: 'relative', zIndex: 1 }}>{opt.label}</span>
                 <span style={{ fontSize: 12, color: 'var(--gray-400)', position: 'relative', zIndex: 1 }}>{pct}% ({voteCount})</span>
               </button>
@@ -274,7 +266,6 @@ export default function PostCard({ post, onUpdated }) {
         </div>
       )}
 
-      {/* Tag + actions */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 10 }}>
         <span className="tag" style={{ background: typeInfo.bg, color: typeInfo.color }}>
           <Icon size={12} />
@@ -287,3 +278,59 @@ export default function PostCard({ post, onUpdated }) {
           <button onClick={() => setShowComments(s => !s)} style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'none', border: 'none', color: showComments ? 'var(--blue-500)' : 'var(--gray-400)', fontSize: 13, cursor: 'pointer' }}>
             <MessageCircle size={16} /> {comments.length > 0 && comments.length}
           </button>
+        </div>
+      </div>
+
+      {showComments && (
+        <div style={{ marginTop: 12, borderTop: '1px solid var(--gray-100)', paddingTop: 10 }}>
+          {comments.map(c => (
+            <div key={c.id} style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
+              <div className="avatar" style={{ width: 28, height: 28, fontSize: 10, background: 'var(--gray-100)', color: 'var(--gray-500)' }}>
+                {c.profile?.first_name?.[0]}{c.profile?.last_name?.[0]}
+              </div>
+              <div style={{ flex: 1 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <span style={{ fontSize: 12, fontWeight: 500 }}>{c.profile?.first_name} {c.profile?.last_name?.[0]}.</span>
+                  <span className="building-tag" style={{ fontSize: 10, padding: '1px 5px' }}>{c.profile?.building}</span>
+                  <span style={{ fontSize: 10, color: 'var(--gray-400)' }}>{formatTimeAgo(c.created_at)}</span>
+                </div>
+                <p style={{ fontSize: 13, color: 'var(--gray-600)', marginTop: 2 }}>{c.content}</p>
+              </div>
+              {c.user_id === user?.id && (
+                <button onClick={() => deleteComment(c.id)} style={{ background: 'none', border: 'none', color: 'var(--gray-300)', cursor: 'pointer' }}>
+                  <X size={14} />
+                </button>
+              )}
+            </div>
+          ))}
+          <form onSubmit={handleComment} style={{ display: 'flex', gap: 8 }}>
+            <input
+              value={newComment} onChange={e => setNewComment(e.target.value)}
+              placeholder="Ecrire un commentaire..."
+              style={{ flex: 1, padding: '8px 10px', border: '1px solid var(--gray-200)', borderRadius: 'var(--radius)', fontSize: 13 }}
+            />
+            <button type="submit" disabled={sendingComment} style={{ background: 'var(--blue-500)', color: '#fff', border: 'none', borderRadius: 'var(--radius)', padding: '8px 10px', cursor: 'pointer' }}>
+              <Send size={16} />
+            </button>
+          </form>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function formatTimeAgo(dateStr) {
+  if (!dateStr) return ''
+  const date = new Date(dateStr)
+  const now = new Date()
+  const diffMs = now - date
+  const diffMins = Math.round(diffMs / 60000)
+  const diffHours = Math.round(diffMs / 3600000)
+  const diffDays = Math.round(diffMs / 86400000)
+  if (diffMins < 1) return "A l'instant"
+  if (diffMins < 60) return 'Il y a ' + diffMins + ' min'
+  if (diffHours < 24) return 'Il y a ' + diffHours + 'h'
+  if (diffDays === 1) return 'Hier'
+  if (diffDays < 7) return 'Il y a ' + diffDays + ' jours'
+  return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })
+}
