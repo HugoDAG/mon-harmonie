@@ -78,9 +78,8 @@ export default function Profile() {
 
   const sections = [
     { key: 'infos', label: 'Mes informations', img: 'https://lorpxeojlganrirzksff.supabase.co/storage/v1/object/public/documents/mes%20informations%20trans.png' },
-    { key: 'signalements', label: 'Mes signalements', img: 'https://lorpxeojlganrirzksff.supabase.co/storage/v1/object/public/documents/singalement%20trans.png' },
-    { key: 'annonces', label: 'Mes annonces', img: 'https://lorpxeojlganrirzksff.supabase.co/storage/v1/object/public/documents/annonces%20trans.png' },
-    { key: 'documents', label: 'Mes documents', img: 'https://lorpxeojlganrirzksff.supabase.co/storage/v1/object/public/documents/documents%20trans.png', action: () => navigate('/documents') },
+   { key: 'signalements', label: 'Mes signalements', img: 'https://lorpxeojlganrirzksff.supabase.co/storage/v1/object/public/documents/mes%20signalements%20trans.png' },
+    { key: 'annonces', label: 'Mes annonces', img: 'https://lorpxeojlganrirzksff.supabase.co/storage/v1/object/public/documents/mes%20annonces%20trans.png' },
     { key: 'regles', label: 'Règles de la copropriété', img: 'https://lorpxeojlganrirzksff.supabase.co/storage/v1/object/public/documents/regle%20de%20coprop%20trans.png', action: () => navigate('/rules') },
     { key: 'guide', label: "Guide d'utilisation", img: 'https://lorpxeojlganrirzksff.supabase.co/storage/v1/object/public/documents/guide%20utilisation%20app%20trans.png', action: () => navigate('/guide') }
   ]
@@ -131,7 +130,7 @@ export default function Profile() {
                   padding: '14px 16px', background: 'var(--white)',
                   border: 'none', cursor: 'pointer', textAlign: 'left'
                 }}>
-                  <img src={img} alt={label} style={{ width: 40, height: 40, objectFit: 'contain', flexShrink: 0 }} />
+                  <img src={img} alt={label} style={{ width: 48, height: 48, objectFit: 'contain', flexShrink: 0 }} />
                   <div style={{ flex: 1 }}>
                     <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-dark)' }}>{label}</div>
                   </div>
