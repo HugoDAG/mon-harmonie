@@ -77,12 +77,12 @@ export default function Profile() {
   }
 
   const sections = [
-    { key: 'infos', icon: User, label: 'Mes informations' },
-    { key: 'signalements', icon: AlertTriangle, label: 'Mes signalements' },
-    { key: 'annonces', icon: Megaphone, label: 'Mes annonces' },
-    { key: 'documents', icon: FileText, label: 'Mes documents', action: () => navigate('/documents') },
-    { key: 'regles', icon: Book, label: 'Règles de la copropriété', action: () => navigate('/rules') },
-    { key: 'guide', icon: HelpCircle, label: "Guide d'utilisation", action: () => navigate('/guide') }
+    { key: 'infos', label: 'Mes informations', img: 'https://lorpxeojlganrirzksff.supabase.co/storage/v1/object/public/documents/mes%20informations%20trans.png' },
+    { key: 'signalements', label: 'Mes signalements', img: 'https://lorpxeojlganrirzksff.supabase.co/storage/v1/object/public/documents/singalement%20trans.png' },
+    { key: 'annonces', label: 'Mes annonces', img: 'https://lorpxeojlganrirzksff.supabase.co/storage/v1/object/public/documents/annonces%20trans.png' },
+    { key: 'documents', label: 'Mes documents', img: 'https://lorpxeojlganrirzksff.supabase.co/storage/v1/object/public/documents/documents%20trans.png', action: () => navigate('/documents') },
+    { key: 'regles', label: 'Règles de la copropriété', img: 'https://lorpxeojlganrirzksff.supabase.co/storage/v1/object/public/documents/regle%20de%20coprop%20trans.png', action: () => navigate('/rules') },
+    { key: 'guide', label: "Guide d'utilisation", img: 'https://lorpxeojlganrirzksff.supabase.co/storage/v1/object/public/documents/guide%20utilisation%20app%20trans.png', action: () => navigate('/guide') }
   ]
 
   return (
@@ -121,7 +121,7 @@ export default function Profile() {
 
         {/* Menu sections */}
         <div style={{ marginBottom: 16 }}>
-          {sections.map(({ key, icon: SIcon, label, action }) => {
+          {sections.map(({ key, label, action, img }) => {
             const isOpen = openSection === key
             const isLink = !!action
             return (
@@ -131,13 +131,7 @@ export default function Profile() {
                   padding: '14px 16px', background: 'var(--white)',
                   border: 'none', cursor: 'pointer', textAlign: 'left'
                 }}>
-                  <div style={{
-                    width: 36, height: 36, borderRadius: 10,
-                    background: 'var(--cream)', display: 'flex',
-                    alignItems: 'center', justifyContent: 'center', flexShrink: 0
-                  }}>
-                    <SIcon size={18} color="var(--green-sage)" />
-                  </div>
+                  <img src={img} alt={label} style={{ width: 40, height: 40, objectFit: 'contain', flexShrink: 0 }} />
                   <div style={{ flex: 1 }}>
                     <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-dark)' }}>{label}</div>
                   </div>
