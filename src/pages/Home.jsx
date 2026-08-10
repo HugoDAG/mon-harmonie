@@ -128,17 +128,17 @@ export default function Home() {
                 background: 'var(--cream)', border: '1px solid var(--border-light)',
                 cursor: 'pointer', transition: 'all 0.15s'
               }}>
-                <div style={{
-                  width: 40, height: 40, borderRadius: 12,
-                  background: 'var(--green-dark-10)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center'
-                }}>
-                  {img ? (
-                    <img src={img} alt={label} style={{ width: 24, height: 24, objectFit: 'contain' }} />
-                  ) : (
+                {img ? (
+                  <img src={img} alt={label} style={{ width: 36, height: 36, objectFit: 'contain' }} />
+                ) : (
+                  <div style={{
+                    width: 40, height: 40, borderRadius: 12,
+                    background: 'var(--green-dark-10)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center'
+                  }}>
                     <Icon size={20} color="var(--green-sage)" />
-                  )}
-                </div>
+                  </div>
+                )}
                 <span style={{ fontSize: 11, fontWeight: 500, color: 'var(--text-medium)' }}>{label}</span>
               </button>
             ))}
