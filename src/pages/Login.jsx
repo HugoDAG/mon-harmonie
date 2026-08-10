@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../lib/AuthContext'
 import { supabase } from '../lib/supabase'
-import { Building2, Eye, EyeOff } from 'lucide-react'
+import { Eye, EyeOff } from 'lucide-react'
 
 export default function Login() {
   const [email, setEmail] = useState('')
@@ -36,49 +36,36 @@ export default function Login() {
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: window.location.origin + '/login'
     })
-    if (error) {
-      setError(error.message)
-    } else {
-      setResetSent(true)
-    }
+    if (error) setError(error.message)
+    else setResetSent(true)
     setLoading(false)
   }
 
   if (resetMode) {
     return (
-      <div className="app-shell" style={{ justifyContent: 'center' }}>
+      <div className="app-shell" style={{ justifyContent: 'center', background: 'var(--cream)' }}>
         <div className="page-content" style={{ paddingBottom: 16 }}>
           <div style={{ textAlign: 'center', marginBottom: 32 }}>
-            <Building2 size={40} color="var(--blue-600)" style={{ marginBottom: 8 }} />
-            <h1 style={{ fontSize: 24, fontWeight: 600 }}>Mot de passe oublié</h1>
-            <p style={{ fontSize: 13, color: 'var(--gray-500)', marginTop: 4 }}>
-              Entrez votre email pour recevoir un lien de réinitialisation
-            </p>
+            <h1 style={{ fontSize: 28, fontWeight: 600, fontFamily: "'Cinzel', serif", color: 'var(--green-dark)', letterSpacing: 2 }}>HARMONIE</h1>
+            <p style={{ fontSize: 12, color: 'var(--text-light)', marginTop: 4, letterSpacing: 3, textTransform: 'uppercase' }}>Aix-en-Provence</p>
+            <p style={{ fontSize: 14, color: 'var(--text-medium)', marginTop: 16 }}>Mot de passe oublié</p>
           </div>
-
           {resetSent ? (
-            <div style={{ background: 'var(--green-50)', color: 'var(--green-600)', padding: '14px 16px', borderRadius: 'var(--radius)', fontSize: 13, textAlign: 'center', marginBottom: 16 }}>
-              Un email de réinitialisation a été envoyé à <strong>{email}</strong>. Vérifiez votre boîte de réception.
+            <div style={{ background: 'var(--green-sage-10)', color: 'var(--green-dark)', padding: '14px 16px', borderRadius: 'var(--radius)', fontSize: 13, textAlign: 'center' }}>
+              Un email a été envoyé à <strong>{email}</strong>.
             </div>
           ) : (
             <form onSubmit={handleReset}>
-              {error && (
-                <div style={{ background: 'var(--red-50)', color: 'var(--red-500)', padding: '10px 14px', borderRadius: 'var(--radius)', fontSize: 13, marginBottom: 16 }}>
-                  {error}
-                </div>
-              )}
+              {error && <div style={{ background: 'var(--red-50)', color: 'var(--red-500)', padding: '10px 14px', borderRadius: 'var(--radius)', fontSize: 13, marginBottom: 16 }}>{error}</div>}
               <div className="form-group">
                 <label>Email</label>
                 <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="hugo@email.com" required />
               </div>
-              <button type="submit" className="btn btn-primary" disabled={loading}>
-                {loading ? 'Envoi…' : 'Envoyer le lien'}
-              </button>
+              <button type="submit" className="btn btn-primary" disabled={loading}>{loading ? 'Envoi...' : 'Envoyer le lien'}</button>
             </form>
           )}
-
-          <p style={{ textAlign: 'center', fontSize: 13, color: 'var(--gray-500)', marginTop: 16 }}>
-            <span onClick={() => { setResetMode(false); setResetSent(false); setError('') }} style={{ color: 'var(--blue-500)', cursor: 'pointer' }}>Retour à la connexion</span>
+          <p style={{ textAlign: 'center', fontSize: 13, color: 'var(--text-light)', marginTop: 16 }}>
+            <span onClick={() => { setResetMode(false); setResetSent(false); setError('') }} style={{ color: 'var(--green-sage)', cursor: 'pointer' }}>Retour</span>
           </p>
         </div>
       </div>
@@ -86,49 +73,35 @@ export default function Login() {
   }
 
   return (
-    <div className="app-shell" style={{ justifyContent: 'center' }}>
+    <div className="app-shell" style={{ justifyContent: 'center', background: 'var(--cream)' }}>
       <div className="page-content" style={{ paddingBottom: 16 }}>
         <div style={{ textAlign: 'center', marginBottom: 32 }}>
-          <Building2 size={40} color="var(--blue-600)" style={{ marginBottom: 8 }} />
-          <h1 style={{ fontSize: 24, fontWeight: 600 }}>Mon Harmonie</h1>
-          <p style={{ fontSize: 13, color: 'var(--gray-500)', marginTop: 4 }}>
-            Résidence Harmonie — Aix-en-Provence
-          </p>
+          <div style={{ fontSize: 36, marginBottom: 8 }}>🌿</div>
+          <h1 style={{ fontSize: 28, fontWeight: 600, fontFamily: "'Cinzel', serif", color: 'var(--green-dark)', letterSpacing: 2 }}>HARMONIE</h1>
+          <p style={{ fontSize: 12, color: 'var(--text-light)', marginTop: 4, letterSpacing: 3, textTransform: 'uppercase' }}>Aix-en-Provence</p>
         </div>
 
         <form onSubmit={handleSubmit}>
-          {error && (
-            <div style={{ background: 'var(--red-50)', color: 'var(--red-500)', padding: '10px 14px', borderRadius: 'var(--radius)', fontSize: 13, marginBottom: 16 }}>
-              {error}
-            </div>
-          )}
-
+          {error && <div style={{ background: 'var(--red-50)', color: 'var(--red-500)', padding: '10px 14px', borderRadius: 'var(--radius)', fontSize: 13, marginBottom: 16 }}>{error}</div>}
           <div className="form-group">
             <label>Email</label>
             <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="hugo@email.com" required />
           </div>
-
           <div className="form-group">
             <label>Mot de passe</label>
             <div style={{ position: 'relative' }}>
               <input type={showPassword ? 'text' : 'password'} value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••••" required style={{ paddingRight: 44 }} />
-              <button type="button" onClick={() => setShowPassword(s => !s)} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: 'var(--gray-400)', cursor: 'pointer' }}>
+              <button type="button" onClick={() => setShowPassword(s => !s)} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}>
                 {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
             </div>
           </div>
-
-          <p style={{ textAlign: 'right', fontSize: 12, color: 'var(--blue-500)', marginTop: -8, marginBottom: 16, cursor: 'pointer' }} onClick={() => setResetMode(true)}>
-            Mot de passe oublié ?
-          </p>
-
-          <button type="submit" className="btn btn-primary" disabled={loading}>
-            {loading ? 'Connexion…' : 'Se connecter'}
-          </button>
+          <p style={{ textAlign: 'right', fontSize: 12, color: 'var(--green-sage)', marginTop: -8, marginBottom: 16, cursor: 'pointer' }} onClick={() => setResetMode(true)}>Mot de passe oublié ?</p>
+          <button type="submit" className="btn btn-primary" disabled={loading}>{loading ? 'Connexion...' : 'Se connecter'}</button>
         </form>
 
-        <p style={{ textAlign: 'center', fontSize: 13, color: 'var(--gray-500)', marginTop: 16 }}>
-          Pas encore inscrit ? <Link to="/register" style={{ color: 'var(--blue-500)' }}>Créer un compte</Link>
+        <p style={{ textAlign: 'center', fontSize: 13, color: 'var(--text-light)', marginTop: 16 }}>
+          Pas encore inscrit ? <Link to="/register" style={{ color: 'var(--green-sage)', fontWeight: 500 }}>Créer un compte</Link>
         </p>
       </div>
     </div>
