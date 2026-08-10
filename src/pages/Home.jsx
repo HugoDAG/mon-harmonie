@@ -5,10 +5,7 @@ import { CHANNELS } from '../lib/constants'
 import PostCard from '../components/PostCard'
 import CreatePost from '../components/CreatePost'
 import BottomNav from '../components/BottomNav'
-import {
-  AlertTriangle, CalendarCheck, FileText, BarChart3,
-  Plus, Building, Home as HomeIcon, Users2, Megaphone, Search
-} from 'lucide-react'
+import { Building, Home as HomeIcon, Search } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 
 export default function Home() {
@@ -69,7 +66,7 @@ export default function Home() {
     return p.content?.toLowerCase().includes(s) || p.profile?.first_name?.toLowerCase().includes(s) || p.profile?.last_name?.toLowerCase().includes(s) || p.type?.toLowerCase().includes(s)
   })
 
- const quickActions = [
+  const quickActions = [
     { label: 'Signalements', path: '/posts/signalement', img: 'https://lorpxeojlganrirzksff.supabase.co/storage/v1/object/public/documents/singalement%20trans.png' },
     { label: 'Annonces', path: '/posts/annonce', img: 'https://lorpxeojlganrirzksff.supabase.co/storage/v1/object/public/documents/annonces%20trans.png' },
     { label: 'Réserver', path: '/bookings', img: 'https://lorpxeojlganrirzksff.supabase.co/storage/v1/object/public/documents/reserver%20trans.png' },
@@ -77,6 +74,45 @@ export default function Home() {
     { label: 'Sondages', path: '/posts/sondage', img: 'https://lorpxeojlganrirzksff.supabase.co/storage/v1/object/public/documents/sondages%20trans.png' },
     { label: 'Documents', path: '/documents', img: 'https://lorpxeojlganrirzksff.supabase.co/storage/v1/object/public/documents/documents%20trans.png' }
   ]
+
+  function renderWelcome() {
+    if (newResidents.length === 0 || !showWelcome) return null
+    return (
+      <div style={{ background: 'var(--green-sage-10)', border: '1px solid var(--green-sage)', borderRadius: 'var(--radius-lg)', padding: '12px 14px', marginBottom: 12 }}>
+        <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--green-dark)', marginBottom: 4 }}>🌿 Bienvenue aux nouveaux résidents !</div>
+        {newResidents.map((r, i) => (
+          <div key={i} style={{ fontSize: 13, color: 'var(--green-sage)' }}>{r.first_name} — Bâtiment {r.building}</div>
+        ))}
+      </div>
+    )
+  }
+
+  function buildFeedItems() {
+    if (filteredPosts.length === 0 && newResidents.length === 0) return null
+    if (filteredPosts.length === 0) return renderWelcome()
+
+    const welcomeTime = newResidents[0]?.created_at ? new Date(newResidents[0].created_at) : null
+    let welcomePlaced = false
+    const items = []
+
+    for (let i = 0; i < filteredPosts.length; i++) {
+      const post = filteredPosts[i]
+      const postTime = new Date(post.created_at)
+
+      if (!welcomePlaced && welcomeTime && postTime <= welcomeTime) {
+        items.push(<div key="welcome">{renderWelcome()}</div>)
+        welcomePlaced = true
+      }
+
+      items.push(<PostCard key={post.id} post={post} onUpdated={fetchPosts} />)
+    }
+
+    if (!welcomePlaced && newResidents.length > 0 && showWelcome) {
+      items.push(<div key="welcome">{renderWelcome()}</div>)
+    }
+
+    return items
+  }
 
   return (
     <div className="app-shell" onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd}>
@@ -122,9 +158,9 @@ export default function Home() {
             gap: 10, marginBottom: 24
           }}>
             {quickActions.map(({ label, path, img }) => (
-             <button key={label} onClick={() => navigate(path)} style={{
-                display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: img ? 0 : 8,
-                padding: img ? '4px' : '16px 8px', borderRadius: 16,
+              <button key={label} onClick={() => navigate(path)} style={{
+                display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 0,
+                padding: '4px', borderRadius: 16,
                 background: 'var(--cream)', border: '1px solid var(--border-light)',
                 cursor: 'pointer', transition: 'all 0.15s',
                 height: 90, overflow: 'hidden'
@@ -160,52 +196,13 @@ export default function Home() {
 
               {loading ? (
                 <p style={{ textAlign: 'center', color: 'var(--text-muted)', padding: 32 }}>Chargement...</p>
-              ) : filteredPosts.length === 0 ? (
+              ) : filteredPosts.length === 0 && newResidents.length === 0 ? (
                 <div style={{ textAlign: 'center', color: 'var(--text-muted)', padding: 32 }}>
                   <p style={{ fontSize: 14 }}>{search ? 'Aucun résultat' : 'Aucune publication pour le moment'}</p>
                   {!search && <p style={{ fontSize: 12, marginTop: 4 }}>Soyez le premier à publier !</p>}
                 </div>
               ) : (
-                <>
-                  {filteredPosts.map((post, index) => {
-                const welcomeAfterThis = newResidents.length > 0 && showWelcome &&
-                  newResidents[0]?.created_at &&
-                  new Date(post.created_at) <= new Date(newResidents[0].created_at) &&
-                  (index === 0 || new Date(filteredPosts[index - 1].created_at) > new Date(newResidents[0].created_at))
-                const welcomeFirst = index === 0 && newResidents.length > 0 && showWelcome &&
-                  newResidents[0]?.created_at &&
-                  new Date(post.created_at) > new Date(newResidents[0].created_at) === false
-                return (
-                  <div key={post.id}>
-                    {welcomeFirst && (
-                      <div style={{ background: 'var(--green-sage-10)', border: '1px solid var(--green-sage)', borderRadius: 'var(--radius-lg)', padding: '12px 14px', marginBottom: 12 }}>
-                        <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--green-dark)', marginBottom: 4 }}>🌿 Bienvenue aux nouveaux résidents !</div>
-                        {newResidents.map((r, i) => (
-                          <div key={i} style={{ fontSize: 13, color: 'var(--green-sage)' }}>{r.first_name} — Bâtiment {r.building}</div>
-                        ))}
-                      </div>
-                    )}
-                    <PostCard post={post} onUpdated={fetchPosts} />
-                    {welcomeAfterThis && (
-                      <div style={{ background: 'var(--green-sage-10)', border: '1px solid var(--green-sage)', borderRadius: 'var(--radius-lg)', padding: '12px 14px', marginBottom: 12 }}>
-                        <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--green-dark)', marginBottom: 4 }}>🌿 Bienvenue aux nouveaux résidents !</div>
-                        {newResidents.map((r, i) => (
-                          <div key={i} style={{ fontSize: 13, color: 'var(--green-sage)' }}>{r.first_name} — Bâtiment {r.building}</div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )
-              })}
-              {filteredPosts.length === 0 && newResidents.length > 0 && showWelcome && (
-                <div style={{ background: 'var(--green-sage-10)', border: '1px solid var(--green-sage)', borderRadius: 'var(--radius-lg)', padding: '12px 14px', marginBottom: 12 }}>
-                  <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--green-dark)', marginBottom: 4 }}>🌿 Bienvenue aux nouveaux résidents !</div>
-                  {newResidents.map((r, i) => (
-                    <div key={i} style={{ fontSize: 13, color: 'var(--green-sage)' }}>{r.first_name} — Bâtiment {r.building}</div>
-                  ))}
-                </div>
-              )}
-                </>
+                buildFeedItems()
               )}
             </>
           )}
