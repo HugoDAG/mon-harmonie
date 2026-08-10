@@ -167,19 +167,17 @@ export default function Home() {
                 </div>
               ) : (
                 <>
-                  {filteredPosts.map((post, index) => (
-                    <div key={post.id}>
-                      <PostCard post={post} onUpdated={fetchPosts} />
-                      {index === 0 && newResidents.length > 0 && showWelcome && (
-                        <div style={{ background: 'var(--green-sage-10)', border: '1px solid var(--green-sage)', borderRadius: 'var(--radius-lg)', padding: '12px 14px', marginBottom: 12 }}>
-                          <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--green-dark)', marginBottom: 4 }}>🌿 Bienvenue aux nouveaux résidents !</div>
-                          {newResidents.map((r, i) => (
-                            <div key={i} style={{ fontSize: 13, color: 'var(--green-sage)' }}>{r.first_name} — Bâtiment {r.building}</div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
+                  {newResidents.length > 0 && showWelcome && (
+                <div style={{ background: 'var(--green-sage-10)', border: '1px solid var(--green-sage)', borderRadius: 'var(--radius-lg)', padding: '12px 14px', marginBottom: 12 }}>
+                  <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--green-dark)', marginBottom: 4 }}>🌿 Bienvenue aux nouveaux résidents !</div>
+                  {newResidents.map((r, i) => (
+                    <div key={i} style={{ fontSize: 13, color: 'var(--green-sage)' }}>{r.first_name} — Bâtiment {r.building}</div>
                   ))}
+                </div>
+              )}
+              {filteredPosts.map(post => (
+                <PostCard key={post.id} post={post} onUpdated={fetchPosts} />
+              ))}
                 </>
               )}
             </>
