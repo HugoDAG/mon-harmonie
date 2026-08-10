@@ -122,11 +122,12 @@ export default function Home() {
             gap: 10, marginBottom: 24
           }}>
             {quickActions.map(({ icon: Icon, label, path, img }) => (
-              <button key={label} onClick={() => navigate(path)} style={{
-                display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8,
-                padding: '16px 8px', borderRadius: 16,
+             <button key={label} onClick={() => navigate(path)} style={{
+                display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: img ? 0 : 8,
+                padding: img ? '4px' : '16px 8px', borderRadius: 16,
                 background: 'var(--cream)', border: '1px solid var(--border-light)',
-                cursor: 'pointer', transition: 'all 0.15s'
+                cursor: 'pointer', transition: 'all 0.15s',
+                height: 90, overflow: 'hidden'
               }}>
                 {img ? (
                   <img src={img} alt={label} style={{ width: '100%', height: '100%', objectFit: 'contain', padding: 4 }} />
