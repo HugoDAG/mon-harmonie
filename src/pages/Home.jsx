@@ -19,7 +19,7 @@ export default function Home() {
   const [loading, setLoading] = useState(true)
   const [showCreate, setShowCreate] = useState(false)
   const [search, setSearch] = useState('')
-  const [showFeed, setShowFeed] = useState(false)
+  const [showFeed, setShowFeed] = useState(true)
   const [newResidents, setNewResidents] = useState([])
   const [showWelcome, setShowWelcome] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
