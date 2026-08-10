@@ -129,7 +129,7 @@ export default function Home() {
                 cursor: 'pointer', transition: 'all 0.15s'
               }}>
                 {img ? (
-                  <img src={img} alt={label} style={{ width: 52, height: 52, objectFit: 'contain' }} />
+                  <img src={img} alt={label} style={{ width: 80, height: 80, objectFit: 'contain' }} />
                 ) : (
                   <div style={{
                     width: 40, height: 40, borderRadius: 12,
@@ -139,7 +139,7 @@ export default function Home() {
                     <Icon size={20} color="var(--green-sage)" />
                   </div>
                 )}
-                <span style={{ fontSize: 11, fontWeight: 500, color: 'var(--text-medium)' }}>{label}</span>
+                {!img && <span style={{ fontSize: 11, fontWeight: 500, color: 'var(--text-medium)' }}>{label}</span>}
               </button>
             ))}
           </div>
