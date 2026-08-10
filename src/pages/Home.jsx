@@ -87,15 +87,16 @@ export default function Home() {
       )}
       {refreshing && <div style={{ textAlign: 'center', padding: 8, color: 'var(--green-sage)', fontSize: 12 }}>Actualisation...</div>}
 
-      {/* Hero image + logo */}
+      {/* Hero image */}
       <div style={{ position: 'relative', width: '100%' }}>
         <div style={{
           width: '100%', height: 280,
           backgroundImage: 'url(https://lorpxeojlganrirzksff.supabase.co/storage/v1/object/public/documents/logo%20fond%20ecran.png)',
           backgroundSize: 'cover', backgroundPosition: 'center'
         }} />
+      </div>
 
-      {/* Content card - overlaps the image */}
+      {/* Content card */}
       <div style={{
         background: 'var(--white)',
         borderRadius: '24px 24px 0 0',
