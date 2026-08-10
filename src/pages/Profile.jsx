@@ -4,7 +4,7 @@ import { supabase } from '../lib/supabase'
 import { useNavigate } from 'react-router-dom'
 import BottomNav from '../components/BottomNav'
 import ChangePassword from '../components/ChangePassword'
-import { LogOut, Building, Mail, LinkIcon, Users, Book, ChevronRight, AlertTriangle } from 'lucide-react'
+import { LogOut, Building, Mail, LinkIcon, Users, Book, ChevronRight, AlertTriangle, HelpCircle } from 'lucide-react'
 
 export default function Profile() {
   const { user, profile, signOut } = useAuth()
@@ -94,6 +94,19 @@ export default function Profile() {
           </div>
         </div>
 
+        <button onClick={() => navigate('/guide')} className="card" style={{
+          display: 'flex', alignItems: 'center', gap: 12, width: '100%', cursor: 'pointer',
+          textAlign: 'left', border: '1px solid var(--gray-200)', background: '#fff', marginTop: 4
+        }}>
+          <div style={{ width: 36, height: 36, borderRadius: 'var(--radius)', background: 'var(--green-50)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <HelpCircle size={18} color="var(--green-500)" />
+          </div>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 14, fontWeight: 500 }}>Guide d'utilisation</div>
+            <div style={{ fontSize: 12, color: 'var(--gray-400)' }}>Comment utiliser Mon Harmonie</div>
+          </div>
+          <ChevronRight size={18} color="var(--gray-300)" />
+        </button>
         <button onClick={() => navigate('/rules')} className="card" style={{
           display: 'flex', alignItems: 'center', gap: 12, width: '100%', cursor: 'pointer',
           textAlign: 'left', border: '1px solid var(--gray-200)', background: '#fff', marginTop: 4
