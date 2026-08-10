@@ -37,7 +37,7 @@ export default function BottomNav({ onPlusClick }) {
             className={`nav-item ${isActive ? 'active' : ''}`}
             onClick={() => navigate(path)}
           >
-            <img src={img} alt={label} style={{ width: 40, height: 40, objectFit: 'contain', opacity: isActive ? 1 : 0.5, marginBottom: -4 }} />
+            <img src={img} alt={label} style={{ width: 50, height: 50, objectFit: 'contain', opacity: isActive ? 1 : 0.5, marginBottom: -6 }} />
             {label}
           </button>
         )
