@@ -47,7 +47,16 @@ export default function Directory() {
   const [editingContact, setEditingContact] = useState(null)
   const [form, setForm] = useState({ name: '', role_label: 'gardien', phone: '', email: '', building: '' })
   const [promotingId, setPromotingId] = useState(null)
-  const [openSections, setOpenSections] = useState({})
+  const [openSections, setOpenSections] = useState(() => {
+    try {
+      const saved = localStorage.getItem('directory_sections')
+      return saved ? JSON.parse(saved) : {}
+    } catch { return {} }
+  })
+
+  useEffect(() => {
+    localStorage.setItem('directory_sections', JSON.stringify(openSections))
+  }, [openSections])
 
   const canEdit = profile?.role === 'syndic' || profile?.role === 'admin' || profile?.role === 'conseil'
 
