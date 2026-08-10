@@ -142,3 +142,26 @@ export default function Profile() {
                   value={deleteText}
                   onChange={e => setDeleteText(e.target.value)}
                   placeholder="Tapez SUPPRIMER"
+                  style={{ borderColor: 'var(--red-500)' }}
+                />
+              </div>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button onClick={() => { setShowDeleteConfirm(false); setDeleteText('') }} className="btn btn-secondary" style={{ flex: 1, fontSize: 13 }}>
+                  Annuler
+                </button>
+                <button onClick={handleDeleteAccount} disabled={deleteText !== 'SUPPRIMER' || deleting}
+                  className="btn" style={{
+                    flex: 1, fontSize: 13, background: deleteText === 'SUPPRIMER' ? 'var(--red-500)' : 'var(--gray-300)',
+                    color: '#fff', border: 'none', borderRadius: 'var(--radius)'
+                  }}>
+                  {deleting ? 'Suppression…' : 'Confirmer'}
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+      <BottomNav />
+    </div>
+  )
+}
