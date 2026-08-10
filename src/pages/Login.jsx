@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../lib/AuthContext'
+import { supabase } from '../lib/supabase'
 import { Building2, Eye, EyeOff } from 'lucide-react'
 
 export default function Login() {
@@ -9,6 +10,8 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [resetMode, setResetMode] = useState(false)
+  const [resetSent, setResetSent] = useState(false)
   const { signIn } = useAuth()
   const navigate = useNavigate()
 
@@ -24,6 +27,62 @@ export default function Login() {
     } finally {
       setLoading(false)
     }
+  }
+
+  async function handleReset(e) {
+    e.preventDefault()
+    setError('')
+    setLoading(true)
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: window.location.origin + '/login'
+    })
+    if (error) {
+      setError(error.message)
+    } else {
+      setResetSent(true)
+    }
+    setLoading(false)
+  }
+
+  if (resetMode) {
+    return (
+      <div className="app-shell" style={{ justifyContent: 'center' }}>
+        <div className="page-content" style={{ paddingBottom: 16 }}>
+          <div style={{ textAlign: 'center', marginBottom: 32 }}>
+            <Building2 size={40} color="var(--blue-600)" style={{ marginBottom: 8 }} />
+            <h1 style={{ fontSize: 24, fontWeight: 600 }}>Mot de passe oublié</h1>
+            <p style={{ fontSize: 13, color: 'var(--gray-500)', marginTop: 4 }}>
+              Entrez votre email pour recevoir un lien de réinitialisation
+            </p>
+          </div>
+
+          {resetSent ? (
+            <div style={{ background: 'var(--green-50)', color: 'var(--green-600)', padding: '14px 16px', borderRadius: 'var(--radius)', fontSize: 13, textAlign: 'center', marginBottom: 16 }}>
+              Un email de réinitialisation a été envoyé à <strong>{email}</strong>. Vérifiez votre boîte de réception.
+            </div>
+          ) : (
+            <form onSubmit={handleReset}>
+              {error && (
+                <div style={{ background: 'var(--red-50)', color: 'var(--red-500)', padding: '10px 14px', borderRadius: 'var(--radius)', fontSize: 13, marginBottom: 16 }}>
+                  {error}
+                </div>
+              )}
+              <div className="form-group">
+                <label>Email</label>
+                <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="hugo@email.com" required />
+              </div>
+              <button type="submit" className="btn btn-primary" disabled={loading}>
+                {loading ? 'Envoi…' : 'Envoyer le lien'}
+              </button>
+            </form>
+          )}
+
+          <p style={{ textAlign: 'center', fontSize: 13, color: 'var(--gray-500)', marginTop: 16 }}>
+            <span onClick={() => { setResetMode(false); setResetSent(false); setError('') }} style={{ color: 'var(--blue-500)', cursor: 'pointer' }}>Retour à la connexion</span>
+          </p>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -58,6 +117,10 @@ export default function Login() {
               </button>
             </div>
           </div>
+
+          <p style={{ textAlign: 'right', fontSize: 12, color: 'var(--blue-500)', marginTop: -8, marginBottom: 16, cursor: 'pointer' }} onClick={() => setResetMode(true)}>
+            Mot de passe oublié ?
+          </p>
 
           <button type="submit" className="btn btn-primary" disabled={loading}>
             {loading ? 'Connexion…' : 'Se connecter'}
