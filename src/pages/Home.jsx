@@ -101,19 +101,9 @@ export default function Home() {
         </p>
 
         {/* Illustration placeholder */}
-        <div style={{
-          width: '100%', height: 160, borderRadius: 'var(--radius-lg)',
-          background: 'linear-gradient(135deg, var(--green-sage) 0%, var(--green-dark) 100%)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          marginBottom: 20, overflow: 'hidden', position: 'relative'
-        }}>
-          <div style={{ fontSize: 48, opacity: 0.3 }}>🏡🌿⛲</div>
-          <div style={{
-            position: 'absolute', bottom: 0, left: 0, right: 0,
-            background: 'linear-gradient(transparent, rgba(74,91,58,0.4))',
-            height: 60
-          }} />
-        </div>
+        <img src="https://lorpxeojlganrirzksff.supabase.co/storage/v1/object/public/documents/Logo.png" alt="Résidence Harmonie" style={{
+          width: '70%', maxWidth: 280, marginBottom: 20
+        }} />
       </div>
 
       <div className="page-content" style={{ paddingTop: 0 }}>
