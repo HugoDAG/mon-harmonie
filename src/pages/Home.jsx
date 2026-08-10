@@ -26,38 +26,22 @@ export default function Home() {
   const [pullDistance, setPullDistance] = useState(0)
 
   function handleTouchStart(e) {
-    if (window.scrollY === 0) {
-      setTouchStart(e.touches[0].clientY)
-    }
+    if (window.scrollY === 0) setTouchStart(e.touches[0].clientY)
   }
-
   function handleTouchMove(e) {
     if (touchStart === null) return
     const distance = e.touches[0].clientY - touchStart
-    if (distance > 0 && distance < 150) {
-      setPullDistance(distance)
-    }
+    if (distance > 0 && distance < 150) setPullDistance(distance)
   }
-
   async function handleTouchEnd() {
-    if (pullDistance > 80) {
-      setRefreshing(true)
-      await fetchPosts()
-      setRefreshing(false)
-    }
-    setTouchStart(null)
-    setPullDistance(0)
+    if (pullDistance > 80) { setRefreshing(true); await fetchPosts(); setRefreshing(false) }
+    setTouchStart(null); setPullDistance(0)
   }
 
   useEffect(() => {
     async function fetchNewResidents() {
       const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
-      const { data } = await supabase
-        .from('profiles')
-        .select('first_name, building, created_at')
-        .gte('created_at', oneDayAgo)
-        .neq('id', user?.id)
-        .order('created_at', { ascending: false })
+      const { data } = await supabase.from('profiles').select('first_name, building, created_at').gte('created_at', oneDayAgo).neq('id', user?.id).order('created_at', { ascending: false })
       setNewResidents(data || [])
     }
     fetchNewResidents()
@@ -70,19 +54,9 @@ export default function Home() {
   async function fetchPosts() {
     if (!profile) return
     setLoading(true)
-
-    let query = supabase
-      .from('posts')
-      .select('*, profile:profiles(id, first_name, last_name, building, role, co_resident_id)')
-      .order('created_at', { ascending: false })
-      .limit(50)
-
-    if (channel === CHANNELS.BUILDING) {
-      query = query.eq('building', profile.building).eq('channel', CHANNELS.BUILDING)
-    } else {
-      query = query.eq('channel', CHANNELS.RESIDENCE)
-    }
-
+    let query = supabase.from('posts').select('*, profile:profiles(id, first_name, last_name, building, role, co_resident_id)').order('created_at', { ascending: false }).limit(50)
+    if (channel === CHANNELS.BUILDING) query = query.eq('building', profile.building).eq('channel', CHANNELS.BUILDING)
+    else query = query.eq('channel', CHANNELS.RESIDENCE)
     const { data } = await query
     setPosts(data || [])
     setLoading(false)
@@ -91,10 +65,7 @@ export default function Home() {
   const filteredPosts = posts.filter(p => {
     if (!search.trim()) return true
     const s = search.toLowerCase()
-    return p.content?.toLowerCase().includes(s) ||
-      p.profile?.first_name?.toLowerCase().includes(s) ||
-      p.profile?.last_name?.toLowerCase().includes(s) ||
-      p.type?.toLowerCase().includes(s)
+    return p.content?.toLowerCase().includes(s) || p.profile?.first_name?.toLowerCase().includes(s) || p.profile?.last_name?.toLowerCase().includes(s) || p.type?.toLowerCase().includes(s)
   })
 
   const quickActions = [
@@ -109,48 +80,35 @@ export default function Home() {
   return (
     <div className="app-shell" onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd}>
       {pullDistance > 0 && (
-        <div style={{ textAlign: 'center', padding: 8, color: 'var(--blue-500)', fontSize: 12, transition: 'all 0.2s' }}>
-          {pullDistance > 80 ? '↑ Relâchez pour actualiser' : '↓ Tirez pour actualiser'}
+        <div style={{ textAlign: 'center', padding: 8, color: 'var(--green-sage)', fontSize: 12 }}>
+          {pullDistance > 80 ? 'Relâchez pour actualiser' : 'Tirez pour actualiser'}
         </div>
       )}
-      {refreshing && (
-        <div style={{ textAlign: 'center', padding: 8, color: 'var(--blue-500)', fontSize: 12 }}>
-          Actualisation…
-        </div>
-      )}
+      {refreshing && <div style={{ textAlign: 'center', padding: 8, color: 'var(--green-sage)', fontSize: 12 }}>Actualisation...</div>}
       <div className="page-content">
-        {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
           <div>
             <h1 style={{ fontSize: 20, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}>
-              Bonjour {profile?.first_name} <Sun size={20} color="var(--amber-500)" />
+              Bonjour {profile?.first_name} <Sun size={20} color="var(--gold)" />
             </h1>
-            <p style={{ fontSize: 12, color: 'var(--gray-400)', marginTop: 2 }}>
+            <p style={{ fontSize: 12, color: 'var(--text-light)', marginTop: 2 }}>
               Bâtiment {profile?.building} — Résidence Harmonie
             </p>
           </div>
-          <div className="avatar" style={{ background: 'var(--blue-50)', color: 'var(--blue-600)' }}>
+          <div className="avatar" style={{ background: 'var(--cream)', color: 'var(--green-dark)' }}>
             {profile?.first_name?.[0]}
           </div>
         </div>
 
-        {/* Channel switch */}
         <div className="channel-switch">
-          <button
-            className={`channel-btn ${channel === CHANNELS.BUILDING ? 'active' : ''}`}
-            onClick={() => setChannel(CHANNELS.BUILDING)}
-          >
+          <button className={`channel-btn ${channel === CHANNELS.BUILDING ? 'active' : ''}`} onClick={() => setChannel(CHANNELS.BUILDING)}>
             <Building size={15} /> Mon bâtiment
           </button>
-          <button
-            className={`channel-btn ${channel === CHANNELS.RESIDENCE ? 'active' : ''}`}
-            onClick={() => setChannel(CHANNELS.RESIDENCE)}
-          >
+          <button className={`channel-btn ${channel === CHANNELS.RESIDENCE ? 'active' : ''}`} onClick={() => setChannel(CHANNELS.RESIDENCE)}>
             <HomeIcon size={15} /> Résidence
           </button>
         </div>
 
-        {/* Quick actions */}
         <div className="quick-grid">
           {quickActions.map(({ icon: Icon, label, path }) => (
             <button key={label} className="quick-item" onClick={() => navigate(path)}>
@@ -160,27 +118,17 @@ export default function Home() {
           ))}
         </div>
 
-        {/* Feed header */}
-        <div className="section-header">
-          <h2>Fil d'actualité</h2>
-        </div>
+        <div className="section-header"><h2>Fil d'actualité</h2></div>
 
-        {/* Search */}
         <div style={{ position: 'relative', marginBottom: 12 }}>
-          <Search size={16} style={{ position: 'absolute', left: 12, top: 11, color: 'var(--gray-400)' }} />
-          <input
-            style={{ width: '100%', padding: '10px 12px 10px 36px', border: '1px solid var(--gray-200)', borderRadius: 'var(--radius)', fontSize: 13, background: 'var(--gray-50)' }}
-            placeholder="Rechercher une publication…"
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-          />
+          <Search size={16} style={{ position: 'absolute', left: 12, top: 11, color: 'var(--text-muted)' }} />
+          <input style={{ width: '100%', padding: '10px 12px 10px 36px', border: '1px solid var(--border)', borderRadius: 'var(--radius)', fontSize: 13, background: 'var(--cream)' }} placeholder="Rechercher une publication..." value={search} onChange={e => setSearch(e.target.value)} />
         </div>
 
-        {/* Posts */}
         {loading ? (
-          <p style={{ textAlign: 'center', color: 'var(--gray-400)', padding: 32 }}>Chargement…</p>
+          <p style={{ textAlign: 'center', color: 'var(--text-muted)', padding: 32 }}>Chargement...</p>
         ) : filteredPosts.length === 0 ? (
-          <div style={{ textAlign: 'center', color: 'var(--gray-400)', padding: 32 }}>
+          <div style={{ textAlign: 'center', color: 'var(--text-muted)', padding: 32 }}>
             <p style={{ fontSize: 14 }}>{search ? 'Aucun résultat' : 'Aucune publication pour le moment'}</p>
             {!search && <p style={{ fontSize: 12, marginTop: 4 }}>Soyez le premier à publier !</p>}
           </div>
@@ -190,12 +138,10 @@ export default function Home() {
               <div key={post.id}>
                 <PostCard post={post} onUpdated={fetchPosts} />
                 {index === 0 && newResidents.length > 0 && showWelcome && (
-                  <div style={{ background: 'var(--green-50)', border: '1px solid var(--green-500)', borderRadius: 'var(--radius-lg)', padding: '12px 14px', marginBottom: 12 }}>
-                    <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--green-600)', marginBottom: 4 }}>🎉 Bienvenue aux nouveaux résidents !</div>
+                  <div style={{ background: 'var(--green-sage-10)', border: '1px solid var(--green-sage)', borderRadius: 'var(--radius-lg)', padding: '12px 14px', marginBottom: 12 }}>
+                    <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--green-dark)', marginBottom: 4 }}>🌿 Bienvenue aux nouveaux résidents !</div>
                     {newResidents.map((r, i) => (
-                      <div key={i} style={{ fontSize: 13, color: 'var(--green-600)' }}>
-                        {r.first_name} — Bâtiment {r.building}
-                      </div>
+                      <div key={i} style={{ fontSize: 13, color: 'var(--green-sage)' }}>{r.first_name} — Bâtiment {r.building}</div>
                     ))}
                   </div>
                 )}
@@ -204,24 +150,18 @@ export default function Home() {
           </>
         )}
 
-        {/* FAB */}
-        <button
-          onClick={() => setShowCreate(true)}
+        <button onClick={() => setShowCreate(true)}
           style={{
             position: 'fixed', bottom: 90, right: 20,
             width: 52, height: 52, borderRadius: '50%',
-            background: 'var(--blue-600)', color: '#fff',
-            border: 'none', boxShadow: '0 4px 12px rgba(37,99,235,0.4)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            zIndex: 40
-          }}
-        >
+            background: 'var(--green-dark)', color: 'var(--cream)',
+            border: 'none', boxShadow: '0 4px 12px rgba(74,91,58,0.3)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 40
+          }}>
           <Plus size={24} />
         </button>
 
-        {showCreate && (
-          <CreatePost onClose={() => setShowCreate(false)} onCreated={fetchPosts} />
-        )}
+        {showCreate && <CreatePost onClose={() => setShowCreate(false)} onCreated={fetchPosts} />}
       </div>
       <BottomNav />
     </div>
