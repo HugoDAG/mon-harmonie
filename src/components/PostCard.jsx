@@ -265,7 +265,7 @@ export default function PostCard({ post, onUpdated }) {
               </button>
             )
           })}
-          <div style={{ fontSize: 11, color: 'var(--gray-400)', marginTop: 4 }}>{totalVotes} vote{totalVotes !== 1 ? 's' : ''}</div>
+          <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>{totalVotes} logement{totalVotes !== 1 ? 's' : ''}</div>
         </div>
       )}
 
