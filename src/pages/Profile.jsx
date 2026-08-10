@@ -3,12 +3,15 @@ import { useAuth } from '../lib/AuthContext'
 import { supabase } from '../lib/supabase'
 import { useNavigate } from 'react-router-dom'
 import BottomNav from '../components/BottomNav'
-import { LogOut, Building, Mail, LinkIcon, Users, Book, ChevronRight } from 'lucide-react'
+import { LogOut, Building, Mail, LinkIcon, Users, Book, ChevronRight, Trash2, AlertTriangle } from 'lucide-react'
 
 export default function Profile() {
-  const { profile, signOut } = useAuth()
+  const { user, profile, signOut } = useAuth()
   const navigate = useNavigate()
   const [coResidentName, setCoResidentName] = useState(null)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [deleteText, setDeleteText] = useState('')
+  const [deleting, setDeleting] = useState(false)
 
   useEffect(() => {
     if (profile?.co_resident_id) {
@@ -22,6 +25,26 @@ export default function Profile() {
         })
     }
   }, [profile])
+
+  async function handleDeleteAccount() {
+    if (deleteText !== 'SUPPRIMER') return
+    setDeleting(true)
+
+    // Supprimer le lien co-résident
+    if (profile?.co_resident_id) {
+      await supabase.from('profiles').update({ co_resident_id: null }).eq('id', profile.co_resident_id)
+    }
+
+    // Supprimer les données
+    await supabase.from('comments').delete().eq('user_id', user.id)
+    await supabase.from('post_likes').delete().eq('user_id', user.id)
+    await supabase.from('posts').delete().eq('user_id', user.id)
+    await supabase.from('bookings').delete().eq('user_id', user.id)
+    await supabase.from('profiles').delete().eq('id', user.id)
+
+    await signOut()
+    navigate('/login')
+  }
 
   return (
     <div className="app-shell">
@@ -97,8 +120,25 @@ export default function Profile() {
         >
           <LogOut size={16} /> Se déconnecter
         </button>
-      </div>
-      <BottomNav />
-    </div>
-  )
-}
+
+        {/* Suppression de compte */}
+        <div style={{ marginTop: 32, borderTop: '1px solid var(--gray-200)', paddingTop: 20 }}>
+          {!showDeleteConfirm ? (
+            <button onClick={() => setShowDeleteConfirm(true)}
+              style={{ background: 'none', border: 'none', color: 'var(--gray-400)', fontSize: 12, cursor: 'pointer', width: '100%', textAlign: 'center' }}>
+              Supprimer mon compte
+            </button>
+          ) : (
+            <div style={{ background: 'var(--red-50)', padding: 16, borderRadius: 'var(--radius-lg)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+                <AlertTriangle size={18} color="var(--red-500)" />
+                <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--red-500)' }}>Supprimer mon compte</span>
+              </div>
+              <p style={{ fontSize: 12, color: 'var(--gray-600)', marginBottom: 12, lineHeight: 1.5 }}>
+                Cette action est irréversible. Toutes vos publications, commentaires et données seront supprimées. Tapez SUPPRIMER pour confirmer.
+              </p>
+              <div className="form-group" style={{ marginBottom: 10 }}>
+                <input
+                  value={deleteText}
+                  onChange={e => setDeleteText(e.target.value)}
+                  placeholder="Tapez SUPPRIMER"
