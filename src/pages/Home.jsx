@@ -70,12 +70,12 @@ export default function Home() {
   })
 
  const quickActions = [
-    { icon: null, label: 'Signalements', path: '/posts/signalement', img: 'https://lorpxeojlganrirzksff.supabase.co/storage/v1/object/public/documents/singalement%20trans.png' },
-    { icon: null, label: 'Annonces', path: '/posts/annonce', img: 'https://lorpxeojlganrirzksff.supabase.co/storage/v1/object/public/documents/annonce%20trans.png' },
-    { icon: null, label: 'Réserver', path: '/bookings', img: 'https://lorpxeojlganrirzksff.supabase.co/storage/v1/object/public/documents/reserver.png' },
-    { icon: null, label: 'Voisinage', path: '/posts/voisinage', img: 'https://lorpxeojlganrirzksff.supabase.co/storage/v1/object/public/documents/voisinage.png' },
-    { icon: BarChart3, label: 'Sondages', path: '/posts/sondage' },
-    { icon: null, label: 'Documents', path: '/documents', img: 'https://lorpxeojlganrirzksff.supabase.co/storage/v1/object/public/documents/document%20trans.png' }
+    { label: 'Signalements', path: '/posts/signalement', img: 'https://lorpxeojlganrirzksff.supabase.co/storage/v1/object/public/documents/singalement%20trans.png' },
+    { label: 'Annonces', path: '/posts/annonce', img: 'https://lorpxeojlganrirzksff.supabase.co/storage/v1/object/public/documents/annonces%20trans.png' },
+    { label: 'Réserver', path: '/bookings', img: 'https://lorpxeojlganrirzksff.supabase.co/storage/v1/object/public/documents/reserver%20trans.png' },
+    { label: 'Voisinage', path: '/posts/voisinage', img: 'https://lorpxeojlganrirzksff.supabase.co/storage/v1/object/public/documents/voisinage%20trans.png' },
+    { label: 'Sondages', path: '/posts/sondage', img: 'https://lorpxeojlganrirzksff.supabase.co/storage/v1/object/public/documents/sondages%20trans.png' },
+    { label: 'Documents', path: '/documents', img: 'https://lorpxeojlganrirzksff.supabase.co/storage/v1/object/public/documents/documents%20trans.png' }
   ]
 
   return (
@@ -121,7 +121,7 @@ export default function Home() {
             display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)',
             gap: 10, marginBottom: 24
           }}>
-            {quickActions.map(({ icon: Icon, label, path, img }) => (
+            {quickActions.map(({ label, path, img }) => (
              <button key={label} onClick={() => navigate(path)} style={{
                 display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: img ? 0 : 8,
                 padding: img ? '4px' : '16px 8px', borderRadius: 16,
@@ -129,18 +129,7 @@ export default function Home() {
                 cursor: 'pointer', transition: 'all 0.15s',
                 height: 90, overflow: 'hidden'
               }}>
-                {img ? (
-                  <img src={img} alt={label} style={{ width: '100%', height: '100%', objectFit: 'contain', padding: 4 }} />
-                ) : (
-                  <div style={{
-                    width: 40, height: 40, borderRadius: 12,
-                    background: 'var(--green-dark-10)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center'
-                  }}>
-                    <Icon size={20} color="var(--green-sage)" />
-                  </div>
-                )}
-                {!img && <span style={{ fontSize: 11, fontWeight: 500, color: 'var(--text-medium)' }}>{label}</span>}
+                <img src={img} alt={label} style={{ width: '100%', height: '100%', objectFit: 'contain', padding: 4 }} />
               </button>
             ))}
           </div>
