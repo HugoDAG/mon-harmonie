@@ -71,10 +71,10 @@ export default function Home() {
 
   const quickActions = [
     { icon: AlertTriangle, label: 'Signalements', path: '/posts/signalement' },
-    { icon: Users2, label: 'Voisinage', path: '/posts/voisinage' },
     { icon: Megaphone, label: 'Annonces', path: '/posts/annonce' },
-    { icon: BarChart3, label: 'Sondages', path: '/posts/sondage' },
     { icon: CalendarCheck, label: 'Réserver', path: '/bookings' },
+    { icon: Users2, label: 'Voisinage', path: '/posts/voisinage' },
+    { icon: BarChart3, label: 'Sondages', path: '/posts/sondage' },
     { icon: FileText, label: 'Documents', path: '/documents' }
   ]
 
@@ -87,117 +87,136 @@ export default function Home() {
       )}
       {refreshing && <div style={{ textAlign: 'center', padding: 8, color: 'var(--green-sage)', fontSize: 12 }}>Actualisation...</div>}
 
-      {/* Hero header */}
-      <div style={{
-        background: 'linear-gradient(180deg, var(--cream) 0%, var(--white) 100%)',
-        padding: '24px 16px 0',
-        textAlign: 'center'
-      }}>
-        <h1 style={{ fontSize: 32, fontWeight: 600, fontFamily: "'Cinzel', serif", color: 'var(--green-dark)', letterSpacing: 3, marginBottom: 2 }}>
-          HARMONIE
-        </h1>
-        <p style={{ fontSize: 11, color: 'var(--text-light)', letterSpacing: 4, textTransform: 'uppercase', marginBottom: 16 }}>
-          Aix-en-Provence
-        </p>
-
-        {/* Illustration placeholder */}
-        <img src="https://lorpxeojlganrirzksff.supabase.co/storage/v1/object/public/documents/Logo.png" alt="Résidence Harmonie" style={{
-          width: '70%', maxWidth: 280, marginBottom: 20
-        }} />
-      </div>
-
-      <div className="page-content" style={{ paddingTop: 0 }}>
-        {/* Welcome card */}
+      {/* Hero image + logo */}
+      <div style={{ position: 'relative', width: '100%' }}>
         <div style={{
-          background: 'var(--white)', borderRadius: 'var(--radius-lg)',
-          padding: '20px 16px', marginBottom: 16, marginTop: -20,
-          boxShadow: '0 4px 16px rgba(74,91,58,0.08)', position: 'relative', zIndex: 2
+          width: '100%', height: 280,
+          backgroundImage: 'url(https://lorpxeojlganrirzksff.supabase.co/storage/v1/object/public/documents/logo%20fond%20ecran.png)',
+          backgroundSize: 'cover', backgroundPosition: 'center'
+        }} />
+        {/* Logo overlay */}
+        <div style={{
+          position: 'absolute', top: 20, left: 0, right: 0,
+          display: 'flex', flexDirection: 'column', alignItems: 'center'
         }}>
-          <h2 style={{ fontSize: 20, fontWeight: 600, fontFamily: "'Cinzel', serif", color: 'var(--green-dark)', marginBottom: 4 }}>
-            Bonjour {profile?.first_name} !
-          </h2>
-          <p style={{ fontSize: 13, color: 'var(--text-light)' }}>
-            Bienvenue dans votre application de copropriété Harmonie.
-          </p>
-          <p style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 4 }}>
-            Bâtiment {profile?.building}
-          </p>
+          <img
+            src="https://lorpxeojlganrirzksff.supabase.co/storage/v1/object/public/documents/Logo.png"
+            alt="Harmonie"
+            style={{ width: 100, height: 100, objectFit: 'contain', marginBottom: 4 }}
+          />
         </div>
-
-        {/* Quick actions */}
-        <div className="quick-grid">
-          {quickActions.map(({ icon: Icon, label, path }) => (
-            <button key={label} className="quick-item" onClick={() => navigate(path)}>
-              <Icon size={22} />
-              {label}
-            </button>
-          ))}
-        </div>
-
-        {/* Channel switch + Feed toggle */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-          <h2 style={{ fontSize: 15, fontWeight: 600, fontFamily: "'Cinzel', serif", color: 'var(--green-dark)' }}>Fil d'actualité</h2>
-          <button onClick={() => setShowFeed(s => !s)} style={{ background: 'none', border: 'none', color: 'var(--green-sage)', fontSize: 12, cursor: 'pointer' }}>
-            {showFeed ? 'Masquer' : 'Afficher'}
-          </button>
-        </div>
-
-        {showFeed && (
-          <>
-            <div className="channel-switch">
-              <button className={`channel-btn ${channel === CHANNELS.BUILDING ? 'active' : ''}`} onClick={() => setChannel(CHANNELS.BUILDING)}>
-                <Building size={15} /> Mon bâtiment
-              </button>
-              <button className={`channel-btn ${channel === CHANNELS.RESIDENCE ? 'active' : ''}`} onClick={() => setChannel(CHANNELS.RESIDENCE)}>
-                <HomeIcon size={15} /> Résidence
-              </button>
-            </div>
-
-            <div style={{ position: 'relative', marginBottom: 12 }}>
-              <Search size={16} style={{ position: 'absolute', left: 12, top: 11, color: 'var(--text-muted)' }} />
-              <input style={{ width: '100%', padding: '10px 12px 10px 36px', border: '1px solid var(--border)', borderRadius: 'var(--radius)', fontSize: 13, background: 'var(--cream)' }} placeholder="Rechercher une publication..." value={search} onChange={e => setSearch(e.target.value)} />
-            </div>
-
-            {loading ? (
-              <p style={{ textAlign: 'center', color: 'var(--text-muted)', padding: 32 }}>Chargement...</p>
-            ) : filteredPosts.length === 0 ? (
-              <div style={{ textAlign: 'center', color: 'var(--text-muted)', padding: 32 }}>
-                <p style={{ fontSize: 14 }}>{search ? 'Aucun résultat' : 'Aucune publication pour le moment'}</p>
-                {!search && <p style={{ fontSize: 12, marginTop: 4 }}>Soyez le premier à publier !</p>}
-              </div>
-            ) : (
-              <>
-                {filteredPosts.map((post, index) => (
-                  <div key={post.id}>
-                    <PostCard post={post} onUpdated={fetchPosts} />
-                    {index === 0 && newResidents.length > 0 && showWelcome && (
-                      <div style={{ background: 'var(--green-sage-10)', border: '1px solid var(--green-sage)', borderRadius: 'var(--radius-lg)', padding: '12px 14px', marginBottom: 12 }}>
-                        <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--green-dark)', marginBottom: 4 }}>🌿 Bienvenue aux nouveaux résidents !</div>
-                        {newResidents.map((r, i) => (
-                          <div key={i} style={{ fontSize: 13, color: 'var(--green-sage)' }}>{r.first_name} — Bâtiment {r.building}</div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </>
-            )}
-          </>
-        )}
-
-        <button onClick={() => setShowCreate(true)}
-          style={{
-            position: 'fixed', bottom: 90, right: 20,
-            width: 52, height: 52, borderRadius: '50%',
-            background: 'var(--green-dark)', color: 'var(--cream)',
-            border: 'none', boxShadow: '0 4px 12px rgba(74,91,58,0.3)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 40
-          }}>
-          <Plus size={24} />
-        </button>
-
-        {showCreate && <CreatePost onClose={() => setShowCreate(false)} onCreated={fetchPosts} />}
       </div>
+
+      {/* Content card - overlaps the image */}
+      <div style={{
+        background: 'var(--white)',
+        borderRadius: '24px 24px 0 0',
+        marginTop: -30,
+        position: 'relative',
+        zIndex: 2,
+        minHeight: 'calc(100vh - 250px)'
+      }}>
+        <div style={{ padding: '24px 16px 100px' }}>
+          {/* Welcome text */}
+          <div style={{ textAlign: 'center', marginBottom: 20 }}>
+            <h1 style={{ fontSize: 22, fontWeight: 600, fontFamily: "'Cinzel', serif", color: 'var(--green-dark)', marginBottom: 4 }}>
+              Bonjour {profile?.first_name} !
+            </h1>
+            <p style={{ fontSize: 13, color: 'var(--text-light)' }}>
+              Bienvenue dans votre application de copropriété Harmonie.
+            </p>
+          </div>
+
+          {/* Quick actions */}
+          <div style={{
+            display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)',
+            gap: 10, marginBottom: 24
+          }}>
+            {quickActions.map(({ icon: Icon, label, path }) => (
+              <button key={label} onClick={() => navigate(path)} style={{
+                display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8,
+                padding: '16px 8px', borderRadius: 16,
+                background: 'var(--cream)', border: '1px solid var(--border-light)',
+                cursor: 'pointer', transition: 'all 0.15s'
+              }}>
+                <div style={{
+                  width: 40, height: 40, borderRadius: 12,
+                  background: 'var(--green-dark-10)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center'
+                }}>
+                  <Icon size={20} color="var(--green-sage)" />
+                </div>
+                <span style={{ fontSize: 11, fontWeight: 500, color: 'var(--text-medium)' }}>{label}</span>
+              </button>
+            ))}
+          </div>
+
+          {/* Feed section */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+            <h2 style={{ fontSize: 15, fontWeight: 600, fontFamily: "'Cinzel', serif", color: 'var(--green-dark)' }}>Fil d'actualité</h2>
+            <button onClick={() => setShowFeed(s => !s)} style={{ background: 'none', border: 'none', color: 'var(--green-sage)', fontSize: 12, cursor: 'pointer', fontWeight: 500 }}>
+              {showFeed ? 'Masquer' : 'Afficher'}
+            </button>
+          </div>
+
+          {showFeed && (
+            <>
+              <div className="channel-switch">
+                <button className={`channel-btn ${channel === CHANNELS.BUILDING ? 'active' : ''}`} onClick={() => setChannel(CHANNELS.BUILDING)}>
+                  <Building size={15} /> Mon bâtiment
+                </button>
+                <button className={`channel-btn ${channel === CHANNELS.RESIDENCE ? 'active' : ''}`} onClick={() => setChannel(CHANNELS.RESIDENCE)}>
+                  <HomeIcon size={15} /> Résidence
+                </button>
+              </div>
+
+              <div style={{ position: 'relative', marginBottom: 12 }}>
+                <Search size={16} style={{ position: 'absolute', left: 12, top: 11, color: 'var(--text-muted)' }} />
+                <input style={{ width: '100%', padding: '10px 12px 10px 36px', border: '1px solid var(--border)', borderRadius: 'var(--radius)', fontSize: 13, background: 'var(--cream)' }} placeholder="Rechercher une publication..." value={search} onChange={e => setSearch(e.target.value)} />
+              </div>
+
+              {loading ? (
+                <p style={{ textAlign: 'center', color: 'var(--text-muted)', padding: 32 }}>Chargement...</p>
+              ) : filteredPosts.length === 0 ? (
+                <div style={{ textAlign: 'center', color: 'var(--text-muted)', padding: 32 }}>
+                  <p style={{ fontSize: 14 }}>{search ? 'Aucun résultat' : 'Aucune publication pour le moment'}</p>
+                  {!search && <p style={{ fontSize: 12, marginTop: 4 }}>Soyez le premier à publier !</p>}
+                </div>
+              ) : (
+                <>
+                  {filteredPosts.map((post, index) => (
+                    <div key={post.id}>
+                      <PostCard post={post} onUpdated={fetchPosts} />
+                      {index === 0 && newResidents.length > 0 && showWelcome && (
+                        <div style={{ background: 'var(--green-sage-10)', border: '1px solid var(--green-sage)', borderRadius: 'var(--radius-lg)', padding: '12px 14px', marginBottom: 12 }}>
+                          <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--green-dark)', marginBottom: 4 }}>🌿 Bienvenue aux nouveaux résidents !</div>
+                          {newResidents.map((r, i) => (
+                            <div key={i} style={{ fontSize: 13, color: 'var(--green-sage)' }}>{r.first_name} — Bâtiment {r.building}</div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </>
+              )}
+            </>
+          )}
+        </div>
+      </div>
+
+      {/* FAB */}
+      <button onClick={() => setShowCreate(true)}
+        style={{
+          position: 'fixed', bottom: 90, right: 20,
+          width: 52, height: 52, borderRadius: '50%',
+          background: 'var(--green-dark)', color: 'var(--cream)',
+          border: 'none', boxShadow: '0 4px 12px rgba(74,91,58,0.3)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 40
+        }}>
+        <Plus size={24} />
+      </button>
+
+      {showCreate && <CreatePost onClose={() => setShowCreate(false)} onCreated={fetchPosts} />}
       <BottomNav />
     </div>
   )
