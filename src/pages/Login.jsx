@@ -76,7 +76,7 @@ export default function Login() {
     <div className="app-shell" style={{ justifyContent: 'center', background: 'var(--cream)' }}>
       <div className="page-content" style={{ paddingBottom: 16 }}>
         <div style={{ textAlign: 'center', marginBottom: 32 }}>
-          <img src="https://lorpxeojlganrirzksff.supabase.co/storage/v1/object/public/documents/logo-transparent.png" alt="Harmonie" style={{ width: 80, height: 80, objectFit: 'contain', marginBottom: 8 }} />
+          <img src="https://lorpxeojlganrirzksff.supabase.co/storage/v1/object/public/documents/logo%20banniere%20connexion.png" alt="Harmonie" style={{ width: '100%', borderRadius: 'var(--radius-lg)', marginBottom: 16, objectFit: 'cover', maxHeight: 160 }} />
           <h1 style={{ fontSize: 28, fontWeight: 600, fontFamily: "'Cinzel', serif", color: 'var(--green-dark)', letterSpacing: 2 }}>HARMONIE</h1>
           <p style={{ fontSize: 12, color: 'var(--text-light)', marginTop: 4, letterSpacing: 3, textTransform: 'uppercase' }}>Aix-en-Provence</p>
         </div>
