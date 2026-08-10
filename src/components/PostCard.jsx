@@ -11,6 +11,13 @@ const TYPE_ICONS = {
   sondage: BarChart3
 }
 
+const STATUS_OPTIONS = [
+  { value: 'open', label: '🆕 Nouveau', color: 'var(--blue-500)', bg: 'var(--blue-50)' },
+  { value: 'in_progress', label: '⏳ En cours', color: 'var(--amber-500)', bg: 'var(--amber-50)' },
+  { value: 'resolved', label: '✅ Résolu', color: 'var(--green-500)', bg: 'var(--green-50)' },
+  { value: 'rejected', label: '❌ Rejeté', color: 'var(--red-500)', bg: 'var(--red-50)' }
+]
+
 function getInitials(profile, coName) {
   if (profile.co_resident_id && coName) {
     return `${profile.first_name?.[0] || ''}&${coName?.[0] || ''}`
@@ -36,38 +43,37 @@ const AVATAR_COLORS = {
 }
 
 export default function PostCard({ post, onUpdated }) {
-  const { user } = useAuth()
-  const { profile, type, content, image_url, created_at } = post
+  const { user, profile: myProfile } = useAuth()
+  const { profile, type, content, image_url, status, created_at } = post
   const typeInfo = POST_TYPE_LABELS[type] || POST_TYPE_LABELS.annonce
   const Icon = TYPE_ICONS[type] || Megaphone
   const avatarStyle = AVATAR_COLORS[type] || AVATAR_COLORS.annonce
   const isSyndic = profile?.role === 'syndic'
   const isOwner = user?.id === post.user_id
+  const canChangeStatus = myProfile?.role === 'syndic' || myProfile?.role === 'admin' || myProfile?.role === 'conseil'
 
   const [editing, setEditing] = useState(false)
   const [editContent, setEditContent] = useState(content)
   const [saving, setSaving] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
+  const [showStatusMenu, setShowStatusMenu] = useState(false)
 
-  // Co-resident
   const [coResidentName, setCoResidentName] = useState(null)
 
-  // Likes
   const [likes, setLikes] = useState([])
   const [liked, setLiked] = useState(false)
 
-  // Comments
   const [comments, setComments] = useState([])
   const [showComments, setShowComments] = useState(false)
   const [newComment, setNewComment] = useState('')
   const [sendingComment, setSendingComment] = useState(false)
 
-  // Polls
   const [pollOptions, setPollOptions] = useState([])
   const [pollVotes, setPollVotes] = useState([])
   const [userVote, setUserVote] = useState(null)
 
   const timeAgo = formatTimeAgo(created_at)
+  const currentStatus = STATUS_OPTIONS.find(s => s.value === (status || 'open')) || STATUS_OPTIONS[0]
 
   useEffect(() => {
     fetchLikes()
@@ -154,6 +160,12 @@ export default function PostCard({ post, onUpdated }) {
     onUpdated?.()
   }
 
+  async function handleStatusChange(newStatus) {
+    await supabase.from('posts').update({ status: newStatus }).eq('id', post.id)
+    setShowStatusMenu(false)
+    onUpdated?.()
+  }
+
   const totalVotes = pollVotes.length
 
   return (
@@ -211,6 +223,32 @@ export default function PostCard({ post, onUpdated }) {
         </>
       )}
 
+      {/* Statut signalement */}
+      {type === 'signalement' && (
+        <div style={{ marginTop: 10, position: 'relative' }}>
+          {canChangeStatus ? (
+            <button onClick={() => setShowStatusMenu(s => !s)}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '4px 10px', borderRadius: 99, border: '1px solid ' + currentStatus.color, background: currentStatus.bg, color: currentStatus.color, fontSize: 12, fontWeight: 500, cursor: 'pointer' }}>
+              {currentStatus.label} ▾
+            </button>
+          ) : (
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '4px 10px', borderRadius: 99, background: currentStatus.bg, color: currentStatus.color, fontSize: 12, fontWeight: 500 }}>
+              {currentStatus.label}
+            </span>
+          )}
+          {showStatusMenu && (
+            <div style={{ position: 'absolute', left: 0, top: 32, background: '#fff', border: '1px solid var(--gray-200)', borderRadius: 'var(--radius)', boxShadow: 'var(--shadow)', zIndex: 10, overflow: 'hidden', minWidth: 160 }}>
+              {STATUS_OPTIONS.map(opt => (
+                <button key={opt.value} onClick={() => handleStatusChange(opt.value)}
+                  style={{ display: 'block', width: '100%', padding: '10px 14px', border: 'none', background: (status || 'open') === opt.value ? opt.bg : '#fff', color: (status || 'open') === opt.value ? opt.color : 'var(--gray-700)', fontSize: 13, textAlign: 'left', cursor: 'pointer', fontWeight: (status || 'open') === opt.value ? 600 : 400 }}>
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Poll */}
       {type === 'sondage' && pollOptions.length > 0 && (
         <div style={{ marginTop: 12 }}>
@@ -249,60 +287,3 @@ export default function PostCard({ post, onUpdated }) {
           <button onClick={() => setShowComments(s => !s)} style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'none', border: 'none', color: showComments ? 'var(--blue-500)' : 'var(--gray-400)', fontSize: 13, cursor: 'pointer' }}>
             <MessageCircle size={16} /> {comments.length > 0 && comments.length}
           </button>
-        </div>
-      </div>
-
-      {/* Comments */}
-      {showComments && (
-        <div style={{ marginTop: 12, borderTop: '1px solid var(--gray-100)', paddingTop: 10 }}>
-          {comments.map(c => (
-            <div key={c.id} style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
-              <div className="avatar" style={{ width: 28, height: 28, fontSize: 10, background: 'var(--gray-100)', color: 'var(--gray-500)' }}>
-                {c.profile?.first_name?.[0]}{c.profile?.last_name?.[0]}
-              </div>
-              <div style={{ flex: 1 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <span style={{ fontSize: 12, fontWeight: 500 }}>{c.profile?.first_name} {c.profile?.last_name?.[0]}.</span>
-                  <span className="building-tag" style={{ fontSize: 10, padding: '1px 5px' }}>{c.profile?.building}</span>
-                  <span style={{ fontSize: 10, color: 'var(--gray-400)' }}>{formatTimeAgo(c.created_at)}</span>
-                </div>
-                <p style={{ fontSize: 13, color: 'var(--gray-600)', marginTop: 2 }}>{c.content}</p>
-              </div>
-              {c.user_id === user?.id && (
-                <button onClick={() => deleteComment(c.id)} style={{ background: 'none', border: 'none', color: 'var(--gray-300)', cursor: 'pointer' }}>
-                  <X size={14} />
-                </button>
-              )}
-            </div>
-          ))}
-          <form onSubmit={handleComment} style={{ display: 'flex', gap: 8 }}>
-            <input
-              value={newComment} onChange={e => setNewComment(e.target.value)}
-              placeholder="Écrire un commentaire…"
-              style={{ flex: 1, padding: '8px 10px', border: '1px solid var(--gray-200)', borderRadius: 'var(--radius)', fontSize: 13 }}
-            />
-            <button type="submit" disabled={sendingComment} style={{ background: 'var(--blue-500)', color: '#fff', border: 'none', borderRadius: 'var(--radius)', padding: '8px 10px', cursor: 'pointer' }}>
-              <Send size={16} />
-            </button>
-          </form>
-        </div>
-      )}
-    </div>
-  )
-}
-
-function formatTimeAgo(dateStr) {
-  if (!dateStr) return ''
-  const date = new Date(dateStr)
-  const now = new Date()
-  const diffMs = now - date
-  const diffMins = Math.round(diffMs / 60000)
-  const diffHours = Math.round(diffMs / 3600000)
-  const diffDays = Math.round(diffMs / 86400000)
-  if (diffMins < 1) return "À l'instant"
-  if (diffMins < 60) return `Il y a ${diffMins} min`
-  if (diffHours < 24) return `Il y a ${diffHours}h`
-  if (diffDays === 1) return 'Hier'
-  if (diffDays < 7) return `Il y a ${diffDays} jours`
-  return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })
-}
