@@ -1,12 +1,12 @@
 import { useLocation, useNavigate } from 'react-router-dom'
-import { Home, Calendar, Users, User, Plus } from 'lucide-react'
+import { Plus } from 'lucide-react'
 
 const NAV_ITEMS = [
-  { path: '/', icon: Home, label: 'Accueil' },
-  { path: '/calendar', icon: Calendar, label: 'Calendrier' },
-  { path: 'fab', icon: Plus, label: '' },
-  { path: '/directory', icon: Users, label: 'Annuaire' },
-  { path: '/profile', icon: User, label: 'Mon compte' }
+  { path: '/', label: 'Accueil', img: 'https://lorpxeojlganrirzksff.supabase.co/storage/v1/object/public/documents/accueil%20trans.png' },
+  { path: '/calendar', label: 'Calendrier', img: 'https://lorpxeojlganrirzksff.supabase.co/storage/v1/object/public/documents/calendrier%20trans.png' },
+  { path: 'fab', label: '' },
+  { path: '/directory', label: 'Annuaire', img: 'https://lorpxeojlganrirzksff.supabase.co/storage/v1/object/public/documents/annuaire%20trans.png' },
+  { path: '/profile', label: 'Mon compte', img: 'https://lorpxeojlganrirzksff.supabase.co/storage/v1/object/public/documents/Mon%20compte%20trans.png' }
 ]
 
 export default function BottomNav({ onPlusClick }) {
@@ -15,7 +15,7 @@ export default function BottomNav({ onPlusClick }) {
 
   return (
     <nav className="bottom-nav">
-      {NAV_ITEMS.map(({ path, icon: Icon, label }) => {
+      {NAV_ITEMS.map(({ path, label, img }) => {
         if (path === 'fab') {
           return (
             <button key="fab" onClick={onPlusClick} style={{
@@ -30,13 +30,14 @@ export default function BottomNav({ onPlusClick }) {
             </button>
           )
         }
+        const isActive = location.pathname === path
         return (
           <button
             key={path}
-            className={`nav-item ${location.pathname === path ? 'active' : ''}`}
+            className={`nav-item ${isActive ? 'active' : ''}`}
             onClick={() => navigate(path)}
           >
-            <Icon size={22} />
+            <img src={img} alt={label} style={{ width: 24, height: 24, objectFit: 'contain', opacity: isActive ? 1 : 0.5 }} />
             {label}
           </button>
         )
