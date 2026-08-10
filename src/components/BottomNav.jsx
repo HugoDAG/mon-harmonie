@@ -23,7 +23,7 @@ export default function BottomNav({ onPlusClick }) {
               background: 'var(--terracotta)', color: '#fff',
               border: '3px solid var(--white)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              marginTop: -28, boxShadow: '0 4px 12px rgba(196,121,78,0.3)',
+              marginTop: -24, boxShadow: '0 4px 12px rgba(196,121,78,0.3)',
               cursor: 'pointer'
             }}>
               <Plus size={26} />
