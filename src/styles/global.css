@@ -92,7 +92,7 @@ input, select, textarea { font-family: inherit; }
   border-top: none;
   display: flex;
   justify-content: space-around;
-  padding: 12px 0 calc(env(safe-area-inset-bottom, 0px) + 16px);
+  padding: 8px 0 calc(env(safe-area-inset-bottom, 0px) + 8px);
   z-index: 50;
   border-radius: 20px 20px 0 0;
 }
