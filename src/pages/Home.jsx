@@ -75,7 +75,7 @@ export default function Home() {
     { icon: null, label: 'Réserver', path: '/bookings', img: 'https://lorpxeojlganrirzksff.supabase.co/storage/v1/object/public/documents/reserver.png' },
     { icon: null, label: 'Voisinage', path: '/posts/voisinage', img: 'https://lorpxeojlganrirzksff.supabase.co/storage/v1/object/public/documents/voisinage.png' },
     { icon: BarChart3, label: 'Sondages', path: '/posts/sondage' },
-    { icon: FileText, label: 'Documents', path: '/documents' }
+    { icon: null, label: 'Documents', path: '/documents', img: 'https://lorpxeojlganrirzksff.supabase.co/storage/v1/object/public/documents/document%20trans.png' }
   ]
 
   return (
