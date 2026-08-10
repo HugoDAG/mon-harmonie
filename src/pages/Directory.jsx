@@ -47,6 +47,7 @@ export default function Directory() {
   const [editingContact, setEditingContact] = useState(null)
   const [form, setForm] = useState({ name: '', role_label: 'gardien', phone: '', email: '', building: '' })
   const [promotingId, setPromotingId] = useState(null)
+  const [openSections, setOpenSections] = useState({})
 
   const canEdit = profile?.role === 'syndic' || profile?.role === 'admin' || profile?.role === 'conseil'
 
@@ -147,6 +148,10 @@ export default function Directory() {
     fetchAll()
   }
 
+  function toggleSection(role) {
+    setOpenSections(s => ({ ...s, [role]: s[role] === false ? true : s[role] === undefined ? false : !s[role] }))
+  }
+
   return (
     <div className="app-shell">
       <div className="page-content">
@@ -194,17 +199,17 @@ export default function Directory() {
         )}
 
         <div style={{ position: 'relative', marginBottom: 12 }}>
-          <Search size={16} style={{ position: 'absolute', left: 12, top: 12, color: 'var(--gray-400)' }} />
+          <Search size={16} style={{ position: 'absolute', left: 12, top: 12, color: 'var(--text-muted)' }} />
           <input
-            style={{ width: '100%', padding: '10px 12px 10px 36px', border: '1px solid var(--gray-300)', borderRadius: 'var(--radius)', fontSize: 14 }}
-            placeholder="Rechercher…"
+            style={{ width: '100%', padding: '10px 12px 10px 36px', border: '1px solid var(--border)', borderRadius: 'var(--radius)', fontSize: 14 }}
+            placeholder="Rechercher..."
             value={filter}
             onChange={e => setFilter(e.target.value)}
           />
         </div>
 
         <select
-          style={{ width: '100%', padding: '10px 12px', border: '1px solid var(--gray-300)', borderRadius: 'var(--radius)', fontSize: 14, marginBottom: 16, color: buildingFilter ? 'var(--gray-900)' : 'var(--gray-400)' }}
+          style={{ width: '100%', padding: '10px 12px', border: '1px solid var(--border)', borderRadius: 'var(--radius)', fontSize: 14, marginBottom: 16, color: buildingFilter ? 'var(--text-dark)' : 'var(--text-muted)' }}
           value={buildingFilter}
           onChange={e => setBuildingFilter(e.target.value)}
         >
@@ -213,28 +218,35 @@ export default function Directory() {
         </select>
 
         {loading ? (
-          <p style={{ textAlign: 'center', color: 'var(--gray-400)', padding: 32 }}>Chargement…</p>
+          <p style={{ textAlign: 'center', color: 'var(--text-muted)', padding: 32 }}>Chargement...</p>
         ) : (
           <>
             {/* Contacts importants */}
             {Object.entries(groupedContacts).map(([role, people]) => {
               const roleInfo = ROLE_COLORS[role] || ROLE_COLORS.autre
               const roleLabel = ROLE_OPTIONS.find(r => r.value === role)?.label || role
+              const isOpen = openSections[role] !== false
               return (
                 <div key={role} style={{ marginBottom: 20 }}>
-                  <div style={{ fontSize: 12, fontWeight: 600, color: roleInfo.color, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1 }}>
-                    {roleLabel}
-                  </div>
-                  {people.map(c => (
+                  <button onClick={() => toggleSection(role)} style={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%',
+                    background: 'none', border: 'none', cursor: 'pointer', padding: '4px 0', marginBottom: isOpen ? 8 : 0
+                  }}>
+                    <span style={{ fontSize: 12, fontWeight: 600, color: roleInfo.color, textTransform: 'uppercase', letterSpacing: 1 }}>
+                      {roleLabel} ({people.length})
+                    </span>
+                    <ChevronDown size={16} color={roleInfo.color} style={{ transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }} />
+                  </button>
+                  {isOpen && people.map(c => (
                     <div key={c.id} className="card" style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px' }}>
                       <div className="avatar" style={{ background: roleInfo.bg, color: roleInfo.color }}>
                         {c.name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()}
                       </div>
                       <div style={{ flex: 1 }}>
                         <div style={{ fontSize: 14, fontWeight: 500 }}>{c.name}</div>
-                        {c.building && <div style={{ fontSize: 12, color: 'var(--gray-400)' }}>Bâtiment {c.building}</div>}
+                        {c.building && <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Bâtiment {c.building}</div>}
                         {c.phone && (
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: 'var(--gray-500)', marginTop: 2 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: 'var(--text-light)', marginTop: 2 }}>
                             <Phone size={11} /> {c.phone}
                           </div>
                         )}
@@ -270,14 +282,14 @@ export default function Directory() {
             {/* Résidents */}
             {Object.entries(groupedResidents).sort(([a], [b]) => a.localeCompare(b)).map(([building, people]) => (
               <div key={building} style={{ marginBottom: 16 }}>
-                <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--gray-400)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1 }}>
+                <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1 }}>
                   Bâtiment {building}
                 </div>
                 {people.map(r => {
                   const badge = ROLE_BADGES[r.role]
                   return (
                     <div key={r.id} className="card" style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px' }}>
-                      <div className="avatar" style={{ background: badge ? badge.bg : 'var(--blue-50)', color: badge ? badge.color : 'var(--blue-600)' }}>
+                      <div className="avatar" style={{ background: badge ? badge.bg : 'var(--cream)', color: badge ? badge.color : 'var(--green-dark)' }}>
                         {r.first_name?.[0]}{r.last_name?.[0]}
                       </div>
                       <div style={{ flex: 1 }}>
@@ -287,7 +299,7 @@ export default function Directory() {
                             <span style={{ fontSize: 10, fontWeight: 500, color: badge.color, background: badge.bg, padding: '2px 8px', borderRadius: 99 }}>{badge.label}</span>
                           )}
                         </div>
-                        <div style={{ fontSize: 12, color: 'var(--gray-400)' }}>Bâtiment {r.building}</div>
+                        <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Bâtiment {r.building}</div>
                       </div>
                       {canEdit && (
                         <div style={{ position: 'relative' }}>
@@ -297,15 +309,15 @@ export default function Directory() {
                           {promotingId === r.id && (
                             <div style={{
                               position: 'absolute', right: 0, top: 36, background: '#fff',
-                              border: '1px solid var(--gray-200)', borderRadius: 'var(--radius)',
+                              border: '1px solid var(--border)', borderRadius: 'var(--radius)',
                               boxShadow: 'var(--shadow)', zIndex: 10, minWidth: 160, overflow: 'hidden'
                             }}>
                               {PROMOTE_OPTIONS.map(opt => (
                                 <button key={opt.value} onClick={() => handlePromote(r.id, opt.value)}
                                   style={{
                                     display: 'block', width: '100%', padding: '10px 14px', border: 'none',
-                                    background: r.role === opt.value ? 'var(--blue-50)' : '#fff',
-                                    color: r.role === opt.value ? 'var(--blue-600)' : 'var(--gray-700)',
+                                    background: r.role === opt.value ? 'var(--cream)' : '#fff',
+                                    color: r.role === opt.value ? 'var(--green-dark)' : 'var(--text-medium)',
                                     fontSize: 13, textAlign: 'left', cursor: 'pointer',
                                     fontWeight: r.role === opt.value ? 600 : 400
                                   }}>
@@ -323,7 +335,7 @@ export default function Directory() {
             ))}
 
             {filteredContacts.length === 0 && filteredResidents.length === 0 && (
-              <div style={{ textAlign: 'center', color: 'var(--gray-400)', padding: 32 }}>
+              <div style={{ textAlign: 'center', color: 'var(--text-muted)', padding: 32 }}>
                 <p style={{ fontSize: 14 }}>Aucun contact trouvé</p>
               </div>
             )}
