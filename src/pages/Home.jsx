@@ -94,18 +94,6 @@ export default function Home() {
           backgroundImage: 'url(https://lorpxeojlganrirzksff.supabase.co/storage/v1/object/public/documents/logo%20fond%20ecran.png)',
           backgroundSize: 'cover', backgroundPosition: 'center'
         }} />
-        {/* Logo overlay */}
-        <div style={{
-          position: 'absolute', top: 20, left: 0, right: 0,
-          display: 'flex', flexDirection: 'column', alignItems: 'center'
-        }}>
-          <img
-            src="https://lorpxeojlganrirzksff.supabase.co/storage/v1/object/public/documents/Logo.png"
-            alt="Harmonie"
-            style={{ width: 100, height: 100, objectFit: 'contain', marginBottom: 4 }}
-          />
-        </div>
-      </div>
 
       {/* Content card - overlaps the image */}
       <div style={{
