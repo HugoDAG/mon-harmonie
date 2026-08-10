@@ -193,20 +193,8 @@ export default function Home() {
         </div>
       </div>
 
-      {/* FAB */}
-      <button onClick={() => setShowCreate(true)}
-        style={{
-          position: 'fixed', bottom: 90, right: 20,
-          width: 52, height: 52, borderRadius: '50%',
-          background: 'var(--green-dark)', color: 'var(--cream)',
-          border: 'none', boxShadow: '0 4px 12px rgba(74,91,58,0.3)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 40
-        }}>
-        <Plus size={24} />
-      </button>
-
       {showCreate && <CreatePost onClose={() => setShowCreate(false)} onCreated={fetchPosts} />}
-      <BottomNav />
+      <BottomNav onPlusClick={() => setShowCreate(true)} />
     </div>
   )
 }
