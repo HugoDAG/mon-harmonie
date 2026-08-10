@@ -110,7 +110,7 @@ export default function Documents() {
                 <div className="card" style={{
                   display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px',
                   cursor: catDocs.length > 0 ? 'pointer' : 'default',
-                  opacity: catDocs.length > 0 ? 1 : 0.6
+                  opacity: catDocs.length > 0 ? 1 : 0.8
                 }}
                   onClick={() => catDocs.length > 0 && catDocs[0].file_url && window.open(catDocs[0].file_url, '_blank')}
                 >
