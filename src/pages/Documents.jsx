@@ -114,7 +114,7 @@ export default function Documents() {
                 }}
                   onClick={() => catDocs.length > 0 && catDocs[0].file_url && window.open(catDocs[0].file_url, '_blank')}
                 >
-                  <span style={{ fontSize: 24 }}>{cat.icon}</span>
+                  <img src={FOLDER_IMG} alt="" style={{ width: 36, height: 36, objectFit: 'contain' }} />
                   <div style={{ flex: 1 }}>
                     <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-dark)' }}>{cat.label}</div>
                     <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>
