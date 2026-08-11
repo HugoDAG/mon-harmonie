@@ -36,6 +36,16 @@ export default function Profile() {
     }
   }, [profile])
 
+  async function handleAvatarUpload(e) {
+    const file = e.target.files[0]
+    if (!file) return
+    const fileExt = file.name.split('.').pop()
+    const fileName = `avatar-${user.id}.${fileExt}`
+    await supabase.storage.from('documents').upload(`avatars/${fileName}`, file, { upsert: true })
+    const { data: urlData } = supabase.storage.from('documents').getPublicUrl(`avatars/${fileName}`)
+    await supabase.from('profiles').update({ avatar_url: urlData.publicUrl }).eq('id', user.id)
+    window.location.reload()
+  }
   async function saveApartment() {
     const apt = aptValue.trim().toUpperCase()
     if (!apt) return
@@ -125,13 +135,29 @@ export default function Profile() {
           padding: '16px', borderRadius: 'var(--radius-lg)',
           background: 'var(--green-dark)', marginBottom: 20
         }}>
-          <div style={{
-            width: 56, height: 56, borderRadius: '50%',
-            background: 'rgba(255,255,255,0.15)', color: 'var(--cream)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 20, fontWeight: 600
-          }}>
-            {profile?.first_name?.[0]}{profile?.last_name?.[0]}
+          <div style={{ position: 'relative' }}>
+            {profile?.avatar_url ? (
+              <img src={profile.avatar_url} alt="" style={{ width: 56, height: 56, borderRadius: '50%', objectFit: 'cover' }} />
+            ) : (
+              <div style={{
+                width: 56, height: 56, borderRadius: '50%',
+                background: 'rgba(255,255,255,0.15)', color: 'var(--cream)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 20, fontWeight: 600
+              }}>
+                {profile?.first_name?.[0]}{profile?.last_name?.[0]}
+              </div>
+            )}
+            <label style={{
+              position: 'absolute', bottom: -2, right: -2,
+              width: 22, height: 22, borderRadius: '50%',
+              background: 'var(--cream)', border: '2px solid var(--green-dark)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              cursor: 'pointer', fontSize: 11
+            }}>
+              📷
+              <input type="file" accept="image/*" onChange={handleAvatarUpload} style={{ display: 'none' }} />
+            </label>
           </div>
           <div style={{ flex: 1 }}>
             <div style={{ fontSize: 17, fontWeight: 600, color: '#fff' }}>
