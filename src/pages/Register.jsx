@@ -67,6 +67,16 @@ export default function Register() {
           invitee_email: form.coResidentEmail
         })
       }
+      
+      // Créer l'appartement dans Ma résidence
+      const aptUpper = form.apartment.trim().toUpperCase()
+      const buildingMatch = aptUpper.match(/^([A-Z]+\d)/)
+      if (buildingMatch) {
+        await supabase.from('apartments').upsert(
+          { building: buildingMatch[1], number: aptUpper },
+          { onConflict: 'building,number' }
+        )
+      }
 
       setSuccess(true)
     } catch (err) {
@@ -146,7 +156,10 @@ export default function Register() {
           <div className="form-group">
             <label>Numéro d'appartement</label>
             <input value={form.apartment} onChange={update('apartment')} placeholder="Ex: C999" required />
-            <p className="form-hint">ℹ️ Votre n° d'appartement reste anonyme. Seul votre bâtiment sera visible par les autres résidents.</p>
+            <p className="form-hint" style={{ lineHeight: 1.5 }}>
+              ℹ️ Votre n° d'appartement reste anonyme. Seul votre bâtiment sera visible par les autres résidents.<br />
+              Format : C223 = C2 (bâtiment) + 2 (étage) + 3 (n° sur l'étage)
+            </p>
           </div>
 
           <div className="form-group">
