@@ -20,6 +20,7 @@ export default function Profile() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [editingApartment, setEditingApartment] = useState(false)
   const [aptValue, setAptValue] = useState('')
+  const [showAptInfo, setShowAptInfo] = useState(false)
   const [deleteText, setDeleteText] = useState('')
   const [deleting, setDeleting] = useState(false)
   const [openSection, setOpenSection] = useState(null)
@@ -36,7 +37,23 @@ export default function Profile() {
   }, [profile])
 
   async function saveApartment() {
-    await supabase.from('profiles').update({ apartment: aptValue.trim().toUpperCase() }).eq('id', user.id)
+    const apt = aptValue.trim().toUpperCase()
+    if (!apt) return
+
+    // Mettre à jour le profil
+    await supabase.from('profiles').update({ apartment: apt }).eq('id', user.id)
+
+    // Extraire le bâtiment du numéro d'appartement (ex: C223 → C2)
+    const buildingMatch = apt.match(/^([A-Z]+\d)/)
+    if (buildingMatch) {
+      const building = buildingMatch[1]
+      // Créer l'appartement dans Ma résidence s'il n'existe pas
+      await supabase.from('apartments').upsert(
+        { building, number: apt },
+        { onConflict: 'building,number' }
+      )
+    }
+
     setEditingApartment(false)
     window.location.reload()
   }
@@ -178,7 +195,7 @@ export default function Profile() {
                         <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>Appartement</div>
                         {editingApartment ? (
                           <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
-                            <input value={aptValue} onChange={e => setAptValue(e.target.value)} placeholder="Ex: C223"
+                            <input value={aptValue} onChange={e => setAptValue(e.target.value)} placeholder="Ex: C999"
                               style={{ flex: 1, padding: '6px 10px', border: '1px solid var(--border)', borderRadius: 'var(--radius)', fontSize: 13 }} />
                             <button onClick={saveApartment} style={{ background: 'var(--green-dark)', color: '#fff', border: 'none', borderRadius: 'var(--radius)', padding: '6px 12px', cursor: 'pointer', fontSize: 12 }}>OK</button>
                             <button onClick={() => setEditingApartment(false)} style={{ background: 'var(--cream)', border: 'none', borderRadius: 'var(--radius)', padding: '6px 10px', cursor: 'pointer', fontSize: 12, color: 'var(--text-muted)' }}>✕</button>
@@ -189,7 +206,27 @@ export default function Profile() {
                             <button onClick={() => { setAptValue(profile?.apartment || ''); setEditingApartment(true) }} style={{ background: 'none', border: 'none', color: 'var(--green-sage)', fontSize: 12, cursor: 'pointer' }}>Modifier</button>
                           </div>
                         )}
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 4 }}>
+                        <div style={{ marginTop: 6 }}>
+                          <button onClick={() => setShowAptInfo(s => !s)} style={{
+                            display: 'inline-flex', alignItems: 'center', gap: 4,
+                            background: 'none', border: 'none', cursor: 'pointer',
+                            fontSize: 11, color: 'var(--green-sage)', fontWeight: 500
+                          }}>
+                            ℹ️ En savoir plus sur le n° d'appartement
+                          </button>
+                          {showAptInfo && (
+                            <div style={{
+                              marginTop: 6, padding: '10px 12px',
+                              background: 'var(--cream)', borderRadius: 'var(--radius)',
+                              fontSize: 12, color: 'var(--text-medium)', lineHeight: 1.6
+                            }}>
+                              <p style={{ marginBottom: 6 }}>Votre n° d'appartement reste <strong>anonyme</strong>. Seul votre bâtiment ({profile?.building}) est visible par les autres résidents.</p>
+                              <p style={{ marginBottom: 6 }}>Le numéro suit le format suivant :</p>
+                              <p style={{ fontWeight: 500, color: 'var(--green-dark)' }}>C223 = C2 (bâtiment) + 2 (étage) + 3 (n° sur l'étage)</p>
+                              <p style={{ marginTop: 6, fontSize: 11, color: 'var(--text-muted)' }}>Ce numéro permet de vérifier votre appartenance à la résidence.</p>
+                            </div>
+                          )}
+                        </div><div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 4 }}>
                           <span style={{ fontSize: 11, color: 'var(--text-muted)', fontStyle: 'italic' }}>ℹ️ Votre n° d'appartement reste anonyme. Seul votre bâtiment ({profile?.building}) est visible par les autres résidents.</span>
                         </div>
                       </div>
