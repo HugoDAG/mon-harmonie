@@ -112,7 +112,7 @@ export default function Register() {
     <div className="app-shell" style={{ justifyContent: 'center', background: 'var(--cream)' }}>
       <div className="page-content" style={{ paddingBottom: 16 }}>
         <div style={{ textAlign: 'center', marginBottom: 24 }}>
-          <img src="https://lorpxeojlganrirzksff.supabase.co/storage/v1/object/public/documents/logo-transparent.png" alt="Harmonie" style={{ width: 70, height: 70, objectFit: 'contain', marginBottom: 8 }} />
+          <img src="https://lorpxeojlganrirzksff.supabase.co/storage/v1/object/public/documents/new%20logo%20trans.png" alt="Harmonie" style={{ width: 70, height: 70, objectFit: 'contain', marginBottom: 8 }} />
           <h1 style={{ fontSize: 22, fontWeight: 600, fontFamily: "'Cinzel', serif", color: 'var(--green-dark)', letterSpacing: 2 }}>HARMONIE</h1>
           <p style={{ fontSize: 12, color: 'var(--text-light)', letterSpacing: 3, textTransform: 'uppercase' }}>Aix-en-Provence</p>
         </div>
