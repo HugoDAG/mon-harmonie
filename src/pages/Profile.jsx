@@ -4,7 +4,7 @@ import { supabase } from '../lib/supabase'
 import { useNavigate } from 'react-router-dom'
 import BottomNav from '../components/BottomNav'
 import ChangePassword from '../components/ChangePassword'
-import { LogOut, User, AlertTriangle, Megaphone, FileText, Book, HelpCircle, ChevronDown, LinkIcon, Building, Mail, Lock } from 'lucide-react'
+import { LogOut, User, AlertTriangle, Megaphone, FileText, Book, HelpCircle, ChevronDown, LinkIcon, Building, Mail, Lock, Home } from 'lucide-react'
 
 const STATUS_LABELS = {
   open: '🆕 Nouveau',
@@ -18,6 +18,8 @@ export default function Profile() {
   const navigate = useNavigate()
   const [coResidentName, setCoResidentName] = useState(null)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [editingApartment, setEditingApartment] = useState(false)
+  const [aptValue, setAptValue] = useState('')
   const [deleteText, setDeleteText] = useState('')
   const [deleting, setDeleting] = useState(false)
   const [openSection, setOpenSection] = useState(null)
@@ -33,6 +35,11 @@ export default function Profile() {
     }
   }, [profile])
 
+  async function saveApartment() {
+    await supabase.from('profiles').update({ apartment: aptValue.trim().toUpperCase() }).eq('id', user.id)
+    setEditingApartment(false)
+    window.location.reload()
+  }
   function toggleSection(section) {
     if (openSection === section) {
       setOpenSection(null)
@@ -163,6 +170,28 @@ export default function Profile() {
                       <div>
                         <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>Bâtiment</div>
                         <div style={{ fontSize: 14, fontWeight: 500 }}>{profile?.building}</div>
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 0', borderBottom: '1px solid var(--border-light)' }}>
+                      <Home size={16} color="var(--text-muted)" />
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>Appartement</div>
+                        {editingApartment ? (
+                          <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
+                            <input value={aptValue} onChange={e => setAptValue(e.target.value)} placeholder="Ex: C223"
+                              style={{ flex: 1, padding: '6px 10px', border: '1px solid var(--border)', borderRadius: 'var(--radius)', fontSize: 13 }} />
+                            <button onClick={saveApartment} style={{ background: 'var(--green-dark)', color: '#fff', border: 'none', borderRadius: 'var(--radius)', padding: '6px 12px', cursor: 'pointer', fontSize: 12 }}>OK</button>
+                            <button onClick={() => setEditingApartment(false)} style={{ background: 'var(--cream)', border: 'none', borderRadius: 'var(--radius)', padding: '6px 10px', cursor: 'pointer', fontSize: 12, color: 'var(--text-muted)' }}>✕</button>
+                          </div>
+                        ) : (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <span style={{ fontSize: 14, fontWeight: 500 }}>{profile?.apartment || 'Non renseigné'}</span>
+                            <button onClick={() => { setAptValue(profile?.apartment || ''); setEditingApartment(true) }} style={{ background: 'none', border: 'none', color: 'var(--green-sage)', fontSize: 12, cursor: 'pointer' }}>Modifier</button>
+                          </div>
+                        )}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 4 }}>
+                          <span style={{ fontSize: 11, color: 'var(--text-muted)', fontStyle: 'italic' }}>ℹ️ Votre n° d'appartement reste anonyme. Seul votre bâtiment ({profile?.building}) est visible par les autres résidents.</span>
+                        </div>
                       </div>
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 0', borderBottom: '1px solid var(--border-light)' }}>
