@@ -36,7 +36,7 @@ export default function Profile() {
     }
   }, [profile])
 
-async function saveApartment() {
+  async function saveApartment() {
     const apt = aptValue.trim().toUpperCase()
     if (!apt) return
 
@@ -46,18 +46,16 @@ async function saveApartment() {
     await supabase.from('profiles').update({ apartment: apt, building }).eq('id', user.id)
 
     if (building) {
-      const { data: existing } = await supabase.from('apartments')
-        .select('id').eq('building', building).eq('number', apt)
-
-      if (!existing || existing.length === 0) {
-        const { error } = await supabase.from('apartments').insert({ building, number: apt })
-        if (error) console.error('Erreur creation appartement:', error)
-      }
+      await supabase.rpc('create_apartment_if_not_exists', {
+        p_building: building,
+        p_number: apt
+      })
     }
 
     setEditingApartment(false)
     window.location.reload()
   }
+
   function toggleSection(section) {
     if (openSection === section) {
       setOpenSection(null)
@@ -114,6 +112,7 @@ async function saveApartment() {
     ...(profile?.role === 'admin' || profile?.role === 'syndic' ? [
       { key: 'pending', label: 'Demandes en attente', img: 'https://lorpxeojlganrirzksff.supabase.co/storage/v1/object/public/documents/demandes%20en%20attente%20trans%202.png', action: () => navigate('/pending') }
     ] : [])
+  ]
 
   return (
     <div className="app-shell">
