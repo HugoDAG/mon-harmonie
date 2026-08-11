@@ -145,7 +145,8 @@ export default function Register() {
 
           <div className="form-group">
             <label>Numéro d'appartement</label>
-            <input value={form.apartment} onChange={update('apartment')} placeholder="Ex: C223" required />
+            <input value={form.apartment} onChange={update('apartment')} placeholder="Ex: C999" required />
+            <p className="form-hint">ℹ️ Votre n° d'appartement reste anonyme. Seul votre bâtiment sera visible par les autres résidents.</p>
           </div>
 
           <div className="form-group">
