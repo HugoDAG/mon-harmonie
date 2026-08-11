@@ -36,7 +36,7 @@ export default function Profile() {
     }
   }, [profile])
 
- async function saveApartment() {
+async function saveApartment() {
     const apt = aptValue.trim().toUpperCase()
     if (!apt) return
 
@@ -46,19 +46,18 @@ export default function Profile() {
     await supabase.from('profiles').update({ apartment: apt, building }).eq('id', user.id)
 
     if (building) {
-      // Vérifier si l'appartement existe déjà
       const { data: existing } = await supabase.from('apartments')
-        .select('id').eq('building', building).eq('number', apt).single()
+        .select('id').eq('building', building).eq('number', apt)
 
-      if (!existing) {
-        await supabase.from('apartments').insert({ building, number: apt })
+      if (!existing || existing.length === 0) {
+        const { error } = await supabase.from('apartments').insert({ building, number: apt })
+        if (error) console.error('Erreur creation appartement:', error)
       }
     }
 
     setEditingApartment(false)
     window.location.reload()
   }
-
   function toggleSection(section) {
     if (openSection === section) {
       setOpenSection(null)
