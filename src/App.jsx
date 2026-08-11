@@ -13,6 +13,7 @@ import Rules from './pages/Rules'
 import Guide from './pages/Guide'
 import MaResidence from './pages/MaResidence'
 import PendingApprovals from './pages/PendingApprovals'
+import ScrollToTop from './components/ScrollToTop'
 
 function PrivateRoute({ children }) {
   const { user, profile, loading, isApproved, signOut } = useAuth()
@@ -50,6 +51,7 @@ export default function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
+        <ScrollToTop />
         <Routes>
           <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
           <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
