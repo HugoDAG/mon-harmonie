@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/AuthContext'
 import { useNavigate } from 'react-router-dom'
 import BottomNav from '../components/BottomNav'
-import { CalendarCheck, Plus, X, Clock, ArrowLeft } from 'lucide-react'
+import { CalendarCheck, Plus, X, Clock, ArrowLeft, Trash2 } from 'lucide-react'
 
 export default function Bookings() {
   const { user, profile } = useAuth()
@@ -13,6 +13,7 @@ export default function Bookings() {
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
   const [form, setForm] = useState({ space_id: '', date: '', start_time: '', end_time: '' })
+  const [deletingId, setDeletingId] = useState(null)
 
   useEffect(() => { fetchData() }, [])
 
@@ -37,6 +38,12 @@ export default function Bookings() {
     fetchData()
   }
 
+  async function handleDelete(id) {
+    await supabase.from('bookings').delete().eq('id', id)
+    setDeletingId(null)
+    fetchData()
+  }
+
   return (
     <div className="app-shell">
       <div className="page-content">
@@ -45,11 +52,11 @@ export default function Bookings() {
             <button onClick={() => navigate('/')} style={{ background: 'none', border: 'none', color: 'var(--green-dark)', padding: 4 }}>
               <ArrowLeft size={22} />
             </button>
-            <h1 style={{ fontSize: 20, fontWeight: 600, fontFamily: "'Cinzel', serif", color: 'var(--green-dark)' }}>Réserver</h1>
+            <h1 style={{ fontSize: 20, fontWeight: 600, fontFamily: "'Cinzel', serif", color: 'var(--green-dark)' }}>Reserver</h1>
           </div>
           <button className="btn btn-secondary" onClick={() => setShowForm(s => !s)} style={{ fontSize: 13 }}>
             {showForm ? <X size={16} /> : <Plus size={16} />}
-            {showForm ? 'Annuler' : 'Réserver'}
+            {showForm ? 'Annuler' : 'Reserver'}
           </button>
         </div>
 
@@ -101,6 +108,18 @@ export default function Bookings() {
                   {b.profile?.first_name} {b.profile?.last_name?.[0]}. - {b.profile?.building}
                 </div>
               </div>
+              {b.user_id === user.id && (
+                deletingId === b.id ? (
+                  <div style={{ display: 'flex', gap: 6 }}>
+                    <button onClick={() => handleDelete(b.id)} style={{ background: 'var(--red-500)', color: '#fff', border: 'none', borderRadius: 'var(--radius)', padding: '6px 10px', fontSize: 11, cursor: 'pointer' }}>Oui</button>
+                    <button onClick={() => setDeletingId(null)} style={{ background: 'var(--cream)', border: 'none', borderRadius: 'var(--radius)', padding: '6px 10px', fontSize: 11, cursor: 'pointer', color: 'var(--text-muted)' }}>Non</button>
+                  </div>
+                ) : (
+                  <button onClick={() => setDeletingId(b.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4 }}>
+                    <Trash2 size={16} color="var(--text-muted)" />
+                  </button>
+                )
+              )}
             </div>
           ))
         )}
