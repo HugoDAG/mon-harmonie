@@ -37,6 +37,10 @@ export function AuthProvider({ children }) {
     setLoading(false)
   }
 
+  function isApproved() {
+    return profile?.account_status === 'approved'
+  }
+
   async function signUp({ email, password, firstName, lastName, building, coResidentEmail }) {
     const { data, error } = await supabase.auth.signUp({ email, password })
     if (error) throw error
@@ -73,7 +77,7 @@ export function AuthProvider({ children }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, profile, loading, signUp, signIn, signOut, fetchProfile }}>
+    <AuthContext.Provider value={{ user, profile, loading, signUp, signIn, signOut, fetchProfile, isApproved }}>
       {children}
     </AuthContext.Provider>
   )
