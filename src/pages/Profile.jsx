@@ -104,14 +104,14 @@ export default function Profile() {
   }
 
   const sections = [
-    { key: 'infos', label: 'Mes informations', img: 'https://lorpxeojlganrirzksff.supabase.co/storage/v1/object/public/documents/mes%20informations%20trans.png' },
-   { key: 'signalements', label: 'Mes signalements', img: 'https://lorpxeojlganrirzksff.supabase.co/storage/v1/object/public/documents/mes%20signalements%20trans.png' },
-    { key: 'annonces', label: 'Mes annonces', img: 'https://lorpxeojlganrirzksff.supabase.co/storage/v1/object/public/documents/mes%20annonces%20trans.png' },
+    { key: 'infos', label: 'Mes informations', img: 'https://lorpxeojlganrirzksff.supabase.co/storage/v1/object/public/documents/mes%20informations%20trans%202.png' },
+    { key: 'signalements', label: 'Mes signalements', img: 'https://lorpxeojlganrirzksff.supabase.co/storage/v1/object/public/documents/mes%20signalements%20trans%202.png' },
+    { key: 'annonces', label: 'Mes annonces', img: 'https://lorpxeojlganrirzksff.supabase.co/storage/v1/object/public/documents/mes%20annonces%20trans%202.png' },
     { key: 'regles', label: 'Règles de la copropriété', img: 'https://lorpxeojlganrirzksff.supabase.co/storage/v1/object/public/documents/regle%20de%20coprop%20trans.png', action: () => navigate('/rules') },
-    { key: 'guide', label: "Guide d'utilisation", img: 'https://lorpxeojlganrirzksff.supabase.co/storage/v1/object/public/documents/guide%20utilisation%20app%20trans.png', action: () => navigate('/guide') },
+    { key: 'guide', label: "Guide d'utilisation", img: 'https://lorpxeojlganrirzksff.supabase.co/storage/v1/object/public/documents/guide%20utilisation%20trans%202.png', action: () => navigate('/guide') },
     ...(profile?.role === 'admin' || profile?.role === 'syndic' ? [
-      { key: 'residence', label: 'Ma résidence', img: 'https://lorpxeojlganrirzksff.supabase.co/storage/v1/object/public/documents/annuaire%20trans.png', action: () => navigate('/ma-residence') },
-      { key: 'pending', label: 'Demandes en attente', img: 'https://lorpxeojlganrirzksff.supabase.co/storage/v1/object/public/documents/mes%20informations%20trans.png', action: () => navigate('/pending') }
+      { key: 'residence', label: 'Ma résidence', img: 'https://lorpxeojlganrirzksff.supabase.co/storage/v1/object/public/documents/ma%20residence.png', action: () => navigate('/ma-residence') },
+      { key: 'pending', label: 'Demandes en attente', img: 'https://lorpxeojlganrirzksff.supabase.co/storage/v1/object/public/documents/demandes%20en%20attente%20trans%202.png', action: () => navigate('/pending') }
     ] : [])
   ]
 
