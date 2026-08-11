@@ -38,6 +38,9 @@ export default function Profile() {
       setOpenSection(null)
     } else {
       setOpenSection(section)
+      setTimeout(() => {
+        document.getElementById(`section-${section}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      }, 100)
       if (section === 'signalements' && mySignalements.length === 0) fetchMySignalements()
       if (section === 'annonces' && myAnnonces.length === 0) fetchMyAnnonces()
     }
@@ -128,7 +131,7 @@ export default function Profile() {
             const isOpen = openSection === key
             const isLink = !!action
             return (
-              <div key={key} style={{ borderBottom: '1px solid var(--border-light)' }}>
+              <div key={key} id={`section-${key}`} style={{ borderBottom: '1px solid var(--border-light)' }}>
                 <button onClick={() => isLink ? action() : toggleSection(key)} style={{
                   display: 'flex', alignItems: 'center', gap: 12, width: '100%',
                   padding: '14px 16px', background: 'var(--white)',
