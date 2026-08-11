@@ -36,7 +36,7 @@ export default function Profile() {
     }
   }, [profile])
 
-  async function saveApartment() {
+ async function saveApartment() {
     const apt = aptValue.trim().toUpperCase()
     if (!apt) return
 
@@ -46,10 +46,13 @@ export default function Profile() {
     await supabase.from('profiles').update({ apartment: apt, building }).eq('id', user.id)
 
     if (building) {
-      await supabase.from('apartments').upsert(
-        { building, number: apt },
-        { onConflict: 'building,number' }
-      )
+      // Vérifier si l'appartement existe déjà
+      const { data: existing } = await supabase.from('apartments')
+        .select('id').eq('building', building).eq('number', apt).single()
+
+      if (!existing) {
+        await supabase.from('apartments').insert({ building, number: apt })
+      }
     }
 
     setEditingApartment(false)
