@@ -72,10 +72,10 @@ export default function Register() {
       const aptUpper = form.apartment.trim().toUpperCase()
       const buildingMatch = aptUpper.match(/^([A-Z]+\d)/)
       if (buildingMatch) {
-        await supabase.from('apartments').upsert(
-          { building: buildingMatch[1], number: aptUpper },
-          { onConflict: 'building,number' }
-        )
+        await supabase.rpc('create_apartment_if_not_exists', {
+          p_building: buildingMatch[1],
+          p_number: aptUpper
+        })
       }
 
       setSuccess(true)
