@@ -1,20 +1,20 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/AuthContext'
+import { useNavigate } from 'react-router-dom'
 import BottomNav from '../components/BottomNav'
-import { CalendarCheck, Plus, X, Clock } from 'lucide-react'
+import { CalendarCheck, Plus, X, Clock, ArrowLeft } from 'lucide-react'
 
 export default function Bookings() {
   const { user, profile } = useAuth()
+  const navigate = useNavigate()
   const [spaces, setSpaces] = useState([])
   const [bookings, setBookings] = useState([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
   const [form, setForm] = useState({ space_id: '', date: '', start_time: '', end_time: '' })
 
-  useEffect(() => {
-    fetchData()
-  }, [])
+  useEffect(() => { fetchData() }, [])
 
   async function fetchData() {
     const [{ data: spacesData }, { data: bookingsData }] = await Promise.all([
@@ -40,8 +40,13 @@ export default function Bookings() {
   return (
     <div className="app-shell">
       <div className="page-content">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-          <h1 style={{ fontSize: 20, fontWeight: 600 }}>Réservations</h1>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <button onClick={() => navigate('/')} style={{ background: 'none', border: 'none', color: 'var(--green-dark)', padding: 4 }}>
+              <ArrowLeft size={22} />
+            </button>
+            <h1 style={{ fontSize: 20, fontWeight: 600, fontFamily: "'Cinzel', serif", color: 'var(--green-dark)' }}>Réserver</h1>
+          </div>
           <button className="btn btn-secondary" onClick={() => setShowForm(s => !s)} style={{ fontSize: 13 }}>
             {showForm ? <X size={16} /> : <Plus size={16} />}
             {showForm ? 'Annuler' : 'Réserver'}
@@ -53,7 +58,7 @@ export default function Bookings() {
             <div className="form-group">
               <label>Espace</label>
               <select value={form.space_id} onChange={e => setForm(f => ({ ...f, space_id: e.target.value }))} required>
-                <option value="">Choisir un espace…</option>
+                <option value="">Choisir un espace...</option>
                 {spaces.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
               </select>
             </div>
@@ -61,26 +66,24 @@ export default function Bookings() {
               <label>Date</label>
               <input type="date" value={form.date} onChange={e => setForm(f => ({ ...f, date: e.target.value }))} required min={new Date().toISOString().split('T')[0]} />
             </div>
-            <div style={{ display: 'flex', gap: 12 }}>
-              <div className="form-group" style={{ flex: 1 }}>
-                <label>De</label>
-                <input type="time" value={form.start_time} onChange={e => setForm(f => ({ ...f, start_time: e.target.value }))} required />
-              </div>
-              <div className="form-group" style={{ flex: 1 }}>
-                <label>À</label>
-                <input type="time" value={form.end_time} onChange={e => setForm(f => ({ ...f, end_time: e.target.value }))} required />
-              </div>
+            <div className="form-group">
+              <label>De</label>
+              <input type="time" value={form.start_time} onChange={e => setForm(f => ({ ...f, start_time: e.target.value }))} required />
+            </div>
+            <div className="form-group">
+              <label>A</label>
+              <input type="time" value={form.end_time} onChange={e => setForm(f => ({ ...f, end_time: e.target.value }))} required />
             </div>
             <button type="submit" className="btn btn-primary">Confirmer</button>
           </form>
         )}
 
         {loading ? (
-          <p style={{ textAlign: 'center', color: 'var(--gray-400)', padding: 32 }}>Chargement…</p>
+          <p style={{ textAlign: 'center', color: 'var(--text-muted)', padding: 32 }}>Chargement...</p>
         ) : bookings.length === 0 ? (
-          <div style={{ textAlign: 'center', color: 'var(--gray-400)', padding: 32 }}>
+          <div style={{ textAlign: 'center', color: 'var(--text-muted)', padding: 32 }}>
             <CalendarCheck size={32} style={{ marginBottom: 8, opacity: 0.5 }} />
-            <p style={{ fontSize: 14 }}>Aucune réservation à venir</p>
+            <p style={{ fontSize: 14 }}>Aucune reservation a venir</p>
           </div>
         ) : (
           bookings.map(b => (
@@ -90,12 +93,12 @@ export default function Bookings() {
               </div>
               <div style={{ flex: 1 }}>
                 <div style={{ fontSize: 14, fontWeight: 500 }}>{b.space?.name}</div>
-                <div style={{ fontSize: 12, color: 'var(--gray-400)', display: 'flex', alignItems: 'center', gap: 4 }}>
+                <div style={{ fontSize: 12, color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 4 }}>
                   <Clock size={11} />
-                  {new Date(b.date).toLocaleDateString('fr-FR')} · {b.start_time?.slice(0, 5)} – {b.end_time?.slice(0, 5)}
+                  {new Date(b.date).toLocaleDateString('fr-FR')} - {b.start_time?.slice(0, 5)} - {b.end_time?.slice(0, 5)}
                 </div>
-                <div style={{ fontSize: 11, color: 'var(--gray-400)' }}>
-                  {b.profile?.first_name} {b.profile?.last_name?.[0]}. — {b.profile?.building}
+                <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>
+                  {b.profile?.first_name} {b.profile?.last_name?.[0]}. - {b.profile?.building}
                 </div>
               </div>
             </div>
