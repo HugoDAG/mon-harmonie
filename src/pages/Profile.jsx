@@ -40,14 +40,12 @@ export default function Profile() {
     const apt = aptValue.trim().toUpperCase()
     if (!apt) return
 
-    // Mettre à jour le profil
-    await supabase.from('profiles').update({ apartment: apt }).eq('id', user.id)
-
-    // Extraire le bâtiment du numéro d'appartement (ex: C223 → C2)
     const buildingMatch = apt.match(/^([A-Z]+\d)/)
-    if (buildingMatch) {
-      const building = buildingMatch[1]
-      // Créer l'appartement dans Ma résidence s'il n'existe pas
+    const building = buildingMatch ? buildingMatch[1] : profile?.building
+
+    await supabase.from('profiles').update({ apartment: apt, building }).eq('id', user.id)
+
+    if (building) {
       await supabase.from('apartments').upsert(
         { building, number: apt },
         { onConflict: 'building,number' }
@@ -57,6 +55,7 @@ export default function Profile() {
     setEditingApartment(false)
     window.location.reload()
   }
+
   function toggleSection(section) {
     if (openSection === section) {
       setOpenSection(null)
@@ -106,11 +105,11 @@ export default function Profile() {
   const sections = [
     { key: 'infos', label: 'Mes informations', img: 'https://lorpxeojlganrirzksff.supabase.co/storage/v1/object/public/documents/mes%20informations%20trans%202.png' },
     { key: 'signalements', label: 'Mes signalements', img: 'https://lorpxeojlganrirzksff.supabase.co/storage/v1/object/public/documents/mes%20signalements%20trans%202.png' },
-    { key: 'annonces', label: 'Mes annonces', img: 'https://lorpxeojlganrirzksff.supabase.co/storage/v1/object/public/documents/mes%20annonces%20trans%202.png',size: 52 },
-    { key: 'regles', label: 'Règles de la copropriété', img: 'https://lorpxeojlganrirzksff.supabase.co/storage/v1/object/public/documents/regle%20de%20coprop%20trans.png', action: () => navigate('/rules') },
+    { key: 'annonces', label: 'Mes annonces', img: 'https://lorpxeojlganrirzksff.supabase.co/storage/v1/object/public/documents/mes%20annonces%20trans%202.png' },
+    { key: 'regles', label: 'Regles de la copropriete', img: 'https://lorpxeojlganrirzksff.supabase.co/storage/v1/object/public/documents/regle%20de%20coprop%20trans.png', action: () => navigate('/rules') },
     { key: 'guide', label: "Guide d'utilisation", img: 'https://lorpxeojlganrirzksff.supabase.co/storage/v1/object/public/documents/guide%20utilisation%20trans%202.png', action: () => navigate('/guide') },
     ...(profile?.role === 'admin' || profile?.role === 'syndic' ? [
-      { key: 'residence', label: 'Ma résidence', img: 'https://lorpxeojlganrirzksff.supabase.co/storage/v1/object/public/documents/ma%20residence.png', action: () => navigate('/ma-residence') },
+      { key: 'residence', label: 'Ma residence', img: 'https://lorpxeojlganrirzksff.supabase.co/storage/v1/object/public/documents/ma%20residence.png', action: () => navigate('/ma-residence') },
       { key: 'pending', label: 'Demandes en attente', img: 'https://lorpxeojlganrirzksff.supabase.co/storage/v1/object/public/documents/demandes%20en%20attente%20trans%202.png', action: () => navigate('/pending') }
     ] : [])
   ]
@@ -139,7 +138,7 @@ export default function Profile() {
               {profile?.first_name} {profile?.last_name?.[0]}.
             </div>
             <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.7)', marginTop: 2 }}>
-              Bâtiment {profile?.building} · Résidence Harmonie
+              Batiment {profile?.building} - Residence Harmonie
             </div>
             {coResidentName && (
               <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', marginTop: 2 }}>
@@ -187,7 +186,7 @@ export default function Profile() {
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 0', borderBottom: '1px solid var(--border-light)' }}>
                       <Building size={16} color="var(--text-muted)" />
                       <div>
-                        <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>Bâtiment</div>
+                        <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>Batiment</div>
                         <div style={{ fontSize: 14, fontWeight: 500 }}>{profile?.building}</div>
                       </div>
                     </div>
@@ -200,37 +199,25 @@ export default function Profile() {
                             <input value={aptValue} onChange={e => setAptValue(e.target.value)} placeholder="Ex: C999"
                               style={{ flex: 1, padding: '6px 10px', border: '1px solid var(--border)', borderRadius: 'var(--radius)', fontSize: 13 }} />
                             <button onClick={saveApartment} style={{ background: 'var(--green-dark)', color: '#fff', border: 'none', borderRadius: 'var(--radius)', padding: '6px 12px', cursor: 'pointer', fontSize: 12 }}>OK</button>
-                            <button onClick={() => setEditingApartment(false)} style={{ background: 'var(--cream)', border: 'none', borderRadius: 'var(--radius)', padding: '6px 10px', cursor: 'pointer', fontSize: 12, color: 'var(--text-muted)' }}>✕</button>
+                            <button onClick={() => setEditingApartment(false)} style={{ background: 'var(--cream)', border: 'none', borderRadius: 'var(--radius)', padding: '6px 10px', cursor: 'pointer', fontSize: 12, color: 'var(--text-muted)' }}>x</button>
                           </div>
                         ) : (
                           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                            <span style={{ fontSize: 14, fontWeight: 500 }}>{profile?.apartment || 'Non renseigné'}</span>
+                            <span style={{ fontSize: 14, fontWeight: 500 }}>{profile?.apartment || 'Non renseigne'}</span>
                             <button onClick={() => { setAptValue(profile?.apartment || ''); setEditingApartment(true) }} style={{ background: 'none', border: 'none', color: 'var(--green-sage)', fontSize: 12, cursor: 'pointer' }}>Modifier</button>
+                            <button onClick={() => setShowAptInfo(s => !s)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 14, marginLeft: 'auto' }}>i</button>
                           </div>
                         )}
-                        <div style={{ marginTop: 6 }}>
-                          <button onClick={() => setShowAptInfo(s => !s)} style={{
-                            display: 'inline-flex', alignItems: 'center', gap: 4,
-                            background: 'none', border: 'none', cursor: 'pointer',
-                            fontSize: 11, color: 'var(--green-sage)', fontWeight: 500
+                        {showAptInfo && (
+                          <div style={{
+                            marginTop: 6, padding: '10px 12px',
+                            background: 'var(--cream)', borderRadius: 'var(--radius)',
+                            fontSize: 12, color: 'var(--text-medium)', lineHeight: 1.6
                           }}>
-                            ℹ️ En savoir plus sur le n° d'appartement
-                          </button>
-                          {showAptInfo && (
-                            <div style={{
-                              marginTop: 6, padding: '10px 12px',
-                              background: 'var(--cream)', borderRadius: 'var(--radius)',
-                              fontSize: 12, color: 'var(--text-medium)', lineHeight: 1.6
-                            }}>
-                              <p style={{ marginBottom: 6 }}>Votre n° d'appartement reste <strong>anonyme</strong>. Seul votre bâtiment ({profile?.building}) est visible par les autres résidents.</p>
-                              <p style={{ marginBottom: 6 }}>Le numéro suit le format suivant :</p>
-                              <p style={{ fontWeight: 500, color: 'var(--green-dark)' }}>C223 = C2 (bâtiment) + 2 (étage) + 3 (n° sur l'étage)</p>
-                              <p style={{ marginTop: 6, fontSize: 11, color: 'var(--text-muted)' }}>Ce numéro permet de vérifier votre appartenance à la résidence.</p>
-                            </div>
-                          )}
-                        </div><div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 4 }}>
-                          <span style={{ fontSize: 11, color: 'var(--text-muted)', fontStyle: 'italic' }}>ℹ️ Votre n° d'appartement reste anonyme. Seul votre bâtiment ({profile?.building}) est visible par les autres résidents.</span>
-                        </div>
+                            <p>Votre n d'appartement reste <strong>anonyme</strong>. Seul votre batiment ({profile?.building}) est visible par les autres residents.</p>
+                            <p style={{ marginTop: 6, fontSize: 11, color: 'var(--text-muted)' }}>Ce numero permet de verifier votre appartenance a la residence.</p>
+                          </div>
+                        )}
                       </div>
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 0', borderBottom: '1px solid var(--border-light)' }}>
@@ -243,14 +230,14 @@ export default function Profile() {
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 0', borderBottom: '1px solid var(--border-light)' }}>
                       <LinkIcon size={16} color="var(--text-muted)" />
                       <div>
-                        <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>Co-résident</div>
+                        <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>Co-resident</div>
                         {coResidentName ? (
                           <div style={{ fontSize: 14, fontWeight: 500, display: 'flex', alignItems: 'center', gap: 6 }}>
                             {coResidentName}
-                            <span style={{ fontSize: 10, color: 'var(--green-500)', background: 'var(--green-50)', padding: '2px 8px', borderRadius: 99 }}>Lié</span>
+                            <span style={{ fontSize: 10, color: 'var(--green-500)', background: 'var(--green-50)', padding: '2px 8px', borderRadius: 99 }}>Lie</span>
                           </div>
                         ) : (
-                          <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>Aucun co-résident lié</div>
+                          <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>Aucun co-resident lie</div>
                         )}
                       </div>
                     </div>
@@ -266,7 +253,7 @@ export default function Profile() {
                     {loadingSignalements ? (
                       <p style={{ fontSize: 13, color: 'var(--text-muted)', padding: '12px 0' }}>Chargement...</p>
                     ) : mySignalements.length === 0 ? (
-                      <p style={{ fontSize: 13, color: 'var(--text-muted)', padding: '12px 0' }}>Aucun signalement envoyé</p>
+                      <p style={{ fontSize: 13, color: 'var(--text-muted)', padding: '12px 0' }}>Aucun signalement envoye</p>
                     ) : (
                       mySignalements.map(s => (
                         <div key={s.id} style={{
@@ -296,7 +283,7 @@ export default function Profile() {
                     {loadingAnnonces ? (
                       <p style={{ fontSize: 13, color: 'var(--text-muted)', padding: '12px 0' }}>Chargement...</p>
                     ) : myAnnonces.length === 0 ? (
-                      <p style={{ fontSize: 13, color: 'var(--text-muted)', padding: '12px 0' }}>Aucune annonce publiée</p>
+                      <p style={{ fontSize: 13, color: 'var(--text-muted)', padding: '12px 0' }}>Aucune annonce publiee</p>
                     ) : (
                       myAnnonces.map(a => (
                         <div key={a.id} style={{
@@ -308,7 +295,7 @@ export default function Profile() {
                               {a.content.length > 60 ? a.content.slice(0, 60) + '...' : a.content}
                             </div>
                             <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>
-                              {formatDate(a.created_at)} · {a.channel === 'building' ? `Bât. ${a.building}` : 'Résidence'}
+                              {formatDate(a.created_at)} - {a.channel === 'building' ? 'Bat. ' + a.building : 'Residence'}
                             </div>
                           </div>
                           {a.image_url && (
@@ -332,7 +319,7 @@ export default function Profile() {
           color: 'var(--terracotta)', fontSize: 14, fontWeight: 500, cursor: 'pointer',
           marginBottom: 16
         }}>
-          <LogOut size={16} /> Déconnexion
+          <LogOut size={16} /> Deconnexion
         </button>
 
         {/* Delete account */}
@@ -349,7 +336,7 @@ export default function Profile() {
                 <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--red-500)' }}>Supprimer mon compte</span>
               </div>
               <p style={{ fontSize: 12, color: 'var(--text-medium)', marginBottom: 12, lineHeight: 1.5 }}>
-                Cette action est irréversible. Toutes vos publications, commentaires et données seront supprimées. Tapez SUPPRIMER pour confirmer.
+                Cette action est irreversible. Toutes vos publications, commentaires et donnees seront supprimees. Tapez SUPPRIMER pour confirmer.
               </p>
               <div className="form-group" style={{ marginBottom: 10 }}>
                 <input value={deleteText} onChange={e => setDeleteText(e.target.value)} placeholder="Tapez SUPPRIMER" style={{ borderColor: 'var(--red-500)' }} />
