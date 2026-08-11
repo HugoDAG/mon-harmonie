@@ -22,6 +22,7 @@ export default function Home() {
   const [refreshing, setRefreshing] = useState(false)
   const [touchStart, setTouchStart] = useState(null)
   const [pullDistance, setPullDistance] = useState(0)
+  const [residentCount, setResidentCount] = useState(0)
 
   function handleTouchStart(e) {
     if (window.scrollY === 0) setTouchStart(e.touches[0].clientY)
@@ -43,6 +44,8 @@ export default function Home() {
       setNewResidents(data || [])
     }
     fetchNewResidents()
+    supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('account_status', 'approved')
+      .then(({ count }) => setResidentCount(count || 0))
     const timer = setTimeout(() => setShowWelcome(false), 60000)
     return () => clearTimeout(timer)
   }, [])
@@ -109,8 +112,13 @@ export default function Home() {
               Bonjour {profile?.first_name} !
             </h1>
             <p style={{ fontSize: 13, color: 'var(--text-light)' }}>
-              Bienvenue dans votre application de copropriété Harmonie.
+              Bienvenue dans votre application de copropriete Harmonie.
             </p>
+            {residentCount > 0 && (
+              <p style={{ fontSize: 12, color: 'var(--green-sage)', marginTop: 4, fontWeight: 500 }}>
+                🏠 {residentCount} resident{residentCount > 1 ? 's' : ''} inscrit{residentCount > 1 ? 's' : ''}
+              </p>
+            )}
           </div>
 
           {/* Quick actions */}
