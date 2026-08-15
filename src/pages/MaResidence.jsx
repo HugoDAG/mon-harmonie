@@ -24,10 +24,19 @@ export default function MaResidence() {
     setLoading(true)
     const [{ data: aptsData }, { data: resData }] = await Promise.all([
       supabase.from('apartments').select('*').order('building').order('number', { ascending: true }),
-      supabase.from('profiles').select('id, first_name, last_name, building, apartment, account_status').eq('account_status', 'approved')
+      supabase.from('profiles').select('id, first_name, last_name, building, apartment, account_status, co_resident_id').eq('account_status', 'approved')
     ])
     setApartments(aptsData || [])
-    setResidents(resData || [])
+
+    // Enrichir avec les noms des co-résidents
+    const enriched = (resData || []).map(r => {
+      if (r.co_resident_id) {
+        const coResident = (resData || []).find(p => p.id === r.co_resident_id)
+        return { ...r, co_resident_name: coResident?.first_name || null }
+      }
+      return r
+    })
+    setResidents(enriched)
     setLoading(false)
   }
 
@@ -59,6 +68,14 @@ export default function MaResidence() {
     const bApts = apartments.filter(a => a.building === building)
     const occupied = bApts.filter(a => getResidentForApt(building, a.number)).length
     return { total: bApts.length, occupied }
+  }
+
+  function getDisplayName(resident) {
+    const name = `${resident.first_name} ${resident.last_name?.[0]}.`
+    if (resident.co_resident_name) {
+      return `${resident.first_name} & ${resident.co_resident_name}`
+    }
+    return name
   }
 
   return (
@@ -147,7 +164,7 @@ export default function MaResidence() {
                           </div>
                           <div style={{ flex: 1 }}>
                             <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-dark)' }}>
-                              {resident ? `${resident.first_name} ${resident.last_name?.[0]}.` : 'Vacant'}
+                              {resident ? getDisplayName(resident) : 'Vacant'}
                             </div>
                             <div style={{ fontSize: 12, color: occupied ? 'var(--green-500)' : 'var(--text-muted)' }}>
                               {occupied ? "Present dans l'app" : "Non present dans l'app"}
