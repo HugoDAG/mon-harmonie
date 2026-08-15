@@ -23,8 +23,8 @@ export default function MaResidence() {
   async function fetchAll() {
     setLoading(true)
     const [{ data: aptsData }, { data: resData }] = await Promise.all([
-      supabase.from('apartments').select('*').order('building').order('number'),
-      supabase.from('profiles').select('id, building, apartment, account_status').eq('account_status', 'approved')
+      supabase.from('apartments').select('*').order('building').order('number', { ascending: true }),
+      supabase.from('profiles').select('id, first_name, last_name, building, apartment, account_status').eq('account_status', 'approved')
     ])
     setApartments(aptsData || [])
     setResidents(resData || [])
@@ -35,7 +35,7 @@ export default function MaResidence() {
     if (!newApt.trim()) return
     const { error } = await supabase.from('apartments').insert({ building, number: newApt.trim().toUpperCase() })
     if (error) {
-      if (error.code === '23505') alert('Cet appartement existe déjà')
+      if (error.code === '23505') alert('Cet appartement existe deja')
       else alert('Erreur : ' + error.message)
     } else {
       setNewApt('')
@@ -51,13 +51,13 @@ export default function MaResidence() {
     }
   }
 
-  function isAptOccupied(building, number) {
-    return residents.some(r => r.building === building && r.apartment === number)
+  function getResidentForApt(building, number) {
+    return residents.find(r => r.building === building && r.apartment === number)
   }
 
   function getBuildingStats(building) {
     const bApts = apartments.filter(a => a.building === building)
-    const occupied = bApts.filter(a => isAptOccupied(building, a.number)).length
+    const occupied = bApts.filter(a => getResidentForApt(building, a.number)).length
     return { total: bApts.length, occupied }
   }
 
@@ -68,7 +68,7 @@ export default function MaResidence() {
           <button onClick={() => navigate('/profile')} style={{ background: 'none', border: 'none', color: 'var(--green-dark)', padding: 4 }}>
             <ArrowLeft size={22} />
           </button>
-          <h1 style={{ fontSize: 20, fontWeight: 600, fontFamily: "'Cinzel', serif", color: 'var(--green-dark)' }}>Ma résidence</h1>
+          <h1 style={{ fontSize: 20, fontWeight: 600, fontFamily: "'Cinzel', serif", color: 'var(--green-dark)' }}>Ma residence</h1>
         </div>
 
         {/* Stats */}
@@ -78,7 +78,7 @@ export default function MaResidence() {
         }}>
           <div style={{ flex: 1, textAlign: 'center' }}>
             <div style={{ fontSize: 22, fontWeight: 600, color: '#fff' }}>{BUILDINGS.length}</div>
-            <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.6)' }}>Bâtiments</div>
+            <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.6)' }}>Batiments</div>
           </div>
           <div style={{ width: 1, background: 'rgba(255,255,255,0.15)' }} />
           <div style={{ flex: 1, textAlign: 'center' }}>
@@ -88,7 +88,7 @@ export default function MaResidence() {
           <div style={{ width: 1, background: 'rgba(255,255,255,0.15)' }} />
           <div style={{ flex: 1, textAlign: 'center' }}>
             <div style={{ fontSize: 22, fontWeight: 600, color: '#fff' }}>{residents.length}</div>
-            <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.6)' }}>Résidents</div>
+            <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.6)' }}>Residents</div>
           </div>
         </div>
 
@@ -115,9 +115,9 @@ export default function MaResidence() {
                     <Home size={18} color="var(--green-sage)" />
                   </div>
                   <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--green-dark)' }}>Bâtiment {building}</div>
+                    <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--green-dark)' }}>Batiment {building}</div>
                     <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>
-                      {stats.total === 0 ? 'Aucun appartement' : `${stats.occupied}/${stats.total} présents dans l'app`}
+                      {stats.total === 0 ? 'Aucun appartement' : `${stats.occupied}/${stats.total} presents dans l'app`}
                     </div>
                   </div>
                   <ChevronDown size={18} color="var(--text-muted)" style={{ transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }} />
@@ -126,11 +126,12 @@ export default function MaResidence() {
                 {isOpen && (
                   <div style={{ padding: '0 16px 16px', background: 'var(--white)' }}>
                     {bApts.length === 0 && (
-                      <p style={{ fontSize: 13, color: 'var(--text-muted)', padding: '8px 0' }}>Aucun appartement enregistré</p>
+                      <p style={{ fontSize: 13, color: 'var(--text-muted)', padding: '8px 0' }}>Aucun appartement enregistre</p>
                     )}
 
                     {bApts.map(apt => {
-                      const occupied = isAptOccupied(building, apt.number)
+                      const resident = getResidentForApt(building, apt.number)
+                      const occupied = !!resident
                       return (
                         <div key={apt.id} style={{
                           display: 'flex', alignItems: 'center', gap: 10, padding: '10px 0',
@@ -146,10 +147,10 @@ export default function MaResidence() {
                           </div>
                           <div style={{ flex: 1 }}>
                             <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-dark)' }}>
-                              Apt. {apt.number}
+                              {resident ? `${resident.first_name} ${resident.last_name?.[0]}.` : 'Vacant'}
                             </div>
                             <div style={{ fontSize: 12, color: occupied ? 'var(--green-500)' : 'var(--text-muted)' }}>
-                              {occupied ? "Présent dans l'app" : 'Non présent dans l\'app'}
+                              {occupied ? "Present dans l'app" : "Non present dans l'app"}
                             </div>
                           </div>
                           {isAdmin && !occupied && (
