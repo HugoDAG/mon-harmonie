@@ -3,15 +3,15 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/AuthContext'
 import { useNavigate } from 'react-router-dom'
 import BottomNav from '../components/BottomNav'
-import { FileText, Upload, Download, ArrowLeft, X, File } from 'lucide-react'
+import { Upload, Download, ArrowLeft, X, File } from 'lucide-react'
 
 const FOLDER_IMG = 'https://lorpxeojlganrirzksff.supabase.co/storage/v1/object/public/documents/dossier%20transparent.png'
 
 const DOC_CATEGORIES = [
-  { key: 'reglement', label: 'Règlement de copropriété' },
-  { key: 'pv', label: 'Procès-verbaux AG' },
-  { key: 'plans', label: 'Plans de la résidence' },
-  { key: 'notices', label: 'Notices équipements' },
+  { key: 'reglement', label: 'Reglement de copropriete' },
+  { key: 'pv', label: 'Proces-verbaux AG' },
+  { key: 'plans', label: 'Plans de la residence' },
+  { key: 'notices', label: 'Notices equipements' },
   { key: 'contrat', label: 'Contrats' },
   { key: 'info', label: 'Informations pratiques' },
   { key: 'autre', label: 'Autres documents' }
@@ -85,7 +85,7 @@ export default function Documents() {
               <input value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} placeholder="Ex: PV AG Juin 2027" required />
             </div>
             <div className="form-group">
-              <label>Catégorie</label>
+              <label>Categorie</label>
               <select value={form.category} onChange={e => setForm(f => ({ ...f, category: e.target.value }))}>
                 {DOC_CATEGORIES.map(c => <option key={c.key} value={c.key}>{c.label}</option>)}
               </select>
@@ -95,7 +95,7 @@ export default function Documents() {
               <input type="file" onChange={e => setForm(f => ({ ...f, file: e.target.files[0] }))} required accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.png" />
             </div>
             <button type="submit" className="btn btn-primary" disabled={uploading}>
-              <Upload size={16} /> {uploading ? 'Envoi...' : 'Téléverser'}
+              <Upload size={16} /> {uploading ? 'Envoi...' : 'Televerser'}
             </button>
           </form>
         )}
@@ -124,7 +124,16 @@ export default function Documents() {
                       }
                     </div>
                   </div>
-                  {catDocs.length > 0 && <Download size={16} color="var(--text-muted)" />}
+                  {catDocs.length > 0 && (
+                    <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                      <button onClick={(e) => { e.stopPropagation(); navigate('/document/' + catDocs[0].id + '/summary') }} style={{
+                        background: 'var(--green-sage-10)', border: 'none', borderRadius: 6,
+                        padding: '4px 8px', fontSize: 11, color: 'var(--green-sage)',
+                        cursor: 'pointer', fontWeight: 500
+                      }}>Resume</button>
+                      <Download size={16} color="var(--text-muted)" />
+                    </div>
+                  )}
                 </div>
                 {catDocs.length > 1 && catDocs.slice(1).map(doc => (
                   <div key={doc.id} style={{
@@ -140,7 +149,14 @@ export default function Documents() {
                         {new Date(doc.created_at).toLocaleDateString('fr-FR')}
                       </div>
                     </div>
-                    <Download size={14} color="var(--text-muted)" />
+                    <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                      <button onClick={(e) => { e.stopPropagation(); navigate('/document/' + doc.id + '/summary') }} style={{
+                        background: 'var(--green-sage-10)', border: 'none', borderRadius: 6,
+                        padding: '3px 6px', fontSize: 10, color: 'var(--green-sage)',
+                        cursor: 'pointer', fontWeight: 500
+                      }}>Resume</button>
+                      <Download size={14} color="var(--text-muted)" />
+                    </div>
                   </div>
                 ))}
               </div>
