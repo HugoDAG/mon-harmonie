@@ -48,11 +48,13 @@ export default function MesDocuments() {
       .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
       .replace(/[^a-zA-Z0-9-]/g, '-')
       .replace(/-+/g, '-')
-    const fileName = `${user.id}/${Date.now()}-${cleanTitle}.${fileExt}`
+    const filePath = `${user.id}/${Date.now()}-${cleanTitle}.${fileExt}`
+
+        const filePath = `${user.id}/${Date.now()}-${cleanTitle}.${fileExt}`
 
     const { error: uploadError } = await supabase.storage
-      .from('documents')
-      .upload(`personal/${fileName}`, form.file)
+      .from('personal')
+      .upload(filePath, form.file)
 
     if (uploadError) {
       alert('Erreur : ' + uploadError.message)
@@ -60,19 +62,15 @@ export default function MesDocuments() {
       return
     }
 
-    const { data: urlData } = supabase.storage
-      .from('documents')
-      .getPublicUrl(`personal/${fileName}`)
-
     const fileSize = form.file.size < 1024 * 1024
       ? `${(form.file.size / 1024).toFixed(0)} Ko`
       : `${(form.file.size / (1024 * 1024)).toFixed(1)} Mo`
 
-    await supabase.from('personal_documents').insert({
+        await supabase.from('personal_documents').insert({
       user_id: user.id,
       title: form.title,
       category: form.category,
-      file_url: urlData.publicUrl,
+      file_url: filePath,
       file_size: fileSize
     })
 
@@ -82,6 +80,16 @@ export default function MesDocuments() {
     setUploading(false)
   }
 
+    async function openDoc(filePath) {
+    const { data, error } = await supabase.storage
+      .from('personal')
+      .createSignedUrl(filePath, 300)
+    if (data?.signedUrl) {
+      window.open(data.signedUrl, '_blank')
+    } else {
+      alert('Impossible d\'ouvrir le document')
+    }
+  }
   async function handleDelete(id) {
     await supabase.from('personal_documents').delete().eq('id', id)
     setDeletingId(null)
@@ -166,7 +174,7 @@ export default function MesDocuments() {
                   }}>
                     <FileText size={18} color="var(--green-sage)" />
                   </div>
-                  <div style={{ flex: 1, cursor: 'pointer' }} onClick={() => window.open(doc.file_url, '_blank')}>
+                  <div style={{ flex: 1, cursor: 'pointer' }} onClick={() => openDoc(doc.file_url)}>
                     <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-dark)' }}>{doc.title}</div>
                     <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>
                       {new Date(doc.created_at).toLocaleDateString('fr-FR')}
@@ -174,7 +182,7 @@ export default function MesDocuments() {
                     </div>
                   </div>
                   <div style={{ display: 'flex', gap: 6 }}>
-                    <button onClick={() => window.open(doc.file_url, '_blank')} style={{
+                    <button onClick={() => openDoc(doc.file_url)} style={{
                       width: 32, height: 32, borderRadius: '50%', background: 'var(--green-50)',
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
                       border: 'none', cursor: 'pointer'
