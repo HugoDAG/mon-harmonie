@@ -116,6 +116,7 @@ export default function Profile() {
     { key: 'infos', label: 'Mes informations', img: 'https://lorpxeojlganrirzksff.supabase.co/storage/v1/object/public/documents/mes%20informations%20trans%202.png' },
     { key: 'signalements', label: 'Mes signalements', img: 'https://lorpxeojlganrirzksff.supabase.co/storage/v1/object/public/documents/mes%20signalements%20trans%202.png' },
     { key: 'annonces', label: 'Mes annonces', img: 'https://lorpxeojlganrirzksff.supabase.co/storage/v1/object/public/documents/mes%20annonces%20trans%202.png' },
+        { key: 'mesdocs', label: 'Mes documents perso', img: 'https://lorpxeojlganrirzksff.supabase.co/storage/v1/object/public/documents/documents%20trans.png', action: () => navigate('/mes-documents') },
     { key: 'regles', label: 'Regles de la copropriete', img: 'https://lorpxeojlganrirzksff.supabase.co/storage/v1/object/public/documents/regle%20de%20coprop%20trans.png', action: () => navigate('/rules') },
     { key: 'guide', label: "Guide d'utilisation", img: 'https://lorpxeojlganrirzksff.supabase.co/storage/v1/object/public/documents/guide%20utilisation%20trans%202.png', action: () => navigate('/guide') },
     { key: 'residence', label: 'Ma residence', img: 'https://lorpxeojlganrirzksff.supabase.co/storage/v1/object/public/documents/ma%20residence.png', action: () => navigate('/ma-residence') },
