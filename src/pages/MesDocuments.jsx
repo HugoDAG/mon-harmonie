@@ -44,7 +44,11 @@ export default function MesDocuments() {
     setUploading(true)
 
     const fileExt = form.file.name.split('.').pop()
-    const fileName = `${user.id}/${Date.now()}-${form.title.replace(/\s+/g, '-')}.${fileExt}`
+        const cleanTitle = form.title
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-zA-Z0-9-]/g, '-')
+      .replace(/-+/g, '-')
+    const fileName = `${user.id}/${Date.now()}-${cleanTitle}.${fileExt}`
 
     const { error: uploadError } = await supabase.storage
       .from('documents')
