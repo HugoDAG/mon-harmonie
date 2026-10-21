@@ -6,6 +6,7 @@ import Register from './pages/Register'
 import Directory from './pages/Directory'
 import Documents from './pages/Documents'
 import DocumentSummary from './pages/DocumentSummary'
+import MesDocuments from './pages/MesDocuments'
 import Bookings from './pages/Bookings'
 import Profile from './pages/Profile'
 import PostsByType from './pages/PostsByType'
@@ -61,6 +62,7 @@ export default function App() {
           <Route path="/directory" element={<PrivateRoute><Directory /></PrivateRoute>} />
           <Route path="/documents" element={<PrivateRoute><Documents /></PrivateRoute>} />
           <Route path="/document/:id/summary" element={<PrivateRoute><DocumentSummary /></PrivateRoute>} />
+          <Route path="/mes-documents" element={<PrivateRoute><MesDocuments /></PrivateRoute>} />
           <Route path="/bookings" element={<PrivateRoute><Bookings /></PrivateRoute>} />
           <Route path="/profile" element={<PrivateRoute><Profile /></PrivateRoute>} />
           <Route path="/calendar" element={<PrivateRoute><CalendarPage /></PrivateRoute>} />
