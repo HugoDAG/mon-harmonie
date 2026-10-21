@@ -11,7 +11,7 @@ const DOC_CATEGORIES = [
   { key: 'assurance', label: 'Assurance habitation' },
   { key: 'facture', label: 'Factures / charges' },
   { key: 'courrier', label: 'Courriers syndic' },
-  { key: 'pv', label: 'PV d\'assemblée générale' },
+  { key: 'pv', label: "PV d'assemblée générale" },
   { key: 'travaux', label: 'Devis / travaux' },
   { key: 'autre', label: 'Autres' }
 ]
@@ -43,14 +43,13 @@ export default function MesDocuments() {
     if (!form.file || !form.title) return
     setUploading(true)
 
-    const fileExt = form.file.name.split('.').pop()
-        const cleanTitle = form.title
+    const fileExt = form.file.name.split('.').pop().toLowerCase()
+    const cleanTitle = form.title
       .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
       .replace(/[^a-zA-Z0-9-]/g, '-')
       .replace(/-+/g, '-')
+      .slice(0, 60)
     const filePath = `${user.id}/${Date.now()}-${cleanTitle}.${fileExt}`
-
-        const filePath = `${user.id}/${Date.now()}-${cleanTitle}.${fileExt}`
 
     const { error: uploadError } = await supabase.storage
       .from('personal')
@@ -66,7 +65,7 @@ export default function MesDocuments() {
       ? `${(form.file.size / 1024).toFixed(0)} Ko`
       : `${(form.file.size / (1024 * 1024)).toFixed(1)} Mo`
 
-        await supabase.from('personal_documents').insert({
+    await supabase.from('personal_documents').insert({
       user_id: user.id,
       title: form.title,
       category: form.category,
@@ -80,18 +79,20 @@ export default function MesDocuments() {
     setUploading(false)
   }
 
-    async function openDoc(filePath) {
-    const { data, error } = await supabase.storage
+  async function openDoc(filePath) {
+    const { data } = await supabase.storage
       .from('personal')
       .createSignedUrl(filePath, 300)
     if (data?.signedUrl) {
       window.open(data.signedUrl, '_blank')
     } else {
-      alert('Impossible d\'ouvrir le document')
+      alert("Impossible d'ouvrir le document")
     }
   }
-  async function handleDelete(id) {
-    await supabase.from('personal_documents').delete().eq('id', id)
+
+  async function handleDelete(doc) {
+    await supabase.storage.from('personal').remove([doc.file_url])
+    await supabase.from('personal_documents').delete().eq('id', doc.id)
     setDeletingId(null)
     fetchDocs()
   }
@@ -117,25 +118,23 @@ export default function MesDocuments() {
           </button>
         </div>
 
-        {/* Privacy notice */}
         <div style={{
           display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px',
           background: 'var(--green-sage-10)', borderRadius: 'var(--radius)',
           marginBottom: 16, fontSize: 12, color: 'var(--green-dark)'
         }}>
           <Lock size={14} />
-          Vos documents sont prives et visibles uniquement par vous.
+          Vos documents sont privés et visibles uniquement par vous.
         </div>
 
-        {/* Upload form */}
         {showUpload && (
           <form onSubmit={handleUpload} className="card" style={{ marginBottom: 16 }}>
             <div className="form-group">
               <label>Titre du document</label>
-              <input value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} placeholder="Ex: Acte de vente apt C223" required />
+              <input value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} placeholder="Ex: Acte de vente" required />
             </div>
             <div className="form-group">
-              <label>Categorie</label>
+              <label>Catégorie</label>
               <select value={form.category} onChange={e => setForm(f => ({ ...f, category: e.target.value }))}>
                 {DOC_CATEGORIES.map(c => <option key={c.key} value={c.key}>{c.label}</option>)}
               </select>
@@ -150,14 +149,13 @@ export default function MesDocuments() {
           </form>
         )}
 
-        {/* Documents list */}
         {loading ? (
           <p style={{ textAlign: 'center', color: 'var(--text-muted)', padding: 32 }}>Chargement...</p>
         ) : docs.length === 0 && !showUpload ? (
           <div style={{ textAlign: 'center', padding: 40 }}>
             <FolderOpen size={40} color="var(--text-muted)" style={{ marginBottom: 12, opacity: 0.4 }} />
             <p style={{ fontSize: 14, color: 'var(--text-muted)', marginBottom: 4 }}>Aucun document personnel</p>
-            <p style={{ fontSize: 12, color: 'var(--text-muted)' }}>Ajoutez vos documents lies a la copropriete : acte de vente, assurance, factures...</p>
+            <p style={{ fontSize: 12, color: 'var(--text-muted)' }}>Ajoutez vos documents liés à la copropriété : acte de vente, assurance, factures...</p>
           </div>
         ) : (
           groupedDocs.map(cat => (
@@ -170,18 +168,18 @@ export default function MesDocuments() {
                   <div style={{
                     width: 36, height: 36, borderRadius: 'var(--radius)',
                     background: 'var(--cream)', display: 'flex',
-                    alignItems: 'center', justifyContent: 'center'
+                    alignItems: 'center', justifyContent: 'center', flexShrink: 0
                   }}>
                     <FileText size={18} color="var(--green-sage)" />
                   </div>
-                  <div style={{ flex: 1, cursor: 'pointer' }} onClick={() => openDoc(doc.file_url)}>
-                    <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-dark)' }}>{doc.title}</div>
+                  <div style={{ flex: 1, cursor: 'pointer', minWidth: 0 }} onClick={() => openDoc(doc.file_url)}>
+                    <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-dark)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{doc.title}</div>
                     <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>
                       {new Date(doc.created_at).toLocaleDateString('fr-FR')}
                       {doc.file_size && ` · ${doc.file_size}`}
                     </div>
                   </div>
-                  <div style={{ display: 'flex', gap: 6 }}>
+                  <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
                     <button onClick={() => openDoc(doc.file_url)} style={{
                       width: 32, height: 32, borderRadius: '50%', background: 'var(--green-50)',
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -191,7 +189,7 @@ export default function MesDocuments() {
                     </button>
                     {deletingId === doc.id ? (
                       <div style={{ display: 'flex', gap: 4 }}>
-                        <button onClick={() => handleDelete(doc.id)} style={{
+                        <button onClick={() => handleDelete(doc)} style={{
                           background: 'var(--red-500)', color: '#fff', border: 'none',
                           borderRadius: 6, padding: '4px 8px', fontSize: 11, cursor: 'pointer'
                         }}>Oui</button>
