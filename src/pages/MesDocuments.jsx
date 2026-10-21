@@ -80,18 +80,33 @@ export default function MesDocuments() {
   }
 
   async function openDoc(filePath) {
-    const { data } = await supabase.storage
+    // Ouvrir l'onglet tout de suite pour éviter le blocage des pop-ups sur ordinateur
+    const newTab = window.open('', '_blank')
+
+    // Anciens documents enregistrés avec une adresse complète
+    if (filePath.startsWith('http')) {
+      if (newTab) newTab.location.href = filePath
+      else window.location.href = filePath
+      return
+    }
+
+    const { data, error } = await supabase.storage
       .from('personal')
       .createSignedUrl(filePath, 300)
+
     if (data?.signedUrl) {
-      window.open(data.signedUrl, '_blank')
+      if (newTab) newTab.location.href = data.signedUrl
+      else window.location.href = data.signedUrl
     } else {
-      alert("Impossible d'ouvrir le document")
+      if (newTab) newTab.close()
+      alert("Impossible d'ouvrir le document : " + (error?.message || 'erreur inconnue'))
     }
   }
 
   async function handleDelete(doc) {
-    await supabase.storage.from('personal').remove([doc.file_url])
+    if (!doc.file_url.startsWith('http')) {
+      await supabase.storage.from('personal').remove([doc.file_url])
+    }
     await supabase.from('personal_documents').delete().eq('id', doc.id)
     setDeletingId(null)
     fetchDocs()
