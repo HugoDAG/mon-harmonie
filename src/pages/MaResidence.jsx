@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/AuthContext'
 import { useNavigate } from 'react-router-dom'
 import BottomNav from '../components/BottomNav'
-import { ArrowLeft, ChevronDown, Plus, Trash2, Home, X } from 'lucide-react'
+import { ArrowLeft, ChevronDown, Plus, Trash2, Home, X, KeyRound, Printer, RotateCw } from 'lucide-react'
 import { BUILDINGS } from '../lib/constants'
 
 export default function MaResidence() {
@@ -11,10 +11,12 @@ export default function MaResidence() {
   const navigate = useNavigate()
   const [apartments, setApartments] = useState([])
   const [residents, setResidents] = useState([])
+  const [codes, setCodes] = useState({})          // { apartmentId: code }
   const [loading, setLoading] = useState(true)
   const [openBuilding, setOpenBuilding] = useState(null)
   const [newApt, setNewApt] = useState('')
   const [addingTo, setAddingTo] = useState(null)
+  const [working, setWorking] = useState(false)
 
   const isAdmin = profile?.role === 'admin' || profile?.role === 'syndic'
 
@@ -23,20 +25,27 @@ export default function MaResidence() {
   async function fetchAll() {
     setLoading(true)
     const [{ data: aptsData }, { data: resData }] = await Promise.all([
-      supabase.from('apartments').select('*').order('building').order('number', { ascending: true }),
+      supabase.from('apartments').select('id, building, number').order('building').order('number'),
       supabase.from('profiles').select('id, first_name, last_name, building, apartment, account_status, co_resident_id').eq('account_status', 'approved')
     ])
     setApartments(aptsData || [])
 
-    // Enrichir avec les noms des co-résidents
     const enriched = (resData || []).map(r => {
       if (r.co_resident_id) {
-        const coResident = (resData || []).find(p => p.id === r.co_resident_id)
-        return { ...r, co_resident_name: coResident?.first_name || null }
+        const co = (resData || []).find(p => p.id === r.co_resident_id)
+        return { ...r, co_resident_name: co?.first_name || null }
       }
       return r
     })
     setResidents(enriched)
+
+    // Les codes ne sont lisibles que par l'admin/syndic (fonction sécurisée)
+    if (isAdmin) {
+      const { data: codeData } = await supabase.rpc('admin_apartment_codes')
+      const map = {}
+      ;(codeData || []).forEach(c => { map[c.id] = c.access_code })
+      setCodes(map)
+    }
     setLoading(false)
   }
 
@@ -44,7 +53,7 @@ export default function MaResidence() {
     if (!newApt.trim()) return
     const { error } = await supabase.from('apartments').insert({ building, number: newApt.trim().toUpperCase() })
     if (error) {
-      if (error.code === '23505') alert('Cet appartement existe deja')
+      if (error.code === '23505') alert('Cet appartement existe déjà')
       else alert('Erreur : ' + error.message)
     } else {
       setNewApt('')
@@ -60,23 +69,62 @@ export default function MaResidence() {
     }
   }
 
-  function getResidentForApt(building, number) {
-    return residents.find(r => r.building === building && r.apartment === number)
+  async function generateCodes() {
+    setWorking(true)
+    const { error } = await supabase.rpc('generate_apartment_codes')
+    setWorking(false)
+    if (error) { alert('Erreur : ' + error.message); return }
+    fetchAll()
+  }
+
+  async function regenerate(id) {
+    if (!confirm("Régénérer le code de cet appartement ? L'ancien code ne fonctionnera plus.")) return
+    const { error } = await supabase.rpc('regenerate_apartment_code', { p_id: id })
+    if (error) { alert('Erreur : ' + error.message); return }
+    fetchAll()
+  }
+
+  function printCodes() {
+    const list = apartments.filter(a => codes[a.id])
+    if (list.length === 0) { alert("Aucun code à imprimer. Générez d'abord les codes."); return }
+    const cards = list.map(a => `
+      <div class="card">
+        <div class="res">Résidence Harmonie</div>
+        <div class="apt">Bâtiment ${a.building} &middot; Appartement ${a.number}</div>
+        <div class="code">${codes[a.id]}</div>
+        <div class="note">Saisissez ce code lors de votre inscription sur l'application <b>Mon Harmonie</b>.<br/>Valable pour 2 comptes (vous + votre co-résident).</div>
+      </div>`).join('')
+    const html = `<!doctype html><html><head><meta charset="utf-8"><title>Codes Mon Harmonie</title>
+      <style>
+        body{font-family:Arial,Helvetica,sans-serif;margin:0;padding:12px;}
+        h1{font-size:16px;color:#4A5B3A;margin:4px 8px 12px;}
+        .grid{display:flex;flex-wrap:wrap;}
+        .card{width:250px;border:1px dashed #999;border-radius:10px;padding:14px;margin:6px;}
+        .res{font-size:10px;color:#4A5B3A;letter-spacing:1px;text-transform:uppercase;}
+        .apt{font-size:14px;font-weight:bold;margin:6px 0;}
+        .code{font-size:22px;font-weight:bold;letter-spacing:2px;font-family:monospace;color:#C4794E;margin:8px 0;}
+        .note{font-size:10px;color:#555;line-height:1.4;}
+        @media print {.card{page-break-inside:avoid;}}
+      </style></head><body>
+      <h1>Codes d'accès &mdash; Mon Harmonie (à découper et distribuer dans les boîtes aux lettres)</h1>
+      <div class="grid">${cards}</div>
+      <script>window.onload=function(){window.print();}</script></body></html>`
+    const w = window.open('', '_blank')
+    if (w) { w.document.write(html); w.document.close() }
+  }
+
+  function apartmentResidents(building, number) {
+    return residents.filter(r => r.building === building && r.apartment === number)
   }
 
   function getBuildingStats(building) {
     const bApts = apartments.filter(a => a.building === building)
-    const occupied = bApts.filter(a => getResidentForApt(building, a.number)).length
+    const occupied = bApts.filter(a => apartmentResidents(building, a.number).length > 0).length
     return { total: bApts.length, occupied }
   }
 
-  function getDisplayName(resident) {
-    const name = `${resident.first_name} ${resident.last_name?.[0]}.`
-    if (resident.co_resident_name) {
-      return `${resident.first_name} & ${resident.co_resident_name}`
-    }
-    return name
-  }
+  const codesCount = Object.keys(codes).length
+  const missingCodes = isAdmin && apartments.some(a => !codes[a.id])
 
   return (
     <div className="app-shell">
@@ -85,17 +133,17 @@ export default function MaResidence() {
           <button onClick={() => navigate('/profile')} style={{ background: 'none', border: 'none', color: 'var(--green-dark)', padding: 4 }}>
             <ArrowLeft size={22} />
           </button>
-          <h1 style={{ fontSize: 20, fontWeight: 600, fontFamily: "'Cinzel', serif", color: 'var(--green-dark)' }}>Ma residence</h1>
+          <h1 style={{ fontSize: 20, fontWeight: 600, fontFamily: "'Cinzel', serif", color: 'var(--green-dark)' }}>Ma résidence</h1>
         </div>
 
         {/* Stats */}
         <div style={{
-          display: 'flex', gap: 12, marginBottom: 20, padding: '14px 16px',
+          display: 'flex', gap: 12, marginBottom: 16, padding: '14px 16px',
           background: 'var(--green-dark)', borderRadius: 'var(--radius-lg)'
         }}>
           <div style={{ flex: 1, textAlign: 'center' }}>
             <div style={{ fontSize: 22, fontWeight: 600, color: '#fff' }}>{BUILDINGS.length}</div>
-            <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.6)' }}>Batiments</div>
+            <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.6)' }}>Bâtiments</div>
           </div>
           <div style={{ width: 1, background: 'rgba(255,255,255,0.15)' }} />
           <div style={{ flex: 1, textAlign: 'center' }}>
@@ -105,9 +153,21 @@ export default function MaResidence() {
           <div style={{ width: 1, background: 'rgba(255,255,255,0.15)' }} />
           <div style={{ flex: 1, textAlign: 'center' }}>
             <div style={{ fontSize: 22, fontWeight: 600, color: '#fff' }}>{residents.length}</div>
-            <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.6)' }}>Residents</div>
+            <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.6)' }}>Résidents</div>
           </div>
         </div>
+
+        {/* Actions admin : codes */}
+        {isAdmin && apartments.length > 0 && (
+          <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
+            <button onClick={generateCodes} disabled={working} className="btn btn-secondary" style={{ flex: 1, fontSize: 12, minWidth: 150 }}>
+              <KeyRound size={15} /> {working ? 'Génération...' : (missingCodes ? 'Générer les codes manquants' : 'Codes générés')}
+            </button>
+            <button onClick={printCodes} className="btn btn-secondary" style={{ flex: 1, fontSize: 12, minWidth: 130 }}>
+              <Printer size={15} /> Imprimer les codes
+            </button>
+          </div>
+        )}
 
         {loading ? (
           <p style={{ textAlign: 'center', color: 'var(--text-muted)', padding: 32 }}>Chargement...</p>
@@ -132,9 +192,9 @@ export default function MaResidence() {
                     <Home size={18} color="var(--green-sage)" />
                   </div>
                   <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--green-dark)' }}>Batiment {building}</div>
+                    <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--green-dark)' }}>Bâtiment {building}</div>
                     <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>
-                      {stats.total === 0 ? 'Aucun appartement' : `${stats.occupied}/${stats.total} presents dans l'app`}
+                      {stats.total === 0 ? 'Aucun appartement' : `${stats.occupied}/${stats.total} présents dans l'app`}
                     </div>
                   </div>
                   <ChevronDown size={18} color="var(--text-muted)" style={{ transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }} />
@@ -143,39 +203,52 @@ export default function MaResidence() {
                 {isOpen && (
                   <div style={{ padding: '0 16px 16px', background: 'var(--white)' }}>
                     {bApts.length === 0 && (
-                      <p style={{ fontSize: 13, color: 'var(--text-muted)', padding: '8px 0' }}>Aucun appartement enregistre</p>
+                      <p style={{ fontSize: 13, color: 'var(--text-muted)', padding: '8px 0' }}>Aucun appartement enregistré</p>
                     )}
 
                     {bApts.map(apt => {
-                      const resident = getResidentForApt(building, apt.number)
-                      const occupied = !!resident
+                      const apRes = apartmentResidents(building, apt.number)
+                      const count = apRes.length
+                      const names = apRes.map(r => r.co_resident_name ? `${r.first_name} & ${r.co_resident_name}` : `${r.first_name} ${r.last_name?.[0] || ''}.`).join(' · ')
+                      const statusLabel = count === 0 ? 'Non activé' : count >= 2 ? 'Complet (2 comptes)' : '1 compte'
                       return (
-                        <div key={apt.id} style={{
-                          display: 'flex', alignItems: 'center', gap: 10, padding: '10px 0',
-                          borderBottom: '1px solid var(--border-light)'
-                        }}>
-                          <div style={{
-                            width: 32, height: 32, borderRadius: 8,
-                            background: occupied ? 'var(--green-50)' : 'var(--cream)',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            fontSize: 12
-                          }}>
-                            {occupied ? '✅' : '🔲'}
-                          </div>
-                          <div style={{ flex: 1 }}>
-                            <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-dark)' }}>
-                              {resident ? getDisplayName(resident) : 'Vacant'}
-                            </div>
-                            <div style={{ fontSize: 12, color: occupied ? 'var(--green-500)' : 'var(--text-muted)' }}>
-                              {occupied ? "Present dans l'app" : "Non present dans l'app"}
-                            </div>
-                          </div>
-                          {isAdmin && !occupied && (
-                            <button onClick={() => deleteApartment(apt.id)} style={{
-                              background: 'none', border: 'none', cursor: 'pointer', padding: 4
+                        <div key={apt.id} style={{ padding: '10px 0', borderBottom: '1px solid var(--border-light)' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                            <div style={{
+                              width: 32, height: 32, borderRadius: 8,
+                              background: count > 0 ? 'var(--green-50)' : 'var(--cream)',
+                              display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12
                             }}>
-                              <Trash2 size={14} color="var(--red-500)" />
-                            </button>
+                              {count > 0 ? '✅' : '🔲'}
+                            </div>
+                            <div style={{ flex: 1 }}>
+                              <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-dark)' }}>
+                                {count > 0 ? names : `Appartement ${apt.number}`}
+                              </div>
+                              <div style={{ fontSize: 12, color: count > 0 ? 'var(--green-500)' : 'var(--text-muted)' }}>
+                                {statusLabel}
+                              </div>
+                            </div>
+                            {isAdmin && count === 0 && (
+                              <button onClick={() => deleteApartment(apt.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4 }}>
+                                <Trash2 size={14} color="var(--red-500)" />
+                              </button>
+                            )}
+                          </div>
+
+                          {/* Code (admin seulement) */}
+                          {isAdmin && (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 6, paddingLeft: 42 }}>
+                              <KeyRound size={13} color="var(--terracotta)" />
+                              <span style={{ fontFamily: 'monospace', fontSize: 13, fontWeight: 600, color: 'var(--terracotta)', letterSpacing: 1 }}>
+                                {codes[apt.id] || '— (générer les codes)'}
+                              </span>
+                              {codes[apt.id] && (
+                                <button onClick={() => regenerate(apt.id)} title="Régénérer" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2, marginLeft: 'auto' }}>
+                                  <RotateCw size={13} color="var(--text-muted)" />
+                                </button>
+                              )}
+                            </div>
                           )}
                         </div>
                       )
@@ -221,6 +294,12 @@ export default function MaResidence() {
               </div>
             )
           })
+        )}
+
+        {isAdmin && (
+          <p style={{ fontSize: 11, color: 'var(--text-muted)', textAlign: 'center', marginTop: 16, lineHeight: 1.5 }}>
+            Ajoutez les appartements, générez les codes, puis imprimez-les pour les distribuer dans les boîtes aux lettres. Chaque code permet 2 comptes (un couple).
+          </p>
         )}
       </div>
       <BottomNav />
