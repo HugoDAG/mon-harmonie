@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { POST_TYPE_LABELS } from '../lib/constants'
-import { AlertTriangle, Megaphone, Users, BarChart3, Pencil, Check, X, Trash2, ThumbsUp, MessageCircle, Send } from 'lucide-react'
+import { AlertTriangle, Megaphone, Users, BarChart3, Car, Pencil, Check, X, Trash2, ThumbsUp, MessageCircle, Send } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/AuthContext'
 
@@ -8,6 +8,7 @@ const TYPE_ICONS = {
   annonce: Megaphone,
   signalement: AlertTriangle,
   voisinage: Users,
+  covoiturage: Car,
   sondage: BarChart3
 }
 
@@ -17,6 +18,12 @@ const STATUS_OPTIONS = [
   { value: 'resolved', label: '✅ Résolu', color: 'var(--green-500)', bg: 'var(--green-50)' },
   { value: 'rejected', label: '❌ Rejeté', color: 'var(--red-500)', bg: 'var(--red-50)' }
 ]
+
+const DIRECTION_LABELS = {
+  'aller': 'Aller',
+  'retour': 'Retour',
+  'aller-retour': 'Aller-retour'
+}
 
 function getInitials(profile, coName) {
   if (profile.co_resident_id && coName) {
@@ -37,7 +44,38 @@ const AVATAR_COLORS = {
   annonce: { bg: 'var(--blue-50)', color: 'var(--blue-600)' },
   signalement: { bg: 'var(--amber-50)', color: 'var(--amber-600)' },
   voisinage: { bg: 'var(--green-50)', color: 'var(--green-600)' },
+  covoiturage: { bg: 'rgba(196,121,78,0.1)', color: 'var(--terracotta)' },
   sondage: { bg: 'var(--purple-50)', color: 'var(--purple-500)' }
+}
+
+function RideDetails({ ride }) {
+  if (!ride) return null
+  const isOffer = ride.role === 'propose'
+  const whenText = ride.frequency === 'regulier'
+    ? (ride.days || 'Trajet régulier')
+    : ride.date
+      ? new Date(ride.date + 'T00:00:00').toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })
+      : ''
+
+  return (
+    <div style={{
+      marginTop: 10, padding: '10px 12px', borderRadius: 'var(--radius)',
+      background: 'rgba(196,121,78,0.08)', border: '1px solid rgba(196,121,78,0.25)'
+    }}>
+      <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--terracotta)', marginBottom: 6 }}>
+        {isOffer ? '🚗 Propose un trajet' : '🙋 Cherche un trajet'}
+      </div>
+      <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-dark)', marginBottom: 4 }}>
+        Harmonie → {ride.destination}
+      </div>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, fontSize: 12, color: 'var(--text-medium)' }}>
+        <span style={{ background: 'var(--white)', padding: '2px 8px', borderRadius: 99 }}>{DIRECTION_LABELS[ride.direction] || ride.direction}</span>
+        {whenText && <span style={{ background: 'var(--white)', padding: '2px 8px', borderRadius: 99 }}>📅 {whenText}</span>}
+        {ride.time && <span style={{ background: 'var(--white)', padding: '2px 8px', borderRadius: 99 }}>🕐 {ride.time.slice(0, 5)}</span>}
+        {isOffer && ride.seats && <span style={{ background: 'var(--white)', padding: '2px 8px', borderRadius: 99 }}>💺 {ride.seats} place{ride.seats > 1 ? 's' : ''}</span>}
+      </div>
+    </div>
+  )
 }
 
 export default function PostCard({ post, onUpdated }) {
@@ -130,7 +168,7 @@ export default function PostCard({ post, onUpdated }) {
     }
   }
 
- async function handleVote(optionId) {
+  async function handleVote(optionId) {
     if (userVote) {
       await supabase.from('poll_votes').delete().eq('option_id', userVote).eq('user_id', user.id)
     }
@@ -214,6 +252,7 @@ export default function PostCard({ post, onUpdated }) {
       ) : (
         <div>
           <p style={{ fontSize: 14, color: 'var(--gray-600)', lineHeight: 1.6 }}>{content}</p>
+          {type === 'covoiturage' && <RideDetails ride={post.ride} />}
           {image_url && (
             <img src={image_url} alt="" style={{ width: '100%', borderRadius: 'var(--radius)', marginTop: 10, maxHeight: 300, objectFit: 'cover' }} />
           )}
@@ -309,7 +348,7 @@ export default function PostCard({ post, onUpdated }) {
           <form onSubmit={handleComment} style={{ display: 'flex', gap: 8 }}>
             <input
               value={newComment} onChange={e => setNewComment(e.target.value)}
-              placeholder="Ecrire un commentaire..."
+              placeholder={type === 'covoiturage' ? "Ça m'intéresse, je vous écris..." : 'Ecrire un commentaire...'}
               style={{ flex: 1, padding: '8px 10px', border: '1px solid var(--gray-200)', borderRadius: 'var(--radius)', fontSize: 13 }}
             />
             <button type="submit" disabled={sendingComment} style={{ background: 'var(--blue-500)', color: '#fff', border: 'none', borderRadius: 'var(--radius)', padding: '8px 10px', cursor: 'pointer' }}>
