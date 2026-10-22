@@ -2,7 +2,19 @@ import { useState } from 'react'
 import { X, Send, Camera, Plus, Trash2 } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/AuthContext'
-import { POST_TYPES, CHANNELS } from '../lib/constants'
+import { POST_TYPES, CHANNELS, RIDE_DESTINATIONS } from '../lib/constants'
+
+const EMPTY_RIDE = {
+  role: 'propose',
+  destination: 'Aix centre',
+  customDestination: '',
+  direction: 'aller',
+  frequency: 'ponctuel',
+  date: '',
+  time: '',
+  days: '',
+  seats: 3
+}
 
 export default function CreatePost({ onClose, onCreated, defaultType }) {
   const { user, profile } = useAuth()
@@ -13,6 +25,14 @@ export default function CreatePost({ onClose, onCreated, defaultType }) {
   const [imagePreview, setImagePreview] = useState(null)
   const [loading, setLoading] = useState(false)
   const [pollOptions, setPollOptions] = useState(['', ''])
+  const [ride, setRide] = useState(EMPTY_RIDE)
+
+  const isRide = type === POST_TYPES.COVOITURAGE
+  const isPoll = type === POST_TYPES.SONDAGE
+
+  function updateRide(field, value) {
+    setRide(r => ({ ...r, [field]: value }))
+  }
 
   function handleImageChange(e) {
     const file = e.target.files[0]
@@ -31,17 +51,31 @@ export default function CreatePost({ onClose, onCreated, defaultType }) {
     if (pollOptions.length > 2) setPollOptions(opts => opts.filter((_, i) => i !== index))
   }
 
+  function buildRideSummary() {
+    const dest = ride.destination === 'Autre' ? (ride.customDestination || 'Destination à préciser') : ride.destination
+    const who = ride.role === 'propose' ? 'Je propose un trajet' : 'Je cherche un trajet'
+    return `${who} vers ${dest}`
+  }
+
   async function handleSubmit(e) {
     e.preventDefault()
-    if (!content.trim()) return
-    if (type === 'sondage' && pollOptions.filter(o => o.trim()).length < 2) {
+    if (!isRide && !content.trim()) return
+    if (isPoll && pollOptions.filter(o => o.trim()).length < 2) {
       alert('Un sondage doit avoir au moins 2 options')
+      return
+    }
+    if (isRide && ride.frequency === 'ponctuel' && !ride.date) {
+      alert('Indiquez la date du trajet')
+      return
+    }
+    if (isRide && ride.destination === 'Autre' && !ride.customDestination.trim()) {
+      alert('Précisez la destination')
       return
     }
     setLoading(true)
 
     let image_url = null
-    if (image) {
+    if (image && !isRide && !isPoll) {
       const fileExt = image.name.split('.').pop()
       const fileName = `${Date.now()}-${user.id}.${fileExt}`
       const { error: uploadError } = await supabase.storage.from('documents').upload(`posts/${fileName}`, image)
@@ -51,23 +85,48 @@ export default function CreatePost({ onClose, onCreated, defaultType }) {
       }
     }
 
+    const ridePayload = isRide ? {
+      role: ride.role,
+      destination: ride.destination === 'Autre' ? ride.customDestination.trim() : ride.destination,
+      direction: ride.direction,
+      frequency: ride.frequency,
+      date: ride.frequency === 'ponctuel' ? ride.date : null,
+      time: ride.time || null,
+      days: ride.frequency === 'regulier' ? (ride.days.trim() || null) : null,
+      seats: ride.role === 'propose' ? Number(ride.seats) || 1 : null
+    } : null
+
     const { data: postData, error } = await supabase.from('posts').insert({
       user_id: user.id,
-      content: content.trim(),
+      content: content.trim() || (isRide ? buildRideSummary() : ''),
       type,
       channel,
       building: profile?.building,
-      image_url
+      image_url,
+      ride: ridePayload
     }).select().single()
 
-    if (!error && type === 'sondage' && postData) {
+    if (!error && isPoll && postData) {
       const options = pollOptions.filter(o => o.trim()).map((label, i) => ({ post_id: postData.id, label: label.trim(), position: i }))
       await supabase.from('poll_options').insert(options)
     }
 
-    if (!error) { onCreated?.(); onClose() }
+    if (error) {
+      alert('Erreur : ' + error.message)
+    } else {
+      onCreated?.()
+      onClose()
+    }
     setLoading(false)
   }
+
+  const chipStyle = (active) => ({
+    flex: 1, padding: '8px 0', fontSize: 12, fontWeight: 500, cursor: 'pointer',
+    border: '1px solid ' + (active ? 'var(--green-dark)' : 'var(--border)'),
+    background: active ? 'var(--green-dark)' : 'var(--white)',
+    color: active ? 'var(--cream)' : 'var(--text-medium)',
+    borderRadius: 'var(--radius)'
+  })
 
   return (
     <div style={{
@@ -97,21 +156,99 @@ export default function CreatePost({ onClose, onCreated, defaultType }) {
           <div className="form-group">
             <label>Type</label>
             <select value={type} onChange={e => setType(e.target.value)}>
-              <option value="voisinage">Voisinage</option>
-              <option value="signalement">Signalement</option>
-              <option value="annonce">Annonce</option>
-              <option value="sondage">Sondage</option>
+              <optgroup label="Voisinage">
+                <option value="voisinage">Entraide entre voisins</option>
+                <option value="covoiturage">Covoiturage</option>
+              </optgroup>
+              <optgroup label="Autres">
+                <option value="signalement">Signalement</option>
+                <option value="annonce">Annonce</option>
+                <option value="sondage">Sondage</option>
+              </optgroup>
             </select>
           </div>
 
+          {/* Covoiturage */}
+          {isRide && (
+            <>
+              <div className="form-group">
+                <label>Je...</label>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <button type="button" onClick={() => updateRide('role', 'propose')} style={chipStyle(ride.role === 'propose')}>🚗 Propose un trajet</button>
+                  <button type="button" onClick={() => updateRide('role', 'cherche')} style={chipStyle(ride.role === 'cherche')}>🙋 Cherche un trajet</button>
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label>Destination</label>
+                <select value={ride.destination} onChange={e => updateRide('destination', e.target.value)}>
+                  {RIDE_DESTINATIONS.map(d => <option key={d} value={d}>{d}</option>)}
+                </select>
+                {ride.destination === 'Autre' && (
+                  <input value={ride.customDestination} onChange={e => updateRide('customDestination', e.target.value)} placeholder="Ex: Plan de Campagne" style={{ marginTop: 8 }} />
+                )}
+              </div>
+
+              <div className="form-group">
+                <label>Sens</label>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <button type="button" onClick={() => updateRide('direction', 'aller')} style={chipStyle(ride.direction === 'aller')}>Aller</button>
+                  <button type="button" onClick={() => updateRide('direction', 'retour')} style={chipStyle(ride.direction === 'retour')}>Retour</button>
+                  <button type="button" onClick={() => updateRide('direction', 'aller-retour')} style={chipStyle(ride.direction === 'aller-retour')}>Aller-retour</button>
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label>Fréquence</label>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <button type="button" onClick={() => updateRide('frequency', 'ponctuel')} style={chipStyle(ride.frequency === 'ponctuel')}>Ponctuel</button>
+                  <button type="button" onClick={() => updateRide('frequency', 'regulier')} style={chipStyle(ride.frequency === 'regulier')}>Régulier</button>
+                </div>
+              </div>
+
+              {ride.frequency === 'ponctuel' ? (
+                <div className="form-group">
+                  <label>Date</label>
+                  <input type="date" value={ride.date} onChange={e => updateRide('date', e.target.value)} min={new Date().toISOString().split('T')[0]} />
+                </div>
+              ) : (
+                <div className="form-group">
+                  <label>Jours</label>
+                  <input value={ride.days} onChange={e => updateRide('days', e.target.value)} placeholder="Ex: Du lundi au vendredi" />
+                </div>
+              )}
+
+              <div className="form-group">
+                <label>Heure de départ (optionnel)</label>
+                <input type="time" value={ride.time} onChange={e => updateRide('time', e.target.value)} />
+              </div>
+
+              {ride.role === 'propose' && (
+                <div className="form-group">
+                  <label>Places disponibles</label>
+                  <select value={ride.seats} onChange={e => updateRide('seats', e.target.value)}>
+                    {[1, 2, 3, 4, 5, 6].map(n => <option key={n} value={n}>{n}</option>)}
+                  </select>
+                </div>
+              )}
+            </>
+          )}
+
           <div className="form-group">
-            <label>{type === 'sondage' ? 'Question du sondage' : type === 'signalement' ? 'Description du problème' : 'Message'}</label>
+            <label>
+              {isPoll ? 'Question du sondage' : type === 'signalement' ? 'Description du problème' : isRide ? 'Précisions (optionnel)' : 'Message'}
+            </label>
             <textarea value={content} onChange={e => setContent(e.target.value)}
-              placeholder={type === 'sondage' ? 'Posez votre question...' : type === 'signalement' ? 'Décrivez le problème rencontré...' : 'Écrivez votre message...'}
-              rows={4} required />
+              placeholder={
+                isPoll ? 'Posez votre question...'
+                  : type === 'signalement' ? 'Décrivez le problème rencontré...'
+                  : isRide ? 'Point de rendez-vous, participation aux frais...'
+                  : 'Écrivez votre message...'
+              }
+              rows={isRide ? 2 : 4} required={!isRide} />
           </div>
 
-          {type === 'sondage' && (
+          {isPoll && (
             <div className="form-group">
               <label>Options du sondage</label>
               {pollOptions.map((opt, i) => (
@@ -133,7 +270,7 @@ export default function CreatePost({ onClose, onCreated, defaultType }) {
             </div>
           )}
 
-          {type !== 'sondage' && (
+          {!isPoll && !isRide && (
             <div className="form-group">
               <label>Photo (optionnel)</label>
               <label style={{
