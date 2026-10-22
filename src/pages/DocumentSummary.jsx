@@ -99,6 +99,30 @@ export default function DocumentSummary() {
   const doitFaire = obligations.filter(o => o.doit)
   const nePeutPas = obligations.filter(o => !o.doit)
 
+  // Affiche une obligation : si le texte contient ":" et ";", rend un titre + une liste à puces
+  function ObligationText({ text }) {
+    const hasList = text.includes(';') || text.includes('•')
+    if (!hasList) {
+      return <span style={{ fontSize: 13, color: 'var(--text-dark)', lineHeight: 1.5 }}>{text}</span>
+    }
+    let head = ''
+    let rest = text
+    const colon = text.indexOf(':')
+    if (colon !== -1) { head = text.slice(0, colon).trim(); rest = text.slice(colon + 1) }
+    const items = rest.split(/[;•]/).map(s => s.trim()).filter(Boolean)
+    return (
+      <div style={{ flex: 1 }}>
+        {head && <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-dark)', marginBottom: 6 }}>{head}</div>}
+        {items.map((it, i) => (
+          <div key={i} style={{ display: 'flex', gap: 8, marginBottom: 4 }}>
+            <span style={{ color: 'var(--green-sage)', lineHeight: 1.5, flexShrink: 0 }}>•</span>
+            <span style={{ fontSize: 13, color: 'var(--text-medium)', lineHeight: 1.5 }}>{it}</span>
+          </div>
+        ))}
+      </div>
+    )
+  }
+
   if (loading) {
     return (
       <div className="app-shell">
@@ -118,7 +142,7 @@ export default function DocumentSummary() {
           <button onClick={() => navigate('/documents')} style={{ background: 'none', border: 'none', color: 'var(--green-dark)', padding: 4 }}>
             <ArrowLeft size={22} />
           </button>
-          <h1 style={{ fontSize: 18, fontWeight: 600, fontFamily: "'Cinzel', serif", color: 'var(--green-dark)' }}>Resume du document</h1>
+          <h1 style={{ fontSize: 18, fontWeight: 600, fontFamily: "'Cinzel', serif", color: 'var(--green-dark)' }}>Résumé du document</h1>
         </div>
 
         {/* Document info */}
@@ -137,7 +161,7 @@ export default function DocumentSummary() {
         {/* ==================== RESUME PAGE PAR PAGE ==================== */}
         <div style={{ marginBottom: 24 }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-            <h2 style={{ fontSize: 15, fontWeight: 600, fontFamily: "'Cinzel', serif", color: 'var(--green-dark)' }}>Resume page par page</h2>
+            <h2 style={{ fontSize: 15, fontWeight: 600, fontFamily: "'Cinzel', serif", color: 'var(--green-dark)' }}>Résumé page par page</h2>
             {canEdit && summary && !editingSummary && (
               <button onClick={() => setEditingSummary(true)} style={{ background: 'none', border: 'none', color: 'var(--green-sage)', fontSize: 12, cursor: 'pointer', fontWeight: 500 }}>
                 Modifier
@@ -148,7 +172,7 @@ export default function DocumentSummary() {
           {editingSummary ? (
             <div>
               <div style={{ background: 'var(--green-sage-10)', padding: '10px 12px', borderRadius: 'var(--radius)', marginBottom: 12, fontSize: 12, color: 'var(--green-dark)', lineHeight: 1.5 }}>
-                Utilisez "--- Page X ---" pour separer les pages. Ecrivez un court resume sous chaque marqueur.
+                Utilisez "--- Page X ---" pour séparer les pages. Écrivez un court résumé sous chaque marqueur.
               </div>
               <textarea
                 value={summary}
@@ -196,7 +220,7 @@ export default function DocumentSummary() {
             </div>
           ) : (
             <div style={{ textAlign: 'center', padding: 24 }}>
-              <p style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 12 }}>Aucun resume disponible</p>
+              <p style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 12 }}>Aucun résumé disponible</p>
               {canEdit && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                   {doc?.file_url && doc.file_url.toLowerCase().endsWith('.pdf') && (
@@ -204,8 +228,8 @@ export default function DocumentSummary() {
                       {extracting ? 'Extraction en cours...' : 'Extraire le texte du PDF'}
                     </button>
                   )}
-                  <button onClick={() => { setSummary('--- Page 1 ---\nResume de la page 1...\n\n--- Page 2 ---\nResume de la page 2...'); setEditingSummary(true) }} className="btn btn-primary" style={{ fontSize: 13, padding: 12 }}>
-                    Rediger un resume manuellement
+                  <button onClick={() => { setSummary('--- Page 1 ---\nRésumé de la page 1...\n\n--- Page 2 ---\nRésumé de la page 2...'); setEditingSummary(true) }} className="btn btn-primary" style={{ fontSize: 13, padding: 12 }}>
+                    Rédiger un résumé manuellement
                   </button>
                 </div>
               )}
@@ -226,7 +250,7 @@ export default function DocumentSummary() {
 
           {obligations.length === 0 && !editingTable ? (
             <div style={{ textAlign: 'center', padding: 24 }}>
-              <p style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 12 }}>Aucune obligation renseignee</p>
+              <p style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 12 }}>Aucune obligation renseignée</p>
               {canEdit && (
                 <button onClick={() => setEditingTable(true)} className="btn btn-primary" style={{ fontSize: 13, padding: 12 }}>
                   Ajouter les obligations du syndic
@@ -289,11 +313,11 @@ export default function DocumentSummary() {
                   </div>
                   {doitFaire.map((o, i) => (
                     <div key={i} style={{
-                      display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px',
+                      display: 'flex', alignItems: 'flex-start', gap: 10, padding: '10px 14px',
                       background: 'var(--green-50)', borderRadius: 'var(--radius)', marginBottom: 4
                     }}>
                       <span style={{ fontSize: 16 }}>✅</span>
-                      <span style={{ fontSize: 13, color: 'var(--text-dark)' }}>{o.action}</span>
+                      <ObligationText text={o.action} />
                     </div>
                   ))}
                 </div>
@@ -306,11 +330,11 @@ export default function DocumentSummary() {
                   </div>
                   {nePeutPas.map((o, i) => (
                     <div key={i} style={{
-                      display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px',
+                      display: 'flex', alignItems: 'flex-start', gap: 10, padding: '10px 14px',
                       background: 'var(--red-50)', borderRadius: 'var(--radius)', marginBottom: 4
                     }}>
                       <span style={{ fontSize: 16 }}>❌</span>
-                      <span style={{ fontSize: 13, color: 'var(--text-dark)' }}>{o.action}</span>
+                      <ObligationText text={o.action} />
                     </div>
                   ))}
                 </div>
