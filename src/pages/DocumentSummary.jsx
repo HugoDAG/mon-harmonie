@@ -69,18 +69,31 @@ export default function DocumentSummary() {
 
   async function saveSummary() {
     setSaving(true)
-    await supabase.from('documents').update({ summary }).eq('id', id)
+    const { data, error } = await supabase.from('documents')
+      .update({ summary }).eq('id', id).select()
     setSaving(false)
+    if (error) { alert("Erreur d'enregistrement : " + error.message); return }
+    if (!data || data.length === 0) {
+      alert("Enregistrement refusé. Vérifiez que la règle de modification des documents est bien ajoutée dans Supabase.")
+      return
+    }
     setEditingSummary(false)
+    fetchDoc()
   }
 
   async function saveObligations() {
     setSaving(true)
-    await supabase.from('documents')
+    const { data, error } = await supabase.from('documents')
       .update({ syndic_obligations: JSON.stringify({ doit: doitText, nepeut: nePeutText }) })
-      .eq('id', id)
+      .eq('id', id).select()
     setSaving(false)
+    if (error) { alert("Erreur d'enregistrement : " + error.message); return }
+    if (!data || data.length === 0) {
+      alert("Enregistrement refusé. Vérifiez que la règle de modification des documents est bien ajoutée dans Supabase.")
+      return
+    }
     setEditingTable(false)
+    fetchDoc()
   }
 
   function parseSummaryPages() {
