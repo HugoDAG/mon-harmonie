@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/AuthContext'
 import BottomNav from '../components/BottomNav'
-import { ArrowLeft, FileText, Save, ChevronDown, Plus, Trash2, Check, X as XIcon } from 'lucide-react'
+import { ArrowLeft, FileText, Save, ChevronDown, Check, X as XIcon } from 'lucide-react'
 
 export default function DocumentSummary() {
   const { id } = useParams()
@@ -11,14 +11,14 @@ export default function DocumentSummary() {
   const { profile } = useAuth()
   const [doc, setDoc] = useState(null)
   const [summary, setSummary] = useState('')
-  const [obligations, setObligations] = useState([])
+  const [doitText, setDoitText] = useState('')
+  const [nePeutText, setNePeutText] = useState('')
   const [loading, setLoading] = useState(true)
   const [extracting, setExtracting] = useState(false)
   const [saving, setSaving] = useState(false)
   const [editingSummary, setEditingSummary] = useState(false)
   const [editingTable, setEditingTable] = useState(false)
   const [openPage, setOpenPage] = useState(null)
-  const [newObligation, setNewObligation] = useState({ action: '', doit: true })
 
   const canEdit = profile?.role === 'admin' || profile?.role === 'syndic' || profile?.role === 'conseil'
 
@@ -29,7 +29,17 @@ export default function DocumentSummary() {
     setDoc(data)
     if (data?.summary) setSummary(data.summary)
     if (data?.syndic_obligations) {
-      try { setObligations(JSON.parse(data.syndic_obligations)) } catch { setObligations([]) }
+      try {
+        const parsed = JSON.parse(data.syndic_obligations)
+        if (Array.isArray(parsed)) {
+          // Ancien format (liste d'objets) -> converti en texte
+          setDoitText(parsed.filter(o => o.doit).map(o => o.action).join('\n'))
+          setNePeutText(parsed.filter(o => !o.doit).map(o => o.action).join('\n'))
+        } else {
+          setDoitText(parsed.doit || '')
+          setNePeutText(parsed.nepeut || '')
+        }
+      } catch { /* ignore */ }
     }
     setLoading(false)
   }
@@ -66,23 +76,11 @@ export default function DocumentSummary() {
 
   async function saveObligations() {
     setSaving(true)
-    await supabase.from('documents').update({ syndic_obligations: JSON.stringify(obligations) }).eq('id', id)
+    await supabase.from('documents')
+      .update({ syndic_obligations: JSON.stringify({ doit: doitText, nepeut: nePeutText }) })
+      .eq('id', id)
     setSaving(false)
     setEditingTable(false)
-  }
-
-  function addObligation() {
-    if (!newObligation.action.trim()) return
-    setObligations(prev => [...prev, { action: newObligation.action.trim(), doit: newObligation.doit }])
-    setNewObligation({ action: '', doit: true })
-  }
-
-  function removeObligation(index) {
-    setObligations(prev => prev.filter((_, i) => i !== index))
-  }
-
-  function toggleObligation(index) {
-    setObligations(prev => prev.map((o, i) => i === index ? { ...o, doit: !o.doit } : o))
   }
 
   function parseSummaryPages() {
@@ -96,29 +94,37 @@ export default function DocumentSummary() {
   }
 
   const summaryPages = parseSummaryPages()
-  const doitFaire = obligations.filter(o => o.doit)
-  const nePeutPas = obligations.filter(o => !o.doit)
+  const hasObligations = doitText.trim() || nePeutText.trim()
 
-  // Affiche une obligation : si le texte contient ":" et ";", rend un titre + une liste à puces
-  function ObligationText({ text }) {
-    const hasList = text.includes(';') || text.includes('•')
-    if (!hasList) {
-      return <span style={{ fontSize: 13, color: 'var(--text-dark)', lineHeight: 1.5 }}>{text}</span>
-    }
-    let head = ''
-    let rest = text
-    const colon = text.indexOf(':')
-    if (colon !== -1) { head = text.slice(0, colon).trim(); rest = text.slice(colon + 1) }
-    const items = rest.split(/[;•]/).map(s => s.trim()).filter(Boolean)
+  // Rend un bloc de texte libre : une ligne = une puce ; une ligne finissant par ":" = sous-titre
+  function ListBlock({ text, variant }) {
+    const lines = text.split('\n').map(l => l.trim()).filter(Boolean)
+    if (lines.length === 0) return null
+    const isDoit = variant === 'doit'
+    const bg = isDoit ? 'var(--green-50)' : 'var(--red-50)'
+    const emoji = isDoit ? '✅' : '❌'
     return (
-      <div style={{ flex: 1 }}>
-        {head && <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-dark)', marginBottom: 6 }}>{head}</div>}
-        {items.map((it, i) => (
-          <div key={i} style={{ display: 'flex', gap: 8, marginBottom: 4 }}>
-            <span style={{ color: 'var(--green-sage)', lineHeight: 1.5, flexShrink: 0 }}>•</span>
-            <span style={{ fontSize: 13, color: 'var(--text-medium)', lineHeight: 1.5 }}>{it}</span>
-          </div>
-        ))}
+      <div>
+        {lines.map((line, i) => {
+          if (line.endsWith(':')) {
+            return (
+              <div key={i} style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-dark)', margin: '10px 0 4px' }}>
+                {line.replace(/:$/, '')}
+              </div>
+            )
+          }
+          return (
+            <div key={i} style={{
+              display: 'flex', alignItems: 'flex-start', gap: 10, padding: '10px 14px',
+              background: bg, borderRadius: 'var(--radius)', marginBottom: 4
+            }}>
+              <span style={{ fontSize: 16 }}>{emoji}</span>
+              <span style={{ fontSize: 13, color: 'var(--text-dark)', lineHeight: 1.5 }}>
+                {line.replace(/^[-•]\s*/, '')}
+              </span>
+            </div>
+          )
+        })}
       </div>
     )
   }
@@ -237,18 +243,51 @@ export default function DocumentSummary() {
           )}
         </div>
 
-        {/* ==================== TABLEAU SYNDIC ==================== */}
+        {/* ==================== OBLIGATIONS DU SYNDIC ==================== */}
         <div style={{ marginBottom: 24 }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
             <h2 style={{ fontSize: 15, fontWeight: 600, fontFamily: "'Cinzel', serif", color: 'var(--green-dark)' }}>Obligations du syndic</h2>
-            {canEdit && !editingTable && obligations.length > 0 && (
+            {canEdit && !editingTable && hasObligations && (
               <button onClick={() => setEditingTable(true)} style={{ background: 'none', border: 'none', color: 'var(--green-sage)', fontSize: 12, cursor: 'pointer', fontWeight: 500 }}>
                 Modifier
               </button>
             )}
           </div>
 
-          {obligations.length === 0 && !editingTable ? (
+          {editingTable ? (
+            <div>
+              <div style={{ background: 'var(--green-sage-10)', padding: '10px 12px', borderRadius: 'var(--radius)', marginBottom: 12, fontSize: 12, color: 'var(--green-dark)', lineHeight: 1.5 }}>
+                Collez votre texte. Une ligne = une puce. Une ligne finissant par « : » devient un sous-titre.
+              </div>
+
+              <div className="form-group">
+                <label style={{ color: 'var(--green-600)' }}>✅ Ce que le syndic doit faire</label>
+                <textarea
+                  value={doitText}
+                  onChange={e => setDoitText(e.target.value)}
+                  placeholder={"Souscrire et gérer les contrats votés en AG :\nAssurance multirisque — AXA (18 448 €/an)\nNettoyage — ASD Nettoyage (68 400 €/an)\n..."}
+                  style={{ width: '100%', minHeight: 160, padding: '12px', border: '1px solid var(--border)', borderRadius: 'var(--radius)', fontSize: 13, fontFamily: 'inherit', lineHeight: 1.6, resize: 'vertical' }}
+                />
+              </div>
+
+              <div className="form-group">
+                <label style={{ color: 'var(--red-500)' }}>❌ Ce que le syndic ne peut pas faire</label>
+                <textarea
+                  value={nePeutText}
+                  onChange={e => setNePeutText(e.target.value)}
+                  placeholder={"Engager une dépense > 1 500 € TTC sans consulter le conseil syndical\nModifier seul le règlement de copropriété\n..."}
+                  style={{ width: '100%', minHeight: 120, padding: '12px', border: '1px solid var(--border)', borderRadius: 'var(--radius)', fontSize: 13, fontFamily: 'inherit', lineHeight: 1.6, resize: 'vertical' }}
+                />
+              </div>
+
+              <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+                <button onClick={() => { setEditingTable(false); fetchDoc() }} className="btn btn-secondary" style={{ flex: 1, fontSize: 13 }}>Annuler</button>
+                <button onClick={saveObligations} className="btn btn-primary" disabled={saving} style={{ flex: 1, fontSize: 13 }}>
+                  <Save size={16} /> {saving ? 'Enregistrement...' : 'Enregistrer'}
+                </button>
+              </div>
+            </div>
+          ) : !hasObligations ? (
             <div style={{ textAlign: 'center', padding: 24 }}>
               <p style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 12 }}>Aucune obligation renseignée</p>
               {canEdit && (
@@ -257,86 +296,23 @@ export default function DocumentSummary() {
                 </button>
               )}
             </div>
-          ) : editingTable ? (
-            <div>
-              {/* Liste editable */}
-              {obligations.map((o, i) => (
-                <div key={i} style={{
-                  display: 'flex', alignItems: 'center', gap: 8, padding: '10px 0',
-                  borderBottom: '1px solid var(--border-light)'
-                }}>
-                  <button onClick={() => toggleObligation(i)} style={{
-                    width: 28, height: 28, borderRadius: 6, border: 'none', cursor: 'pointer',
-                    background: o.doit ? 'var(--green-50)' : 'var(--red-50)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0
-                  }}>
-                    {o.doit ? <Check size={14} color="var(--green-500)" /> : <XIcon size={14} color="var(--red-500)" />}
-                  </button>
-                  <span style={{ flex: 1, fontSize: 13, color: 'var(--text-dark)' }}>{o.action}</span>
-                  <button onClick={() => removeObligation(i)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4 }}>
-                    <Trash2 size={14} color="var(--text-muted)" />
-                  </button>
-                </div>
-              ))}
-
-              {/* Ajouter */}
-              <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
-                <select value={newObligation.doit} onChange={e => setNewObligation(n => ({ ...n, doit: e.target.value === 'true' }))}
-                  style={{ padding: '8px', border: '1px solid var(--border)', borderRadius: 'var(--radius)', fontSize: 12 }}>
-                  <option value="true">Doit faire</option>
-                  <option value="false">Ne peut pas</option>
-                </select>
-                <input value={newObligation.action} onChange={e => setNewObligation(n => ({ ...n, action: e.target.value }))}
-                  placeholder="Ex: Entretenir les parties communes"
-                  style={{ flex: 1, padding: '8px 10px', border: '1px solid var(--border)', borderRadius: 'var(--radius)', fontSize: 13 }}
-                  onKeyDown={e => e.key === 'Enter' && addObligation()}
-                />
-                <button onClick={addObligation} style={{ background: 'var(--green-dark)', color: '#fff', border: 'none', borderRadius: 'var(--radius)', padding: '8px 12px', cursor: 'pointer' }}>
-                  <Plus size={16} />
-                </button>
-              </div>
-
-              <div style={{ display: 'flex', gap: 8, marginTop: 16 }}>
-                <button onClick={() => { setEditingTable(false); fetchDoc() }} className="btn btn-secondary" style={{ flex: 1, fontSize: 13 }}>Annuler</button>
-                <button onClick={saveObligations} className="btn btn-primary" disabled={saving} style={{ flex: 1, fontSize: 13 }}>
-                  <Save size={16} /> {saving ? 'Enregistrement...' : 'Enregistrer'}
-                </button>
-              </div>
-            </div>
           ) : (
             <div>
-              {/* Tableau lecture */}
-              {doitFaire.length > 0 && (
+              {doitText.trim() && (
                 <div style={{ marginBottom: 16 }}>
                   <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--green-dark)', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
                     <Check size={16} color="var(--green-500)" /> Ce que le syndic doit faire
                   </div>
-                  {doitFaire.map((o, i) => (
-                    <div key={i} style={{
-                      display: 'flex', alignItems: 'flex-start', gap: 10, padding: '10px 14px',
-                      background: 'var(--green-50)', borderRadius: 'var(--radius)', marginBottom: 4
-                    }}>
-                      <span style={{ fontSize: 16 }}>✅</span>
-                      <ObligationText text={o.action} />
-                    </div>
-                  ))}
+                  <ListBlock text={doitText} variant="doit" />
                 </div>
               )}
 
-              {nePeutPas.length > 0 && (
+              {nePeutText.trim() && (
                 <div>
                   <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--red-500)', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
                     <XIcon size={16} color="var(--red-500)" /> Ce que le syndic ne peut pas faire
                   </div>
-                  {nePeutPas.map((o, i) => (
-                    <div key={i} style={{
-                      display: 'flex', alignItems: 'flex-start', gap: 10, padding: '10px 14px',
-                      background: 'var(--red-50)', borderRadius: 'var(--radius)', marginBottom: 4
-                    }}>
-                      <span style={{ fontSize: 16 }}>❌</span>
-                      <ObligationText text={o.action} />
-                    </div>
-                  ))}
+                  <ListBlock text={nePeutText} variant="nepeut" />
                 </div>
               )}
             </div>
