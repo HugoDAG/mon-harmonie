@@ -1,10 +1,11 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
-import { Eye, EyeOff, KeyRound } from 'lucide-react'
+import { Eye, EyeOff, Home } from 'lucide-react'
+import { BUILDINGS } from '../lib/constants'
 
 export default function Register() {
-  const [form, setForm] = useState({ firstName: '', lastName: '', email: '', password: '', code: '' })
+  const [form, setForm] = useState({ building: '', apartment: '', firstName: '', lastName: '', email: '', password: '' })
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
@@ -21,36 +22,31 @@ export default function Register() {
     setLoading(true)
 
     try {
-      const code = form.code.trim()
-      if (!code) throw new Error("Veuillez entrer votre code d'accès")
+      const building = form.building
+      const apartment = form.apartment.trim().toUpperCase()
+      if (!building) throw new Error('Veuillez choisir votre bâtiment')
+      if (!apartment) throw new Error("Veuillez entrer votre numéro d'appartement")
 
-      // 1. Vérifier le code AVANT de créer le compte
-      const { data: lookup, error: lookupErr } = await supabase.rpc('lookup_access_code', { p_code: code })
-      if (lookupErr) throw lookupErr
-      const apt = lookup && lookup[0]
-      if (!apt) throw new Error("Code d'accès invalide. Vérifiez le papier reçu dans votre boîte aux lettres.")
-      if (apt.is_full) throw new Error("Ce logement a déjà 2 comptes associés. Contactez le conseil syndical si besoin.")
-
-      // 2. Créer le compte
+      // 1. Créer le compte
       const { data, error: signUpError } = await supabase.auth.signUp({
         email: form.email, password: form.password
       })
       if (signUpError) throw signUpError
 
-      // 3. Créer le profil (en attente de validation)
+      // 2. Créer le profil (en attente de validation)
       const { error: profileError } = await supabase.from('profiles').insert({
         id: data.user.id,
         first_name: form.firstName,
         last_name: form.lastName,
-        building: apt.building,
-        apartment: apt.number,
+        building,
+        apartment,
         email: form.email,
         account_status: 'pending'
       })
       if (profileError) throw profileError
 
-      // 4. Lier automatiquement un éventuel co-résident du même logement
-      await supabase.rpc('link_coresident', { p_building: apt.building, p_number: apt.number })
+      // 3. Lier automatiquement un éventuel co-résident du même logement
+      await supabase.rpc('link_coresident', { p_building: building, p_number: apartment })
 
       setSuccess(true)
     } catch (err) {
@@ -94,17 +90,21 @@ export default function Register() {
         <form onSubmit={handleSubmit}>
           {error && <div style={{ background: 'var(--red-50)', color: 'var(--red-500)', padding: '10px 14px', borderRadius: 'var(--radius)', fontSize: 13, marginBottom: 16 }}>{error}</div>}
 
-          {/* Code d'accès */}
           <div className="form-group">
-            <label>Code d'accès</label>
+            <label>Mon bâtiment</label>
+            <select value={form.building} onChange={update('building')} required>
+              <option value="">Choisir mon bâtiment...</option>
+              {BUILDINGS.map(b => <option key={b} value={b}>{b}</option>)}
+            </select>
+          </div>
+
+          <div className="form-group">
+            <label>Numéro d'appartement</label>
             <div style={{ position: 'relative' }}>
-              <KeyRound size={18} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
-              <input value={form.code} onChange={update('code')} placeholder="Ex : C223-7K4P" required
-                style={{ paddingLeft: 40, textTransform: 'uppercase', fontFamily: 'monospace', letterSpacing: 1 }} />
+              <Home size={18} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+              <input value={form.apartment} onChange={update('apartment')} placeholder="Ex : C223" required style={{ paddingLeft: 40 }} />
             </div>
-            <p className="form-hint" style={{ lineHeight: 1.5 }}>
-              Le code reçu dans votre boîte aux lettres. Il identifie automatiquement votre bâtiment et votre appartement.
-            </p>
+            <p className="form-hint">Votre n° d'appartement reste anonyme : seuls les autres résidents voient votre bâtiment.</p>
           </div>
 
           <div className="form-group">
@@ -133,7 +133,7 @@ export default function Register() {
           </div>
 
           <div style={{ background: 'var(--green-sage-10)', padding: '10px 12px', borderRadius: 'var(--radius)', marginBottom: 16, fontSize: 12, color: 'var(--green-dark)', lineHeight: 1.5 }}>
-            Vous vivez à deux ? Votre co-résident utilise le même code pour créer son compte : vos deux comptes seront automatiquement liés.
+            Vous vivez à deux ? Votre co-résident crée son compte avec le même bâtiment et le même numéro d'appartement : vos deux comptes seront automatiquement liés.
           </div>
 
           <button type="submit" className="btn btn-primary" disabled={loading}>
