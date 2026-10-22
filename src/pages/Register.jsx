@@ -1,17 +1,10 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import { useAuth } from '../lib/AuthContext'
 import { supabase } from '../lib/supabase'
-import { Eye, EyeOff, Camera } from 'lucide-react'
-import { BUILDINGS } from '../lib/constants'
+import { Eye, EyeOff, KeyRound } from 'lucide-react'
 
 export default function Register() {
-  const [form, setForm] = useState({
-    firstName: '', lastName: '', email: '', password: '',
-    building: '', apartment: '', coResidentEmail: ''
-  })
-  const [proofImage, setProofImage] = useState(null)
-  const [proofPreview, setProofPreview] = useState(null)
+  const [form, setForm] = useState({ firstName: '', lastName: '', email: '', password: '', code: '' })
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
@@ -22,61 +15,42 @@ export default function Register() {
     return (e) => setForm(f => ({ ...f, [field]: e.target.value }))
   }
 
-  function handleProofChange(e) {
-    const file = e.target.files[0]
-    if (file) { setProofImage(file); setProofPreview(URL.createObjectURL(file)) }
-  }
-
   async function handleSubmit(e) {
     e.preventDefault()
     setError('')
     setLoading(true)
 
     try {
+      const code = form.code.trim()
+      if (!code) throw new Error("Veuillez entrer votre code d'accès")
+
+      // 1. Vérifier le code AVANT de créer le compte
+      const { data: lookup, error: lookupErr } = await supabase.rpc('lookup_access_code', { p_code: code })
+      if (lookupErr) throw lookupErr
+      const apt = lookup && lookup[0]
+      if (!apt) throw new Error("Code d'accès invalide. Vérifiez le papier reçu dans votre boîte aux lettres.")
+      if (apt.is_full) throw new Error("Ce logement a déjà 2 comptes associés. Contactez le conseil syndical si besoin.")
+
+      // 2. Créer le compte
       const { data, error: signUpError } = await supabase.auth.signUp({
         email: form.email, password: form.password
       })
       if (signUpError) throw signUpError
 
-      let proof_photo_url = null
-      if (proofImage) {
-        const fileExt = proofImage.name.split('.').pop()
-        const fileName = `proof-${data.user.id}.${fileExt}`
-        const { error: uploadError } = await supabase.storage.from('documents').upload(`proofs/${fileName}`, proofImage)
-        if (!uploadError) {
-          const { data: urlData } = supabase.storage.from('documents').getPublicUrl(`proofs/${fileName}`)
-          proof_photo_url = urlData.publicUrl
-        }
-      }
-
+      // 3. Créer le profil (en attente de validation)
       const { error: profileError } = await supabase.from('profiles').insert({
         id: data.user.id,
         first_name: form.firstName,
         last_name: form.lastName,
-        building: form.building,
-        apartment: form.apartment.trim().toUpperCase() || null,
+        building: apt.building,
+        apartment: apt.number,
         email: form.email,
-        account_status: 'pending',
-        proof_photo_url
+        account_status: 'pending'
       })
       if (profileError) throw profileError
 
-      if (form.coResidentEmail) {
-        await supabase.from('co_resident_invites').insert({
-          inviter_id: data.user.id,
-          invitee_email: form.coResidentEmail
-        })
-      }
-      
-      // Créer l'appartement dans Ma résidence
-      const aptUpper = form.apartment.trim().toUpperCase()
-      const buildingMatch = aptUpper.match(/^([A-Z]+\d)/)
-      if (buildingMatch) {
-        await supabase.rpc('create_apartment_if_not_exists', {
-          p_building: buildingMatch[1],
-          p_number: aptUpper
-        })
-      }
+      // 4. Lier automatiquement un éventuel co-résident du même logement
+      await supabase.rpc('link_coresident', { p_building: apt.building, p_number: apt.number })
 
       setSuccess(true)
     } catch (err) {
@@ -95,7 +69,7 @@ export default function Register() {
             Compte en attente
           </h1>
           <p style={{ fontSize: 14, color: 'var(--text-light)', lineHeight: 1.6, marginBottom: 24 }}>
-            Votre demande a été envoyée. Un administrateur de la résidence va vérifier vos informations et valider votre compte.
+            Votre demande a été envoyée. Un administrateur de la résidence va valider votre compte.
           </p>
           <p style={{ fontSize: 13, color: 'var(--text-muted)' }}>
             Vous recevrez un accès dès que votre compte sera approuvé.
@@ -119,6 +93,19 @@ export default function Register() {
 
         <form onSubmit={handleSubmit}>
           {error && <div style={{ background: 'var(--red-50)', color: 'var(--red-500)', padding: '10px 14px', borderRadius: 'var(--radius)', fontSize: 13, marginBottom: 16 }}>{error}</div>}
+
+          {/* Code d'accès */}
+          <div className="form-group">
+            <label>Code d'accès</label>
+            <div style={{ position: 'relative' }}>
+              <KeyRound size={18} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+              <input value={form.code} onChange={update('code')} placeholder="Ex : C223-7K4P" required
+                style={{ paddingLeft: 40, textTransform: 'uppercase', fontFamily: 'monospace', letterSpacing: 1 }} />
+            </div>
+            <p className="form-hint" style={{ lineHeight: 1.5 }}>
+              Le code reçu dans votre boîte aux lettres. Il identifie automatiquement votre bâtiment et votre appartement.
+            </p>
+          </div>
 
           <div className="form-group">
             <label>Prénom</label>
@@ -145,43 +132,8 @@ export default function Register() {
             </div>
           </div>
 
-          <div className="form-group">
-            <label>Mon bâtiment</label>
-            <select value={form.building} onChange={update('building')} required>
-              <option value="">Choisir mon bâtiment...</option>
-              {BUILDINGS.map(b => <option key={b} value={b}>{b}</option>)}
-            </select>
-          </div>
-
-          <div className="form-group">
-            <label>Numéro d'appartement</label>
-            <input value={form.apartment} onChange={update('apartment')} placeholder="Ex: C999" required />
-            <p className="form-hint" style={{ lineHeight: 1.5 }}>
-              ℹ️ Votre n° d'appartement reste anonyme. Seul votre bâtiment sera visible par les autres résidents.<br />
-              Format : C223 = C2 (bâtiment) + 2 (étage) + 3 (n° sur l'étage)
-            </p>
-          </div>
-
-          <div className="form-group">
-            <label>Photo de votre boîte aux lettres <span style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 400 }}>(preuve de résidence)</span></label>
-            <label style={{
-              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-              padding: 12, border: '1px dashed var(--border)', borderRadius: 'var(--radius)',
-              cursor: 'pointer', color: 'var(--text-muted)', fontSize: 13
-            }}>
-              <Camera size={18} />
-              {proofImage ? proofImage.name : 'Prendre une photo'}
-              <input type="file" accept="image/*" capture="environment" onChange={handleProofChange} style={{ display: 'none' }} />
-            </label>
-            {proofPreview && (
-              <img src={proofPreview} alt="" style={{ width: '100%', borderRadius: 'var(--radius)', marginTop: 8, maxHeight: 150, objectFit: 'cover' }} />
-            )}
-          </div>
-
-          <div className="form-group">
-            <label>Lier un co-résident <span style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 400 }}>(optionnel)</span></label>
-            <input type="email" value={form.coResidentEmail} onChange={update('coResidentEmail')} placeholder="Email du co-résident" />
-            <p className="form-hint">Publiez ensemble en tant que co-résidents</p>
+          <div style={{ background: 'var(--green-sage-10)', padding: '10px 12px', borderRadius: 'var(--radius)', marginBottom: 16, fontSize: 12, color: 'var(--green-dark)', lineHeight: 1.5 }}>
+            Vous vivez à deux ? Votre co-résident utilise le même code pour créer son compte : vos deux comptes seront automatiquement liés.
           </div>
 
           <button type="submit" className="btn btn-primary" disabled={loading}>
