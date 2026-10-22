@@ -152,6 +152,15 @@ export default function MaResidence() {
         ) : (
           BUILDINGS.map(building => {
             const bRes = buildingResidents(building)
+            // Un couple lié n'apparaît qu'une fois
+            const households = []
+            const seen = new Set()
+            for (const r of bRes) {
+              if (seen.has(r.id)) continue
+              seen.add(r.id)
+              if (r.co_resident_id) seen.add(r.co_resident_id)
+              households.push(r)
+            }
             const isOpen = openBuilding === building
             return (
               <div key={building} style={{ marginBottom: 4, borderBottom: '1px solid var(--border-light)' }}>
@@ -181,7 +190,7 @@ export default function MaResidence() {
                     {bRes.length === 0 ? (
                       <p style={{ fontSize: 13, color: 'var(--text-muted)', padding: '8px 0' }}>Aucun résident inscrit pour ce bâtiment.</p>
                     ) : (
-                      bRes.map(r => (
+                      households.map(r => (
                         <div key={r.id} style={{
                           display: 'flex', alignItems: 'center', gap: 10, padding: '10px 0',
                           borderBottom: '1px solid var(--border-light)'
