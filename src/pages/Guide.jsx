@@ -6,83 +6,116 @@ const SECTIONS = [
   {
     title: "Page d'accueil",
     items: [
-      "Mon batiment / Residence - Basculez entre les publications de votre batiment et celles de toute la residence.",
-      "Bouton + (barre inferieure) - Creez une nouvelle publication. Choisissez le canal (batiment ou residence), le type (voisinage, signalement, annonce, sondage) et ajoutez une photo si besoin.",
-      "Barre de recherche - Recherchez une publication par mot-cle, nom ou type.",
-      "J'aime - Appuyez sur le pouce pour liker une publication.",
-      "Commentaires - Appuyez sur la bulle pour voir ou ecrire un commentaire.",
-      "Modifier - Le crayon apparait sur vos propres publications pour les editer.",
-      "Supprimer - La corbeille permet de supprimer vos publications.",
-      "Masquer / Afficher - Vous pouvez replier le fil d'actualite pour ne voir que les raccourcis."
+      "Mon bâtiment / Résidence — Basculez entre les publications de votre bâtiment et celles de toute la résidence.",
+      "Bouton + (barre inférieure) — Créez une nouvelle publication. Choisissez le canal (bâtiment ou résidence), le type et ajoutez une photo si besoin.",
+      "Barre de recherche — Recherchez une publication par mot-clé, nom ou type.",
+      "J'aime — Appuyez sur le pouce pour liker une publication.",
+      "Commentaires — Appuyez sur la bulle pour voir ou écrire un commentaire.",
+      "Modifier / Supprimer — Le crayon et la corbeille apparaissent sur vos propres publications.",
+      "Nouveaux résidents — Un message de bienvenue s'affiche brièvement quand un voisin vient de s'inscrire."
     ]
   },
   {
-    title: "Raccourcis",
+    title: "Les raccourcis",
     items: [
-      "Signalements - Declarez un probleme (panne, fuite, eclairage...). Un badge de statut indique Nouveau, En cours, Resolu ou Rejete. Onglet \"Mes signalements\" pour voir vos envois.",
-      "Annonces - Informations importantes ou petites annonces entre residents. Onglet \"Mes annonces\" pour voir les votres.",
-      "Reserver - Reservez un espace commun (salle commune, local velos, parking visiteur, jardin partage, terrain de petanque).",
-      "Voisinage - Entraide entre voisins : pret d'outils, colis, services... Onglet \"Mes discussions\" pour voir vos publications.",
-      "Sondages - Votez sur des questions soumises a la communaute. 1 vote par logement. Cliquez sur une option pour voter, recliquez pour retirer votre vote.",
-      "Documents - Consultez les documents de la copropriete (reglement, PV, contrats, plans). Seuls les membres du conseil peuvent ajouter des documents."
+      "Signalements — Déclarez un problème (panne, fuite, éclairage…). Un badge indique le statut : 🆕 Nouveau, ⏳ En cours, ✅ Résolu, ❌ Rejeté.",
+      "Annonces — Informations importantes ou petites annonces entre résidents.",
+      "Réserver — Réservez un espace commun (salle, local vélos, parking visiteur, jardin, terrain de pétanque).",
+      "Voisinage — Entraide entre voisins et covoiturage (voir ci-dessous).",
+      "Sondages — Votez sur les questions soumises à la communauté. 1 vote par logement.",
+      "Documents — Consultez les documents de la copropriété. Chaque document peut avoir un résumé (voir ci-dessous)."
+    ]
+  },
+  {
+    title: "Voisinage & Covoiturage",
+    items: [
+      "En haut de la page Voisinage : filtres Tout · 🤝 Entraide · 🚗 Covoiturage.",
+      "Entraide — Prêt d'outils, colis, services, questions entre voisins.",
+      "Covoiturage — Depuis le +, choisissez le type « Covoiturage ». Indiquez si vous proposez ou cherchez un trajet, la destination (Aix centre, gare TGV, aéroport…), le sens (aller / retour), la fréquence (ponctuel ou régulier) et le nombre de places.",
+      "Astuce : pour toucher un maximum de voisins, publiez vos trajets sur le canal Résidence."
+    ]
+  },
+  {
+    title: "Réserver un espace",
+    items: [
+      "Choisissez l'espace, la date et l'horaire, puis confirmez.",
+      "Terrain de pétanque — Créneaux imposés par l'AG : 11h–21h l'été (avril à septembre), 10h–18h l'hiver (octobre à mars). L'application empêche toute réservation hors de ces horaires.",
+      "Vous pouvez supprimer vos propres réservations depuis la liste."
     ]
   },
   {
     title: "Barre de navigation",
     items: [
-      "Accueil - Retour au fil d'actualite et aux raccourcis.",
-      "Calendrier - Consultez les evenements a venir (AG, conseil syndical, travaux, activites). Cliquez sur un jour pour voir ses evenements. Les membres du conseil peuvent ajouter des evenements.",
-      "Bouton + - Creer une nouvelle publication depuis n'importe quelle page.",
-      "Annuaire - Retrouvez les contacts importants (syndic, gardiens, urgences) et la liste des residents par batiment. Les sections se replient pour plus de lisibilite.",
-      "Mon compte - Vos informations personnelles, co-resident, mot de passe, signalements et annonces envoyes, regles de la copro, guide d'utilisation."
+      "Accueil — Fil d'actualité et raccourcis.",
+      "Calendrier — Événements à venir (AG, conseil, travaux, encombrants, activités, info). Cliquez sur un jour pour voir ses événements. Le conseil/syndic peut en ajouter, avec une option de répétition (utile pour les encombrants).",
+      "Bouton + — Créer une publication depuis n'importe quelle page.",
+      "Annuaire — Contacts importants (syndic, gardiens, prestataires, urgences) et résidents par bâtiment. Les sections se replient.",
+      "Mon compte — Vos informations et vos espaces personnels."
     ]
   },
   {
     title: "Mon compte",
     items: [
-      "Mes informations - Consultez votre nom, batiment, numero d'appartement (anonyme), email, co-resident lie et changez votre mot de passe.",
-      "Mes signalements - Liste de tous vos signalements avec leur statut actuel.",
-      "Mes annonces - Liste de toutes vos annonces publiees.",
-      "Regles de copropriete - Sera disponible des reception du reglement.",
-      "Guide d'utilisation - Cette page.",
-      "Ma residence (admin) - Visualisez tous les batiments et appartements, et les residents presents dans l'app.",
-      "Demandes en attente (admin) - Approuvez ou refusez les demandes d'inscription.",
-      "Deconnexion - Pour vous deconnecter de l'application.",
-      "Supprimer mon compte - Suppression irreversible de toutes vos donnees (RGPD)."
+      "Mes informations — Nom, bâtiment, numéro d'appartement (anonyme), email, co-résident lié et changement de mot de passe.",
+      "Mes signalements — Liste de tous vos signalements avec leur statut.",
+      "Mes annonces — Liste de toutes vos annonces publiées.",
+      "Mes documents — Votre coffre-fort personnel : stockez vos documents liés à la copropriété (acte de vente, assurance, factures, courriers syndic…). Ils sont privés et visibles uniquement par vous.",
+      "Règles de la copropriété — Les règles issues de l'AG (travaux privatifs, boîtes aux lettres, pétanque…).",
+      "Guide d'utilisation — Cette page.",
+      "Ma résidence — Vue de tous les bâtiments et appartements, avec les résidents présents dans l'app (lecture seule pour tous, gestion réservée à l'admin/syndic).",
+      "Demandes en attente (admin/syndic) — Approbation des nouvelles inscriptions.",
+      "Déconnexion et Suppression de compte (RGPD)."
     ]
   },
   {
-    title: "Compte duo",
+    title: "Numéro d'appartement",
     items: [
-      "Si vous vivez a deux dans le meme logement, vous pouvez lier vos comptes. A l'inscription, entrez l'email de votre co-resident.",
-      "Quand cette personne s'inscrit avec cet email, les comptes sont lies automatiquement.",
-      "Vos publications s'afficheront sous la forme \"Prenom Resident & Prenom Co-Resident - Batiment\".",
-      "Le lien est visible dans Mon compte puis Mes informations."
+      "Renseignez votre appartement dans Mes informations (ex : C223 = bâtiment C2, 2e étage, appartement n°3).",
+      "Il reste anonyme : seuls les autres résidents voient votre bâtiment, jamais votre numéro précis.",
+      "Une fois saisi, votre logement apparaît automatiquement dans « Ma résidence », dans le bon bâtiment."
     ]
   },
   {
-    title: "Securite et inscription",
+    title: "Documents & résumés",
     items: [
-      "A l'inscription, chaque resident fournit son batiment, son numero d'appartement et une photo de sa boite aux lettres.",
-      "Le compte est en attente de validation par un administrateur de la residence.",
-      "L'administrateur verifie les informations et approuve ou refuse la demande.",
-      "Le numero d'appartement reste anonyme pour les autres residents. Seul le batiment est visible."
+      "Les documents sont classés par catégorie (règlement, PV d'AG, plans, contrats…).",
+      "Bouton Résumé — Pour chaque document, le conseil/syndic peut rédiger un résumé page par page (volets dépliables) et un tableau des obligations du syndic (ce qu'il doit faire ✅ / ce qu'il ne peut pas faire ❌).",
+      "Les résidents consultent ces résumés en lecture seule : pratique pour comprendre un PV sans tout lire."
     ]
   },
   {
-    title: "Roles",
+    title: "Compte duo (co-résidents)",
     items: [
-      "Resident - Peut publier, commenter, liker, reserver des espaces, consulter les documents et voter aux sondages.",
-      "Conseil Syndical - En plus : peut ajouter des documents, creer des evenements au calendrier, modifier le statut des signalements, gerer les contacts de l'annuaire.",
-      "Syndic - Memes droits que le conseil syndical.",
-      "Admin - Tous les droits, y compris promouvoir d'autres residents depuis l'annuaire, gerer Ma residence et approuver les demandes."
+      "Si vous vivez à deux dans le même logement, liez vos comptes : à l'inscription, entrez l'email de votre co-résident.",
+      "Quand cette personne s'inscrit avec cet email, les comptes sont liés automatiquement.",
+      "Vos publications s'affichent alors sous la forme « Prénom & Prénom — Bâtiment ».",
+      "Le lien est visible dans Mon compte → Mes informations."
     ]
   },
   {
-    title: "Numeros d'urgence",
+    title: "Sécurité et inscription",
     items: [
-      "Les numeros d'urgence (pompiers, SAMU, police, gaz, eau) sont accessibles dans l'annuaire.",
-      "Cliquez sur le telephone vert pour appeler directement."
+      "À l'inscription, chaque résident fournit son bâtiment, son numéro d'appartement et une photo de sa boîte aux lettres (preuve de résidence).",
+      "Le compte est en attente de validation par un administrateur de la résidence.",
+      "L'administrateur vérifie les informations et approuve ou refuse la demande.",
+      "Un résident ne peut pas se promouvoir lui-même : seuls l'admin ou le syndic attribuent les rôles.",
+      "Vos documents personnels sont stockés dans un espace privé et chiffré d'accès : personne d'autre ne peut les ouvrir."
+    ]
+  },
+  {
+    title: "Les rôles",
+    items: [
+      "Résident — Publier, commenter, liker, réserver, consulter, voter aux sondages, stocker ses documents personnels.",
+      "Conseil syndical — En plus : ajouter des documents et leurs résumés, créer des événements, modifier le statut des signalements, gérer les contacts de l'annuaire.",
+      "Syndic — Mêmes droits que le conseil syndical.",
+      "Admin — Tous les droits : promouvoir des résidents, gérer Ma résidence, approuver les demandes d'inscription."
+    ]
+  },
+  {
+    title: "Numéros d'urgence",
+    items: [
+      "Les numéros d'urgence (pompiers, SAMU, police, gaz, eau) sont dans l'annuaire.",
+      "Appuyez sur le bouton téléphone vert pour appeler directement."
     ]
   }
 ]
@@ -101,7 +134,7 @@ export default function Guide() {
         </div>
 
         <div style={{ background: 'var(--green-sage-10)', padding: '12px 14px', borderRadius: 'var(--radius-lg)', marginBottom: 20, fontSize: 13, color: 'var(--green-dark)', lineHeight: 1.6 }}>
-          Bienvenue sur Mon Harmonie ! Voici un guide complet pour vous aider a prendre en main l'application.
+          Bienvenue sur Mon Harmonie ! Voici un guide complet pour prendre en main l'application de votre copropriété.
         </div>
 
         {SECTIONS.map((section, si) => (
