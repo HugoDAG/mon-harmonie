@@ -258,7 +258,7 @@ export default function Home() {
       {/* Hero image */}
       <div style={{ position: 'relative', width: '100%' }}>
         <div style={{
-          width: '100%', height: 160,
+          width: '100%', height: 280,
           backgroundImage: 'url(https://lorpxeojlganrirzksff.supabase.co/storage/v1/object/public/documents/logo%20fond%20ecran.png)',
           backgroundSize: 'cover', backgroundPosition: 'center'
         }} />
@@ -271,7 +271,7 @@ export default function Home() {
         marginTop: -30,
         position: 'relative',
         zIndex: 2,
-        minHeight: 'calc(100vh - 130px)'
+        minHeight: 'calc(100vh - 250px)'
       }}>
         <div style={{ padding: '24px 16px 100px' }}>
           {/* Welcome text */}
