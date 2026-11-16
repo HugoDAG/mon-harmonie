@@ -24,6 +24,7 @@ export default function Bookings() {
   const [showForm, setShowForm] = useState(false)
   const [form, setForm] = useState({ space_id: '', date: '', start_time: '', end_time: '' })
   const [deletingId, setDeletingId] = useState(null)
+  const [booking, setBooking] = useState(false)
 
   useEffect(() => { fetchData() }, [])
 
@@ -51,6 +52,7 @@ export default function Bookings() {
 
   async function handleBook(e) {
     e.preventDefault()
+    if (booking) return
 
     // Contrôle des horaires pour le terrain de pétanque
     if (isPetanque()) {
@@ -65,14 +67,58 @@ export default function Bookings() {
       return
     }
 
-    await supabase.from('bookings').insert({ ...form, user_id: user.id })
+    setBooking(true)
+
+    // L'espace est-il déjà pris sur ce créneau ? Deux réservations se
+    // chevauchent si l'une commence avant la fin de l'autre et finit après
+    // son début.
+    const { data: clashes, error: clashError } = await supabase.from('bookings')
+      .select('start_time, end_time, profile:profiles(first_name, last_name)')
+      .eq('space_id', form.space_id)
+      .eq('date', form.date)
+      .lt('start_time', form.end_time)
+      .gt('end_time', form.start_time)
+
+    if (clashError) {
+      setBooking(false)
+      alert("Impossible de vérifier les réservations existantes : " + clashError.message)
+      return
+    }
+
+    if (clashes && clashes.length > 0) {
+      const c = clashes[0]
+      const who = c.profile?.first_name
+        ? `${c.profile.first_name} ${c.profile.last_name ? c.profile.last_name[0] + '.' : ''}`
+        : 'un autre résident'
+      setBooking(false)
+      alert(
+        `Ce créneau est déjà pris.\n\n${selectedSpace()?.name || 'Cet espace'} est réservé de ` +
+        `${c.start_time?.slice(0, 5)} à ${c.end_time?.slice(0, 5)} par ${who}.\n\n` +
+        `Choisissez un autre horaire ou une autre date.`
+      )
+      return
+    }
+
+    const { error } = await supabase.from('bookings').insert({ ...form, user_id: user.id })
+    setBooking(false)
+
+    if (error) {
+      // 23P01 = contrainte d'exclusion : quelqu'un a réservé entre-temps
+      alert(error.code === '23P01'
+        ? "Ce créneau vient d'être réservé par un autre résident. Rafraîchissez la liste et choisissez un autre horaire."
+        : "La réservation n'a pas pu être enregistrée : " + error.message)
+      fetchData()
+      return
+    }
+
     setShowForm(false)
     setForm({ space_id: '', date: '', start_time: '', end_time: '' })
     fetchData()
   }
 
   async function handleDelete(id) {
-    await supabase.from('bookings').delete().eq('id', id)
+    const { error } = await supabase.from('bookings').delete().eq('id', id)
+    if (error) alert("La réservation n'a pas pu être supprimée : " + error.message)
     setDeletingId(null)
     fetchData()
   }
@@ -126,7 +172,9 @@ export default function Bookings() {
               <input type="time" value={form.end_time} onChange={e => setForm(f => ({ ...f, end_time: e.target.value }))} required
                 min={petWindow?.start} max={petWindow?.end} />
             </div>
-            <button type="submit" className="btn btn-primary">Confirmer</button>
+            <button type="submit" className="btn btn-primary" disabled={booking}>
+              {booking ? 'Vérification du créneau...' : 'Confirmer'}
+            </button>
           </form>
         )}
 
