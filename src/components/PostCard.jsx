@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { POST_TYPE_LABELS } from '../lib/constants'
-import { AlertTriangle, Megaphone, Users, BarChart3, Car, Pencil, Check, X, Trash2, ThumbsUp, MessageCircle, Send } from 'lucide-react'
+import { AlertTriangle, Megaphone, Users, BarChart3, Car, Pencil, Check, X, Trash2, ThumbsUp, MessageCircle, Send, Clock } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/AuthContext'
 
@@ -11,6 +11,9 @@ const TYPE_ICONS = {
   covoiturage: Car,
   sondage: BarChart3
 }
+
+// Au-dela de ce delai sans mouvement, un signalement ouvert est signale
+const STALE_DAYS = 14
 
 const STATUS_OPTIONS = [
   { value: 'open', label: '🆕 Nouveau', color: 'var(--blue-500)', bg: 'var(--blue-50)' },
@@ -108,6 +111,15 @@ export default function PostCard({ post, onUpdated, isNew = false }) {
 
   const timeAgo = formatTimeAgo(created_at)
   const currentStatus = STATUS_OPTIONS.find(s => s.value === (status || 'open')) || STATUS_OPTIONS[0]
+
+  // Signalement qui dort : on compte depuis le dernier changement de statut,
+  // ou depuis la publication si rien n'a jamais bouge.
+  const isOpenSignalement = type === 'signalement' && (!status || status === 'open' || status === 'in_progress')
+  const lastMove = post.status_updated_at || created_at
+  const staleDays = isOpenSignalement && lastMove
+    ? Math.floor((Date.now() - new Date(lastMove).getTime()) / 86400000)
+    : 0
+  const isStale = staleDays >= STALE_DAYS
 
   useEffect(() => {
     fetchLikes()
@@ -292,6 +304,17 @@ export default function PostCard({ post, onUpdated, isNew = false }) {
           ) : (
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '4px 10px', borderRadius: 99, background: currentStatus.bg, color: currentStatus.color, fontSize: 12, fontWeight: 500 }}>
               {currentStatus.label}
+            </span>
+          )}
+          {isStale && (
+            <span style={{
+              display: 'inline-flex', alignItems: 'center', gap: 4, marginLeft: 8,
+              padding: '4px 10px', borderRadius: 99,
+              background: 'var(--amber-50)', color: 'var(--amber-600)',
+              fontSize: 11, fontWeight: 600
+            }}>
+              <Clock size={11} />
+              {status === 'in_progress' ? 'Sans mise à jour' : 'Sans réponse'} depuis {staleDays} jours
             </span>
           )}
           {showStatusMenu && (

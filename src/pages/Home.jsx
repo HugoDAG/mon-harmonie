@@ -7,13 +7,15 @@ import CreatePost from '../components/CreatePost'
 import BottomNav from '../components/BottomNav'
 import {
   Building, Home as HomeIcon, Search, CalendarDays, CalendarCheck,
-  AlertTriangle, BarChart3, CheckCircle2, ChevronRight, Bell, X
+  AlertTriangle, BarChart3, CheckCircle2, ChevronRight, Bell, X, Clock
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 
 const LAST_SEEN_KEY = 'harmonie_last_seen'
 const ALERTS_KEY = 'harmonie_alertes_masquees'
 const DAY = 24 * 60 * 60 * 1000
+// Au-dela de ce delai sans mouvement, un signalement ouvert est considere en souffrance
+const STALE_DAYS = 14
 
 function readLastSeen() {
   try { return localStorage.getItem(LAST_SEEN_KEY) } catch { return null }
@@ -76,7 +78,8 @@ export default function Home() {
   const [dismissedAlerts, setDismissedAlerts] = useState(() => readDismissedAlerts())
   const [newCounts, setNewCounts] = useState({})
   const [weekly, setWeekly] = useState({
-    events: [], bookings: [], openSignalements: 0, resolvedRecent: 0, openSondages: 0
+    events: [], bookings: [], openSignalements: 0, staleSignalements: 0,
+    resolvedRecent: 0, openSondages: 0
   })
   const [feedEvents, setFeedEvents] = useState([])
 
@@ -134,6 +137,7 @@ export default function Home() {
     const since14 = new Date(Date.now() - 14 * DAY).toISOString()
     const since7 = new Date(Date.now() - 7 * DAY).toISOString()
     const since30 = new Date(Date.now() - 30 * DAY).toISOString()
+    const staleCutoff = new Date(Date.now() - STALE_DAYS * DAY).toISOString()
 
     // Pastilles « nouveau »
     if (lastSeen) {
@@ -165,6 +169,12 @@ export default function Home() {
       events: evRes.data || [],
       bookings: bkRes.data || [],
       openSignalements: signs.filter(s => !s.status || s.status === 'open' || s.status === 'in_progress').length,
+      // Signalements ouverts sans aucun mouvement depuis plus de 14 jours
+      staleSignalements: signs.filter(s => {
+        if (s.status && s.status !== 'open' && s.status !== 'in_progress') return false
+        const move = s.status_updated_at || s.created_at
+        return move && move < staleCutoff
+      }).length,
       resolvedRecent: signs.filter(s => s.status === 'resolved' && s.status_updated_at && s.status_updated_at > since7).length,
       openSondages: (pollRes.data || []).filter(visibleToMe).length
     })
@@ -231,6 +241,14 @@ export default function Home() {
     key: 'sg', icon: AlertTriangle, color: 'var(--amber-500)',
     title: `${weekly.openSignalements} signalement${weekly.openSignalements > 1 ? 's' : ''} en cours`,
     meta: 'Voir où ça en est',
+    onClick: () => navigate('/posts/signalement')
+  })
+  // Les signalements qui dorment ne concernent que ceux qui peuvent agir dessus
+  const canManageSignalements = ['conseil', 'syndic', 'admin'].includes(profile?.role)
+  if (canManageSignalements && weekly.staleSignalements > 0) weekRows.push({
+    key: 'st', icon: Clock, color: 'var(--red-500)',
+    title: `${weekly.staleSignalements} signalement${weekly.staleSignalements > 1 ? 's' : ''} sans réponse depuis plus de ${STALE_DAYS} jours`,
+    meta: 'À traiter en priorité',
     onClick: () => navigate('/posts/signalement')
   })
   if (weekly.resolvedRecent > 0) weekRows.push({
