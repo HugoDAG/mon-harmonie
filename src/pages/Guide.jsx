@@ -49,6 +49,7 @@ const SECTIONS = [
       "Choisissez l'espace, la date et l'horaire, puis confirmez.",
       "Terrain de pétanque — Créneaux imposés par l'AG : 11h–21h l'été (avril à septembre), 10h–18h l'hiver (octobre à mars). L'application empêche toute réservation hors de ces horaires.",
       "Votre réservation apparaît automatiquement dans le calendrier, visible par tous : plus de mauvaise surprise en arrivant devant une salle déjà occupée.",
+      "Deux réservations ne peuvent plus se chevaucher sur le même espace : si le créneau est pris, l'application vous dit par qui et jusqu'à quelle heure. Finir à 14h et commencer à 14h reste possible, ce n'est pas un chevauchement.",
       "Vous pouvez supprimer vos propres réservations depuis la liste."
     ]
   },
