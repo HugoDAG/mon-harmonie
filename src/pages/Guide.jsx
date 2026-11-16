@@ -13,6 +13,7 @@ const SECTIONS = [
       "Mon bâtiment / Résidence — Basculez entre les publications de votre bâtiment et celles de toute la résidence.",
       "Événements dans le fil — Quand le conseil ou le syndic crée un événement, il apparaît aussi dans le fil d'actualité (encadré orange). Appuyez dessus pour ouvrir le calendrier.",
       "Bouton + (barre inférieure) — Créez une nouvelle publication. Choisissez le canal (bâtiment ou résidence), le type et ajoutez une photo si besoin.",
+      "Photos — Elles sont automatiquement allégées avant l'envoi (une photo de téléphone de 10 Mo tombe sous le mégaoctet) : le fil reste rapide à charger en 4G et le stockage de la résidence ne sature pas. La qualité à l'écran est inchangée.",
       "Barre de recherche — Recherchez une publication par mot-clé, nom ou type.",
       "J'aime — Appuyez sur le pouce pour liker une publication.",
       "Commentaires — Appuyez sur la bulle pour voir ou écrire un commentaire.",
