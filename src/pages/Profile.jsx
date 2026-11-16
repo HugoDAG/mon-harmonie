@@ -4,14 +4,7 @@ import { supabase } from '../lib/supabase'
 import { useNavigate } from 'react-router-dom'
 import BottomNav from '../components/BottomNav'
 import ChangePassword from '../components/ChangePassword'
-import { LogOut, User, AlertTriangle, Megaphone, FileText, Book, HelpCircle, ChevronDown, LinkIcon, Building, Mail, Lock, Home } from 'lucide-react'
-
-const STATUS_LABELS = {
-  open: '🆕 Nouveau',
-  in_progress: '⏳ En cours',
-  resolved: '✅ Résolu',
-  rejected: '❌ Rejeté'
-}
+import { LogOut, User, AlertTriangle, ChevronDown, LinkIcon, Building, Mail, Home } from 'lucide-react'
 
 export default function Profile() {
   const { user, profile, signOut } = useAuth()
@@ -24,10 +17,6 @@ export default function Profile() {
   const [deleteText, setDeleteText] = useState('')
   const [deleting, setDeleting] = useState(false)
   const [openSection, setOpenSection] = useState(null)
-  const [mySignalements, setMySignalements] = useState([])
-  const [myAnnonces, setMyAnnonces] = useState([])
-  const [loadingSignalements, setLoadingSignalements] = useState(false)
-  const [loadingAnnonces, setLoadingAnnonces] = useState(false)
 
   useEffect(() => {
     if (profile?.co_resident_id) {
@@ -74,23 +63,7 @@ export default function Profile() {
       setTimeout(() => {
         document.getElementById(`section-${section}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
       }, 100)
-      if (section === 'signalements' && mySignalements.length === 0) fetchMySignalements()
-      if (section === 'annonces' && myAnnonces.length === 0) fetchMyAnnonces()
     }
-  }
-
-  async function fetchMySignalements() {
-    setLoadingSignalements(true)
-    const { data } = await supabase.from('posts').select('*').eq('user_id', user.id).eq('type', 'signalement').order('created_at', { ascending: false })
-    setMySignalements(data || [])
-    setLoadingSignalements(false)
-  }
-
-  async function fetchMyAnnonces() {
-    setLoadingAnnonces(true)
-    const { data } = await supabase.from('posts').select('*').eq('user_id', user.id).eq('type', 'annonce').order('created_at', { ascending: false })
-    setMyAnnonces(data || [])
-    setLoadingAnnonces(false)
   }
 
   async function handleDeleteAccount() {
@@ -108,18 +81,14 @@ export default function Profile() {
     navigate('/login')
   }
 
-  function formatDate(dateStr) {
-    return new Date(dateStr).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })
-  }
-
   const sections = [
+    { group: 'Mon compte' },
     { key: 'infos', label: 'Mes informations', img: 'https://lorpxeojlganrirzksff.supabase.co/storage/v1/object/public/documents/mes%20informations%20trans%202.png' },
-    { key: 'signalements', label: 'Mes signalements', img: 'https://lorpxeojlganrirzksff.supabase.co/storage/v1/object/public/documents/mes%20signalements%20trans%202.png' },
-    { key: 'annonces', label: 'Mes annonces', img: 'https://lorpxeojlganrirzksff.supabase.co/storage/v1/object/public/documents/mes%20annonces%20trans%202.png' },
-        { key: 'mesdocs', label: 'Mes documents perso', img: 'https://lorpxeojlganrirzksff.supabase.co/storage/v1/object/public/documents/documents%20trans.png', action: () => navigate('/mes-documents') },
+    { key: 'mesdocs', label: 'Mes documents', img: 'https://lorpxeojlganrirzksff.supabase.co/storage/v1/object/public/documents/documents%20trans.png', action: () => navigate('/mes-documents') },
+    { group: 'La residence' },
+    { key: 'residence', label: 'Ma residence', img: 'https://lorpxeojlganrirzksff.supabase.co/storage/v1/object/public/documents/ma%20residence.png', action: () => navigate('/ma-residence') },
     { key: 'regles', label: 'Regles de la copropriete', img: 'https://lorpxeojlganrirzksff.supabase.co/storage/v1/object/public/documents/regle%20de%20coprop%20trans.png', action: () => navigate('/rules') },
     { key: 'guide', label: "Guide d'utilisation", img: 'https://lorpxeojlganrirzksff.supabase.co/storage/v1/object/public/documents/guide%20utilisation%20trans%202.png', action: () => navigate('/guide') },
-    { key: 'residence', label: 'Ma residence', img: 'https://lorpxeojlganrirzksff.supabase.co/storage/v1/object/public/documents/ma%20residence.png', action: () => navigate('/ma-residence') },
     ...(profile?.role === 'admin' || profile?.role === 'syndic' ? [
       { key: 'pending', label: 'Demandes en attente', img: 'https://lorpxeojlganrirzksff.supabase.co/storage/v1/object/public/documents/demandes%20en%20attente%20trans%202.png', action: () => navigate('/pending') }
     ] : [])
@@ -177,7 +146,15 @@ export default function Profile() {
 
         {/* Menu sections */}
         <div style={{ marginBottom: 16 }}>
-          {sections.map(({ key, label, action, img }) => {
+          {sections.map((item) => {
+            if (item.group) return (
+              <div key={'g' + item.group} style={{
+                fontSize: 11, fontWeight: 600, color: 'var(--text-muted)',
+                textTransform: 'uppercase', letterSpacing: 1,
+                margin: '18px 0 6px', paddingLeft: 4
+              }}>{item.group}</div>
+            )
+            const { key, label, action, img } = item
             const isOpen = openSection === key
             const isLink = !!action
             return (
@@ -188,7 +165,7 @@ export default function Profile() {
                   border: 'none', cursor: 'pointer', textAlign: 'left'
                 }}>
                   <div style={{ width: 68, height: 68, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                    <img src={img} alt={label} style={{ width: key === 'annonces' ? 56 : 68, height: key === 'annonces' ? 56 : 68, objectFit: 'contain' }} />
+                    <img src={img} alt={label} style={{ width: 68, height: 68, objectFit: 'contain' }} />
                   </div>
                   <div style={{ flex: 1 }}>
                     <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-dark)' }}>{label}</div>
@@ -271,66 +248,6 @@ export default function Profile() {
                     <div style={{ marginTop: 12 }}>
                       <ChangePassword />
                     </div>
-                  </div>
-                )}
-
-                {/* Mes signalements */}
-                {key === 'signalements' && isOpen && (
-                  <div style={{ padding: '0 16px 16px', background: 'var(--white)' }}>
-                    {loadingSignalements ? (
-                      <p style={{ fontSize: 13, color: 'var(--text-muted)', padding: '12px 0' }}>Chargement...</p>
-                    ) : mySignalements.length === 0 ? (
-                      <p style={{ fontSize: 13, color: 'var(--text-muted)', padding: '12px 0' }}>Aucun signalement envoye</p>
-                    ) : (
-                      mySignalements.map(s => (
-                        <div key={s.id} style={{
-                          display: 'flex', alignItems: 'center', gap: 10, padding: '10px 0',
-                          borderBottom: '1px solid var(--border-light)'
-                        }}>
-                          <div style={{ flex: 1 }}>
-                            <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-dark)' }}>
-                              {s.content.length > 60 ? s.content.slice(0, 60) + '...' : s.content}
-                            </div>
-                            <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>
-                              {formatDate(s.created_at)}
-                            </div>
-                          </div>
-                          <span style={{ fontSize: 11, whiteSpace: 'nowrap' }}>
-                            {STATUS_LABELS[s.status || 'open']}
-                          </span>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                )}
-
-                {/* Mes annonces */}
-                {key === 'annonces' && isOpen && (
-                  <div style={{ padding: '0 16px 16px', background: 'var(--white)' }}>
-                    {loadingAnnonces ? (
-                      <p style={{ fontSize: 13, color: 'var(--text-muted)', padding: '12px 0' }}>Chargement...</p>
-                    ) : myAnnonces.length === 0 ? (
-                      <p style={{ fontSize: 13, color: 'var(--text-muted)', padding: '12px 0' }}>Aucune annonce publiee</p>
-                    ) : (
-                      myAnnonces.map(a => (
-                        <div key={a.id} style={{
-                          display: 'flex', alignItems: 'center', gap: 10, padding: '10px 0',
-                          borderBottom: '1px solid var(--border-light)'
-                        }}>
-                          <div style={{ flex: 1 }}>
-                            <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-dark)' }}>
-                              {a.content.length > 60 ? a.content.slice(0, 60) + '...' : a.content}
-                            </div>
-                            <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>
-                              {formatDate(a.created_at)} - {a.channel === 'building' ? 'Bat. ' + a.building : 'Residence'}
-                            </div>
-                          </div>
-                          {a.image_url && (
-                            <img src={a.image_url} alt="" style={{ width: 40, height: 40, borderRadius: 8, objectFit: 'cover' }} />
-                          )}
-                        </div>
-                      ))
-                    )}
                   </div>
                 )}
               </div>
