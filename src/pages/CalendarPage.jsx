@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/AuthContext'
 import BottomNav from '../components/BottomNav'
-import { ChevronLeft, ChevronRight, Plus, X, Trash2 } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Plus, X, Trash2, CalendarCheck } from 'lucide-react'
 
 const EVENT_TYPES = [
   { key: 'ag', label: 'Assemblée Générale', color: 'var(--terracotta)', bg: 'rgba(196,121,78,0.1)' },
@@ -20,6 +20,10 @@ const REPEAT_OPTIONS = [
   { key: 'monthly', label: 'Chaque mois' }
 ]
 
+// Les reservations d'espaces communs ont leur propre couleur dans le calendrier
+const BOOKING_COLOR = 'var(--green-dark)'
+const BOOKING_BG = 'var(--green-dark-10)'
+
 const DAYS = ['L', 'M', 'M', 'J', 'V', 'S', 'D']
 const MONTHS = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre']
 
@@ -35,6 +39,7 @@ const EMPTY_FORM = { title: '', description: '', event_date: '', event_time: '',
 export default function CalendarPage() {
   const { profile } = useAuth()
   const [events, setEvents] = useState([])
+  const [bookings, setBookings] = useState([])
   const [currentDate, setCurrentDate] = useState(new Date())
   const [selectedDate, setSelectedDate] = useState(toDateStr(new Date()))
   const [showForm, setShowForm] = useState(false)
@@ -52,10 +57,18 @@ export default function CalendarPage() {
     const start = toDateStr(new Date(year, month, 1))
     const end = toDateStr(new Date(year, month + 1, 0))
 
-    const { data } = await supabase.from('events').select('*')
-      .gte('event_date', start).lte('event_date', end)
-      .order('event_date').order('event_time')
-    setEvents(data || [])
+    // Le calendrier affiche les evenements ET les reservations d'espaces
+    // communs, pour que tout le monde sache quand la salle est prise.
+    const [evRes, bkRes] = await Promise.all([
+      supabase.from('events').select('*')
+        .gte('event_date', start).lte('event_date', end)
+        .order('event_date').order('event_time'),
+      supabase.from('bookings').select('*, space:spaces(name), profile:profiles(first_name, last_name, building)')
+        .gte('date', start).lte('date', end)
+        .order('date').order('start_time')
+    ])
+    setEvents(evRes.data || [])
+    setBookings(bkRes.data || [])
   }
 
   async function handleCreate(e) {
@@ -127,8 +140,17 @@ export default function CalendarPage() {
     return [...new Set(events.filter(e => e.event_date === dateStr).map(e => e.event_type))]
   }
 
+  // Pastilles sous le jour : une par type d'evenement, plus une pour les reservations
+  function getDayDots(day) {
+    const dateStr = getDateStr(day)
+    const dots = getDayTypes(day).map(t => (EVENT_TYPES.find(et => et.key === t) || EVENT_TYPES[5]).color)
+    if (bookings.some(b => b.date === dateStr)) dots.push(BOOKING_COLOR)
+    return dots
+  }
+
   const today = toDateStr(new Date())
   const selectedEvents = events.filter(e => e.event_date === selectedDate)
+  const selectedBookings = bookings.filter(b => b.date === selectedDate)
   const calendarDays = getDaysInMonth()
 
   return (
@@ -219,7 +241,7 @@ export default function CalendarPage() {
               const dateStr = getDateStr(day)
               const isToday = dateStr === today
               const isSelected = dateStr === selectedDate
-              const dayTypes = getDayTypes(day)
+              const dayDots = getDayDots(day)
               return (
                 <button key={i} onClick={() => setSelectedDate(dateStr)} style={{
                   width: '100%', aspectRatio: '1', borderRadius: '50%',
@@ -231,17 +253,21 @@ export default function CalendarPage() {
                   display: 'flex', alignItems: 'center', justifyContent: 'center'
                 }}>
                   {day}
-                  {dayTypes.length > 0 && (
+                  {dayDots.length > 0 && (
                     <div style={{ position: 'absolute', bottom: 2, left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: 2 }}>
-                      {dayTypes.slice(0, 3).map(t => {
-                        const info = EVENT_TYPES.find(et => et.key === t) || EVENT_TYPES[5]
-                        return <div key={t} style={{ width: 5, height: 5, borderRadius: '50%', background: isSelected ? '#fff' : info.color }} />
-                      })}
+                      {dayDots.slice(0, 3).map((color, idx) => (
+                        <div key={idx} style={{ width: 5, height: 5, borderRadius: '50%', background: isSelected ? '#fff' : color }} />
+                      ))}
                     </div>
                   )}
                 </button>
               )
             })}
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 12, paddingTop: 10, borderTop: '1px solid var(--border-light)' }}>
+            <div style={{ width: 6, height: 6, borderRadius: '50%', background: BOOKING_COLOR }} />
+            <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>Réservation d'un espace commun</span>
           </div>
         </div>
 
@@ -251,10 +277,11 @@ export default function CalendarPage() {
             {new Date(selectedDate + 'T00:00:00').toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}
           </h2>
 
-          {selectedEvents.length === 0 ? (
+          {selectedEvents.length === 0 && selectedBookings.length === 0 && (
             <p style={{ fontSize: 13, color: 'var(--text-muted)', padding: '16px 0' }}>Aucun événement ce jour</p>
-          ) : (
-            selectedEvents.map(ev => {
+          )}
+
+          {selectedEvents.map(ev => {
               const typeInfo = EVENT_TYPES.find(t => t.key === ev.event_type) || EVENT_TYPES[5]
               return (
                 <div key={ev.id} style={{
@@ -286,8 +313,35 @@ export default function CalendarPage() {
                   )}
                 </div>
               )
-            })
-          )}
+            })}
+
+          {/* Reservations d'espaces communs (lecture seule) */}
+          {selectedBookings.map(b => (
+            <div key={'b' + b.id} style={{
+              display: 'flex', gap: 12, padding: '12px 14px', marginBottom: 8,
+              borderLeft: `3px solid ${BOOKING_COLOR}`, background: BOOKING_BG,
+              borderRadius: '0 var(--radius) var(--radius) 0'
+            }}>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-dark)', marginBottom: 2 }}>
+                  {b.space?.name || 'Espace commun'}
+                </div>
+                {b.start_time && (
+                  <div style={{ fontSize: 12, color: 'var(--text-light)' }}>
+                    {b.start_time.slice(0, 5)}{b.end_time ? ` – ${b.end_time.slice(0, 5)}` : ''}
+                  </div>
+                )}
+                {b.profile?.first_name && (
+                  <div style={{ fontSize: 12, color: 'var(--text-light)', marginTop: 2 }}>
+                    Réservé par {b.profile.first_name} {b.profile.last_name ? b.profile.last_name[0] + '.' : ''}
+                    {b.profile.building ? ` · Bât. ${b.profile.building}` : ''}
+                  </div>
+                )}
+                <span style={{ fontSize: 10, color: BOOKING_COLOR, fontWeight: 500 }}>Réservation</span>
+              </div>
+              <CalendarCheck size={14} color={BOOKING_COLOR} style={{ alignSelf: 'flex-start', marginTop: 2 }} />
+            </div>
+          ))}
         </div>
       </div>
       <BottomNav />
