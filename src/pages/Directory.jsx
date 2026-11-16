@@ -45,7 +45,7 @@ export default function Directory() {
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
   const [editingContact, setEditingContact] = useState(null)
-  const [form, setForm] = useState({ name: '', role_label: 'gardien', phone: '', email: '', building: '' })
+  const [form, setForm] = useState({ name: '', role_label: 'gardien', phone: '', phone2: '', email: '', building: '' })
   const [promotingId, setPromotingId] = useState(null)
   const [openSections, setOpenSections] = useState(() => {
     try {
@@ -55,7 +55,7 @@ export default function Directory() {
   })
 
   useEffect(() => {
-    localStorage.setItem('directory_sections', JSON.stringify(openSections))
+    try { localStorage.setItem('directory_sections', JSON.stringify(openSections)) } catch { /* ignore */ }
   }, [openSections])
 
   const canEdit = profile?.role === 'syndic' || profile?.role === 'admin' || profile?.role === 'conseil'
@@ -108,6 +108,7 @@ export default function Directory() {
       name: contact.name,
       role_label: contact.role_label,
       phone: contact.phone || '',
+      phone2: contact.phone2 || '',
       email: contact.email || '',
       building: contact.building || ''
     })
@@ -116,7 +117,7 @@ export default function Directory() {
   }
 
   function openNewForm() {
-    setForm({ name: '', role_label: 'gardien', phone: '', email: '', building: '' })
+    setForm({ name: '', role_label: 'gardien', phone: '', phone2: '', email: '', building: '' })
     setEditingContact(null)
     setShowForm(true)
   }
@@ -129,6 +130,7 @@ export default function Directory() {
       name: form.name.trim(),
       role_label: form.role_label,
       phone: form.phone.trim() || null,
+      phone2: form.phone2.trim() || null,
       email: form.email.trim() || null,
       building: form.building || null
     }
@@ -187,8 +189,12 @@ export default function Directory() {
               </select>
             </div>
             <div className="form-group">
-              <label>Téléphone</label>
+              <label>Téléphone 1</label>
               <input type="tel" value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))} placeholder="06 12 34 56 78" />
+            </div>
+            <div className="form-group">
+              <label>Téléphone 2 (optionnel)</label>
+              <input type="tel" value={form.phone2} onChange={e => setForm(f => ({ ...f, phone2: e.target.value }))} placeholder="04 42 00 00 00" />
             </div>
             <div className="form-group">
               <label>Email</label>
@@ -251,7 +257,7 @@ export default function Directory() {
                       <div className="avatar" style={{ background: roleInfo.bg, color: roleInfo.color }}>
                         {c.name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()}
                       </div>
-                      <div style={{ flex: 1 }}>
+                      <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ fontSize: 14, fontWeight: 500 }}>{c.name}</div>
                         {c.building && <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Bâtiment {c.building}</div>}
                         {c.phone && (
@@ -259,10 +265,20 @@ export default function Directory() {
                             <Phone size={11} /> {c.phone}
                           </div>
                         )}
+                        {c.phone2 && (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: 'var(--text-light)', marginTop: 2 }}>
+                            <Phone size={11} /> {c.phone2}
+                          </div>
+                        )}
                       </div>
-                      <div style={{ display: 'flex', gap: 6 }}>
+                      <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
                         {c.phone && (
                           <a href={`tel:${c.phone}`} style={{ width: 32, height: 32, borderRadius: '50%', background: 'var(--green-50)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <Phone size={14} color="var(--green-500)" />
+                          </a>
+                        )}
+                        {c.phone2 && (
+                          <a href={`tel:${c.phone2}`} style={{ width: 32, height: 32, borderRadius: '50%', background: 'var(--green-50)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                             <Phone size={14} color="var(--green-500)" />
                           </a>
                         )}
