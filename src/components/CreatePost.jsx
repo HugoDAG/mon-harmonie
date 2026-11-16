@@ -16,6 +16,59 @@ const EMPTY_RIDE = {
   seats: 3
 }
 
+// Les photos prises au téléphone pèsent 3 à 8 Mo. On les redimensionne
+// avant l'envoi : le stockage reste raisonnable et le fil se charge vite,
+// sans perte visible sur un écran de téléphone.
+const MAX_SIDE = 1600
+const JPEG_QUALITY = 0.8
+const SKIP_UNDER = 400 * 1024
+
+async function loadBitmap(file) {
+  // createImageBitmap applique l'orientation EXIF quand le navigateur le
+  // permet ; sinon on retombe sur une balise <img>, qui l'applique aussi.
+  try {
+    return await createImageBitmap(file, { imageOrientation: 'from-image' })
+  } catch {
+    return await new Promise((resolve, reject) => {
+      const img = new Image()
+      const url = URL.createObjectURL(file)
+      img.onload = () => { URL.revokeObjectURL(url); resolve(img) }
+      img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('image illisible')) }
+      img.src = url
+    })
+  }
+}
+
+async function compressImage(file) {
+  if (!file.type?.startsWith('image/')) return file
+  try {
+    const src = await loadBitmap(file)
+    const w0 = src.width || src.naturalWidth
+    const h0 = src.height || src.naturalHeight
+    if (!w0 || !h0) return file
+
+    const scale = Math.min(1, MAX_SIDE / Math.max(w0, h0))
+    // Déjà petite et légère : on n'y touche pas, inutile de la réencoder
+    if (scale === 1 && file.size < SKIP_UNDER) return file
+
+    const canvas = document.createElement('canvas')
+    canvas.width = Math.round(w0 * scale)
+    canvas.height = Math.round(h0 * scale)
+    canvas.getContext('2d').drawImage(src, 0, 0, canvas.width, canvas.height)
+
+    const blob = await new Promise(res => canvas.toBlob(res, 'image/jpeg', JPEG_QUALITY))
+    // Si la compression n'apporte rien, on garde l'original
+    if (!blob || blob.size >= file.size) return file
+
+    const name = file.name.replace(/\.[^.]+$/, '') + '.jpg'
+    return new File([blob], name, { type: 'image/jpeg' })
+  } catch {
+    // En cas de souci on envoie la photo telle quelle : mieux vaut une
+    // photo lourde que pas de photo du tout.
+    return file
+  }
+}
+
 export default function CreatePost({ onClose, onCreated, defaultType }) {
   const { user, profile } = useAuth()
   const [content, setContent] = useState('')
@@ -24,6 +77,7 @@ export default function CreatePost({ onClose, onCreated, defaultType }) {
   const [image, setImage] = useState(null)
   const [imagePreview, setImagePreview] = useState(null)
   const [loading, setLoading] = useState(false)
+  const [compressing, setCompressing] = useState(false)
   const [pollOptions, setPollOptions] = useState(['', ''])
   const [ride, setRide] = useState(EMPTY_RIDE)
 
@@ -34,9 +88,14 @@ export default function CreatePost({ onClose, onCreated, defaultType }) {
     setRide(r => ({ ...r, [field]: value }))
   }
 
-  function handleImageChange(e) {
+  async function handleImageChange(e) {
     const file = e.target.files[0]
-    if (file) { setImage(file); setImagePreview(URL.createObjectURL(file)) }
+    if (!file) return
+    setCompressing(true)
+    const ready = await compressImage(file)
+    setCompressing(false)
+    setImage(ready)
+    setImagePreview(URL.createObjectURL(ready))
   }
 
   function updatePollOption(index, value) {
@@ -76,13 +135,18 @@ export default function CreatePost({ onClose, onCreated, defaultType }) {
 
     let image_url = null
     if (image && !isRide && !isPoll) {
-      const fileExt = image.name.split('.').pop()
+      const fileExt = (image.name.split('.').pop() || 'jpg').toLowerCase()
       const fileName = `${Date.now()}-${user.id}.${fileExt}`
       const { error: uploadError } = await supabase.storage.from('documents').upload(`posts/${fileName}`, image)
-      if (!uploadError) {
-        const { data: urlData } = supabase.storage.from('documents').getPublicUrl(`posts/${fileName}`)
-        image_url = urlData.publicUrl
+      if (uploadError) {
+        // Avant, l'échec était silencieux : la publication partait sans la photo
+        setLoading(false)
+        alert("La photo n'a pas pu être envoyée : " + uploadError.message
+          + "\n\nRetirez-la pour publier sans photo, ou réessayez.")
+        return
       }
+      const { data: urlData } = supabase.storage.from('documents').getPublicUrl(`posts/${fileName}`)
+      image_url = urlData.publicUrl
     }
 
     const ridePayload = isRide ? {
@@ -279,7 +343,7 @@ export default function CreatePost({ onClose, onCreated, defaultType }) {
                 cursor: 'pointer', color: 'var(--text-muted)', fontSize: 13
               }}>
                 <Camera size={18} />
-                {image ? image.name : 'Ajouter une photo'}
+                {compressing ? 'Préparation de la photo...' : image ? image.name : 'Ajouter une photo'}
                 <input type="file" accept="image/*" onChange={handleImageChange} style={{ display: 'none' }} />
               </label>
               {imagePreview && (
