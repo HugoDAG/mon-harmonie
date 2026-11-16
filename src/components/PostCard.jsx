@@ -78,7 +78,7 @@ function RideDetails({ ride }) {
   )
 }
 
-export default function PostCard({ post, onUpdated }) {
+export default function PostCard({ post, onUpdated, isNew = false }) {
   const { user, profile: myProfile } = useAuth()
   const { profile, type, content, image_url, status, created_at } = post
   const typeInfo = POST_TYPE_LABELS[type] || POST_TYPE_LABELS.annonce
@@ -196,7 +196,11 @@ export default function PostCard({ post, onUpdated }) {
   }
 
   async function handleStatusChange(newStatus) {
-    await supabase.from('posts').update({ status: newStatus }).eq('id', post.id)
+    // On horodate le changement : c'est ce qui permet de remonter
+    // les signalements résolus récemment sur l'accueil.
+    await supabase.from('posts')
+      .update({ status: newStatus, status_updated_at: new Date().toISOString() })
+      .eq('id', post.id)
     setShowStatusMenu(false)
     onUpdated?.()
   }
@@ -216,6 +220,13 @@ export default function PostCard({ post, onUpdated }) {
             </span>
             {!isSyndic && profile?.building && (
               <span className="building-tag">{profile.building}</span>
+            )}
+            {isNew && (
+              <span style={{
+                marginLeft: 6, fontSize: 10, fontWeight: 600, letterSpacing: 0.3,
+                color: '#fff', background: 'var(--terracotta)',
+                padding: '2px 7px', borderRadius: 999
+              }}>Nouveau</span>
             )}
           </div>
           <div style={{ fontSize: 12, color: 'var(--gray-400)' }}>{timeAgo}</div>
