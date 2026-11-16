@@ -6,13 +6,18 @@ const SECTIONS = [
   {
     title: "Page d'accueil",
     items: [
+      "Cette semaine à Harmonie — En haut de l'accueil, un récapitulatif des 7 jours à venir : prochains événements, espaces communs réservés, signalements en cours, signalements résolus cette semaine et sondages ouverts. Appuyez sur une ligne pour aller directement au détail. Si tout est calme, le bloc vous le dit.",
+      "Pastille orange sur les raccourcis — Le petit chiffre orange indique le nombre de nouveautés depuis votre dernière visite (nouvelles annonces, nouveaux signalements, etc.). Il disparaît une fois que vous êtes passé voir.",
+      "Étiquette « Nouveau » — Les publications parues depuis votre dernière visite sont marquées dans le fil.",
       "Mon bâtiment / Résidence — Basculez entre les publications de votre bâtiment et celles de toute la résidence.",
+      "Événements dans le fil — Quand le conseil ou le syndic crée un événement, il apparaît aussi dans le fil d'actualité (encadré orange). Appuyez dessus pour ouvrir le calendrier.",
       "Bouton + (barre inférieure) — Créez une nouvelle publication. Choisissez le canal (bâtiment ou résidence), le type et ajoutez une photo si besoin.",
       "Barre de recherche — Recherchez une publication par mot-clé, nom ou type.",
       "J'aime — Appuyez sur le pouce pour liker une publication.",
       "Commentaires — Appuyez sur la bulle pour voir ou écrire un commentaire.",
       "Modifier / Supprimer — Le crayon et la corbeille apparaissent sur vos propres publications.",
-      "Nouveaux résidents — Un message de bienvenue s'affiche brièvement quand un voisin vient de s'inscrire."
+      "Nouveaux résidents — Un message de bienvenue s'affiche brièvement quand un voisin vient de s'inscrire.",
+      "Tirez vers le bas pour rafraîchir le fil."
     ]
   },
   {
@@ -23,7 +28,8 @@ const SECTIONS = [
       "Réserver — Réservez un espace commun (salle, local vélos, parking visiteur, jardin, terrain de pétanque).",
       "Voisinage — Entraide entre voisins et covoiturage (voir ci-dessous).",
       "Sondages — Votez sur les questions soumises à la communauté. 1 vote par logement.",
-      "Documents — Consultez les documents de la copropriété. Chaque document peut avoir un résumé (voir ci-dessous)."
+      "Documents — Consultez les documents de la copropriété. Chaque document peut avoir un résumé (voir ci-dessous).",
+      "C'est ici, et nulle part ailleurs, que vous retrouvez l'intégralité des publications d'un type — y compris les vôtres."
     ]
   },
   {
@@ -40,31 +46,32 @@ const SECTIONS = [
     items: [
       "Choisissez l'espace, la date et l'horaire, puis confirmez.",
       "Terrain de pétanque — Créneaux imposés par l'AG : 11h–21h l'été (avril à septembre), 10h–18h l'hiver (octobre à mars). L'application empêche toute réservation hors de ces horaires.",
+      "Votre réservation apparaît automatiquement dans le calendrier, visible par tous : plus de mauvaise surprise en arrivant devant une salle déjà occupée.",
       "Vous pouvez supprimer vos propres réservations depuis la liste."
     ]
   },
   {
     title: "Barre de navigation",
     items: [
-      "Accueil — Fil d'actualité et raccourcis.",
-      "Calendrier — Événements à venir (AG, conseil, travaux, encombrants, activités, info). Cliquez sur un jour pour voir ses événements. Le conseil/syndic peut en ajouter, avec une option de répétition (utile pour les encombrants).",
+      "Accueil — Fil d'actualité, récapitulatif de la semaine et raccourcis.",
+      "Calendrier — Événements à venir (AG, conseil, travaux, encombrants, activités, info) et réservations d'espaces communs. Cliquez sur un jour pour voir son détail. Les pastilles sous les jours indiquent ce qui s'y passe ; la pastille vert foncé signale une réservation. Le conseil/syndic peut ajouter des événements, avec une option de répétition (utile pour les encombrants).",
       "Bouton + — Créer une publication depuis n'importe quelle page.",
-      "Annuaire — Contacts importants (syndic, gardiens, prestataires, urgences) et résidents par bâtiment. Les sections se replient.",
-      "Mon compte — Vos informations et vos espaces personnels."
+      "Annuaire — Contacts importants (syndic, gardiens, prestataires, urgences) et résidents par bâtiment. Les sections se replient et restent comme vous les laissez.",
+      "Mon compte — Vos informations et les documents de référence de la résidence."
     ]
   },
   {
     title: "Mon compte",
     items: [
+      "La page est en deux parties : « Mon compte », qui ne concerne que vous, et « La résidence », les documents de référence communs.",
       "Mes informations — Nom, bâtiment, numéro d'appartement (anonyme), email, co-résident lié et changement de mot de passe.",
-      "Mes signalements — Liste de tous vos signalements avec leur statut.",
-      "Mes annonces — Liste de toutes vos annonces publiées.",
       "Mes documents — Votre coffre-fort personnel : stockez vos documents liés à la copropriété (acte de vente, assurance, factures, courriers syndic…). Ils sont privés et visibles uniquement par vous.",
+      "Ma résidence — Vue de tous les bâtiments et appartements, avec les résidents présents dans l'app (lecture seule pour tous, gestion réservée à l'admin/syndic).",
       "Règles de la copropriété — Les règles issues de l'AG (travaux privatifs, boîtes aux lettres, pétanque…).",
       "Guide d'utilisation — Cette page.",
-      "Ma résidence — Vue de tous les bâtiments et appartements, avec les résidents présents dans l'app (lecture seule pour tous, gestion réservée à l'admin/syndic).",
       "Demandes en attente (admin/syndic) — Approbation des nouvelles inscriptions.",
-      "Déconnexion et Suppression de compte (RGPD)."
+      "Déconnexion et Suppression de compte (RGPD).",
+      "Vos signalements et vos annonces ne sont plus listés ici : retrouvez-les directement dans les onglets Signalements et Annonces de l'accueil, avec ceux de vos voisins."
     ]
   },
   {
@@ -95,11 +102,12 @@ const SECTIONS = [
   {
     title: "Sécurité et inscription",
     items: [
-      "À l'inscription, chaque résident fournit son bâtiment, son numéro d'appartement et une photo de sa boîte aux lettres (preuve de résidence).",
-      "Le compte est en attente de validation par un administrateur de la résidence.",
-      "L'administrateur vérifie les informations et approuve ou refuse la demande.",
+      "L'accès à l'application se fait par un QR code distribué dans les boîtes aux lettres de la résidence. Scannez-le (ou ouvrez le lien) pour arriver sur la page d'inscription.",
+      "À l'inscription, vous renseignez votre nom, votre bâtiment, votre numéro d'appartement et, si vous le souhaitez, l'email de votre co-résident.",
+      "Aucune vérification par email n'est demandée : vous pouvez vous connecter dès que le compte est créé.",
+      "Le compte est en attente de validation par un administrateur de la résidence, qui vérifie la cohérence des informations avant d'approuver.",
       "Un résident ne peut pas se promouvoir lui-même : seuls l'admin ou le syndic attribuent les rôles.",
-      "Vos documents personnels sont stockés dans un espace privé et chiffré d'accès : personne d'autre ne peut les ouvrir."
+      "Vos documents personnels sont stockés dans un espace privé : personne d'autre ne peut les ouvrir, pas même l'admin."
     ]
   },
   {
@@ -112,10 +120,12 @@ const SECTIONS = [
     ]
   },
   {
-    title: "Numéros d'urgence",
+    title: "Annuaire et numéros d'urgence",
     items: [
-      "Les numéros d'urgence (pompiers, SAMU, police, gaz, eau) sont dans l'annuaire.",
-      "Appuyez sur le bouton téléphone vert pour appeler directement."
+      "Les contacts sont regroupés par section (syndic, gardiens, prestataires, urgences). Chaque section se replie, et l'application garde vos sections fermées jusqu'à ce que vous les rouvriez.",
+      "Appuyez sur le bouton téléphone vert pour appeler directement.",
+      "Un contact peut avoir deux numéros (fixe et portable, par exemple). Dans ce cas, le bouton téléphone vous demande lequel appeler.",
+      "Le conseil et le syndic peuvent ajouter, modifier ou supprimer les contacts de l'annuaire."
     ]
   }
 ]
