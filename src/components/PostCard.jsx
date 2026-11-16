@@ -103,6 +103,8 @@ export default function PostCard({ post, onUpdated, isNew = false }) {
   const [pollOptions, setPollOptions] = useState([])
   const [pollVotes, setPollVotes] = useState([])
   const [userVote, setUserVote] = useState(null)
+  // Vote emis par le co-resident : il verrouille le sondage pour le logement
+  const [coResidentVote, setCoResidentVote] = useState(null)
 
   const timeAgo = formatTimeAgo(created_at)
   const currentStatus = STATUS_OPTIONS.find(s => s.value === (status || 'open')) || STATUS_OPTIONS[0]
@@ -163,19 +165,29 @@ export default function PostCard({ post, onUpdated, isNew = false }) {
     if (optionIds.length > 0) {
       const { data: votes } = await supabase.from('poll_votes').select('*').in('option_id', optionIds)
       setPollVotes(votes || [])
-      const myVote = (votes || []).find(v => v.user_id === user?.id)
-      setUserVote(myVote?.option_id || null)
+      // Un seul vote par logement : le vote du co-resident compte comme le mien.
+      const mine = (votes || []).find(v => v.user_id === user?.id)
+      const co = myProfile?.co_resident_id
+        ? (votes || []).find(v => v.user_id === myProfile.co_resident_id)
+        : null
+      setUserVote(mine?.option_id || null)
+      setCoResidentVote(mine ? null : (co?.option_id || null))
     }
   }
 
   async function handleVote(optionId) {
+    // Le logement a deja vote via le co-resident : on ne touche pas a son vote.
+    if (coResidentVote) return
+
     if (userVote) {
       await supabase.from('poll_votes').delete().eq('option_id', userVote).eq('user_id', user.id)
     }
     if (userVote !== optionId) {
       const { error } = await supabase.from('poll_votes').insert({ option_id: optionId, user_id: user.id })
       if (error) {
-        alert('Un vote a déjà été enregistré pour votre logement')
+        alert(error.code === '23505'
+          ? 'Un vote a déjà été enregistré pour votre logement.'
+          : "Le vote n'a pas pu être enregistré : " + error.message)
       }
     }
     fetchPoll()
@@ -301,21 +313,31 @@ export default function PostCard({ post, onUpdated, isNew = false }) {
             const voteCount = pollVotes.filter(v => v.option_id === opt.id).length
             const pct = totalVotes > 0 ? Math.round((voteCount / totalVotes) * 100) : 0
             const isMyVote = userVote === opt.id
+            const isCoVote = coResidentVote === opt.id
+            const locked = !!coResidentVote
+            const chosen = isMyVote || isCoVote
             return (
-              <button key={opt.id} onClick={() => handleVote(opt.id)}
+              <button key={opt.id} onClick={locked ? undefined : () => handleVote(opt.id)} disabled={locked}
                 style={{
                   display: 'flex', alignItems: 'center', width: '100%', padding: '10px 12px',
-                  border: isMyVote ? '2px solid var(--blue-500)' : '1px solid var(--gray-200)',
+                  border: chosen ? '2px solid var(--blue-500)' : '1px solid var(--gray-200)',
                   borderRadius: 'var(--radius)', marginBottom: 6, background: 'var(--gray-50)',
-                  cursor: 'pointer', position: 'relative', overflow: 'hidden', textAlign: 'left'
+                  cursor: locked ? 'default' : 'pointer', position: 'relative', overflow: 'hidden', textAlign: 'left'
                 }}>
-                <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: pct + '%', background: isMyVote ? 'rgba(59,130,246,0.1)' : 'rgba(0,0,0,0.03)', transition: 'width 0.3s' }} />
-                <span style={{ flex: 1, fontSize: 13, fontWeight: isMyVote ? 600 : 400, position: 'relative', zIndex: 1 }}>{opt.label}</span>
+                <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: pct + '%', background: chosen ? 'rgba(59,130,246,0.1)' : 'rgba(0,0,0,0.03)', transition: 'width 0.3s' }} />
+                <span style={{ flex: 1, fontSize: 13, fontWeight: chosen ? 600 : 400, position: 'relative', zIndex: 1 }}>{opt.label}</span>
                 <span style={{ fontSize: 12, color: 'var(--gray-400)', position: 'relative', zIndex: 1 }}>{pct}% ({voteCount})</span>
               </button>
             )
           })}
-          <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>{totalVotes} logement{totalVotes !== 1 ? 's' : ''}</div>
+          <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>
+            {totalVotes} logement{totalVotes !== 1 ? 's' : ''}
+          </div>
+          {coResidentVote && (
+            <div style={{ fontSize: 11, color: 'var(--terracotta)', marginTop: 4, lineHeight: 1.5 }}>
+              Votre co-résident a déjà voté pour votre logement. Un seul vote par logement.
+            </div>
+          )}
         </div>
       )}
 

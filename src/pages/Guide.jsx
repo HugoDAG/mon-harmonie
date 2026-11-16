@@ -6,6 +6,7 @@ const SECTIONS = [
   {
     title: "Page d'accueil",
     items: [
+      "Rappels — Quand une Assemblée Générale, un passage d'encombrants, des travaux ou un conseil syndical approchent (moins de 7 jours), un bandeau s'affiche en haut de l'accueil avec le compte à rebours. Il devient orange la veille et le jour même. La croix le masque si vous l'avez bien noté.",
       "Cette semaine à Harmonie — En haut de l'accueil, un récapitulatif des 7 jours à venir : prochains événements, espaces communs réservés, signalements en cours, signalements résolus cette semaine et sondages ouverts. Appuyez sur une ligne pour aller directement au détail. Si tout est calme, le bloc vous le dit.",
       "Pastille orange sur les raccourcis — Le petit chiffre orange indique le nombre de nouveautés depuis votre dernière visite (nouvelles annonces, nouveaux signalements, etc.). Il disparaît une fois que vous êtes passé voir.",
       "Étiquette « Nouveau » — Les publications parues depuis votre dernière visite sont marquées dans le fil.",
@@ -27,7 +28,7 @@ const SECTIONS = [
       "Annonces — Informations importantes ou petites annonces entre résidents.",
       "Réserver — Réservez un espace commun (salle, local vélos, parking visiteur, jardin, terrain de pétanque).",
       "Voisinage — Entraide entre voisins et covoiturage (voir ci-dessous).",
-      "Sondages — Votez sur les questions soumises à la communauté. 1 vote par logement.",
+      "Sondages — Votez sur les questions soumises à la communauté. Un seul vote par logement : si vous avez un compte duo, le vote de votre co-résident vaut pour vous deux, et le sondage se verrouille après son choix. Tant que personne n'a voté chez vous, vous pouvez changer d'avis librement.",
       "Documents — Consultez les documents de la copropriété. Chaque document peut avoir un résumé (voir ci-dessous).",
       "C'est ici, et nulle part ailleurs, que vous retrouvez l'intégralité des publications d'un type — y compris les vôtres."
     ]
