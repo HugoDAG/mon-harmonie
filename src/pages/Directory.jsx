@@ -47,6 +47,7 @@ export default function Directory() {
   const [editingContact, setEditingContact] = useState(null)
   const [form, setForm] = useState({ name: '', role_label: 'gardien', phone: '', phone2: '', email: '', building: '' })
   const [promotingId, setPromotingId] = useState(null)
+  const [callingId, setCallingId] = useState(null)
   const [openSections, setOpenSections] = useState(() => {
     try {
       const saved = localStorage.getItem('directory_sections')
@@ -272,15 +273,41 @@ export default function Directory() {
                         )}
                       </div>
                       <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
-                        {c.phone && (
-                          <a href={`tel:${c.phone}`} style={{ width: 32, height: 32, borderRadius: '50%', background: 'var(--green-50)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            <Phone size={14} color="var(--green-500)" />
-                          </a>
-                        )}
-                        {c.phone2 && (
-                          <a href={`tel:${c.phone2}`} style={{ width: 32, height: 32, borderRadius: '50%', background: 'var(--green-50)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            <Phone size={14} color="var(--green-500)" />
-                          </a>
+                        {(c.phone || c.phone2) && (
+                          <div style={{ position: 'relative' }}>
+                            {c.phone && c.phone2 ? (
+                              <>
+                                <button onClick={() => setCallingId(callingId === c.id ? null : c.id)}
+                                  style={{ width: 32, height: 32, borderRadius: '50%', background: 'var(--green-50)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', cursor: 'pointer' }}>
+                                  <Phone size={14} color="var(--green-500)" />
+                                </button>
+                                {callingId === c.id && (
+                                  <div style={{
+                                    position: 'absolute', right: 0, top: 38, background: '#fff',
+                                    border: '1px solid var(--border)', borderRadius: 'var(--radius)',
+                                    boxShadow: 'var(--shadow)', zIndex: 20, minWidth: 180, overflow: 'hidden'
+                                  }}>
+                                    <div style={{ fontSize: 11, color: 'var(--text-muted)', padding: '8px 12px', borderBottom: '1px solid var(--border-light)' }}>
+                                      Choisir un numéro
+                                    </div>
+                                    <a href={`tel:${c.phone}`} onClick={() => setCallingId(null)}
+                                      style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 12px', fontSize: 13, color: 'var(--text-dark)', textDecoration: 'none', borderBottom: '1px solid var(--border-light)' }}>
+                                      <Phone size={13} color="var(--green-500)" /> {c.phone}
+                                    </a>
+                                    <a href={`tel:${c.phone2}`} onClick={() => setCallingId(null)}
+                                      style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 12px', fontSize: 13, color: 'var(--text-dark)', textDecoration: 'none' }}>
+                                      <Phone size={13} color="var(--green-500)" /> {c.phone2}
+                                    </a>
+                                  </div>
+                                )}
+                              </>
+                            ) : (
+                              <a href={`tel:${c.phone || c.phone2}`}
+                                style={{ width: 32, height: 32, borderRadius: '50%', background: 'var(--green-50)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                <Phone size={14} color="var(--green-500)" />
+                              </a>
+                            )}
+                          </div>
                         )}
                         {c.email && (
                           <a href={`mailto:${c.email}`} style={{ width: 32, height: 32, borderRadius: '50%', background: 'var(--blue-50)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
