@@ -25,6 +25,7 @@ const SECTIONS = [
     title: "Les raccourcis",
     items: [
       "Signalements — Déclarez un problème (panne, fuite, éclairage…). Un badge indique le statut : 🆕 Nouveau, ⏳ En cours, ✅ Résolu, ❌ Rejeté.",
+      "Signalements oubliés — Si un signalement reste ouvert plus de 14 jours sans que son statut bouge, une mention orange « Sans réponse depuis X jours » apparaît dessus, visible par tous. Le conseil et le syndic voient en plus le total de ces signalements dans le récapitulatif de la semaine.",
       "Annonces — Informations importantes ou petites annonces entre résidents.",
       "Réserver — Réservez un espace commun (salle, local vélos, parking visiteur, jardin, terrain de pétanque).",
       "Voisinage — Entraide entre voisins et covoiturage (voir ci-dessous).",
