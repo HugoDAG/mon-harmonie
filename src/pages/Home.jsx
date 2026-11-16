@@ -7,11 +7,12 @@ import CreatePost from '../components/CreatePost'
 import BottomNav from '../components/BottomNav'
 import {
   Building, Home as HomeIcon, Search, CalendarDays, CalendarCheck,
-  AlertTriangle, BarChart3, CheckCircle2, ChevronRight
+  AlertTriangle, BarChart3, CheckCircle2, ChevronRight, Bell, X
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 
 const LAST_SEEN_KEY = 'harmonie_last_seen'
+const ALERTS_KEY = 'harmonie_alertes_masquees'
 const DAY = 24 * 60 * 60 * 1000
 
 function readLastSeen() {
@@ -19,6 +20,25 @@ function readLastSeen() {
 }
 function writeLastSeen() {
   try { localStorage.setItem(LAST_SEEN_KEY, new Date().toISOString()) } catch { /* ignore */ }
+}
+function readDismissedAlerts() {
+  try { return JSON.parse(localStorage.getItem(ALERTS_KEY) || '[]') } catch { return [] }
+}
+
+// Evenements qui meritent un rappel en haut de l'accueil, par ordre d'importance
+const ALERT_PRIORITY = { ag: 0, encombrants: 1, travaux: 2, conseil: 3 }
+
+function daysUntil(dateStr) {
+  const target = new Date(dateStr + 'T00:00:00')
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  return Math.round((target - today) / DAY)
+}
+
+function countdownLabel(n) {
+  if (n <= 0) return "aujourd'hui"
+  if (n === 1) return 'demain'
+  return `dans ${n} jours`
 }
 
 const EVENT_TYPE_LABELS = {
@@ -53,6 +73,7 @@ export default function Home() {
 
   // Nouveautés depuis la dernière visite (figées pour toute la visite en cours)
   const [lastSeen] = useState(() => readLastSeen())
+  const [dismissedAlerts, setDismissedAlerts] = useState(() => readDismissedAlerts())
   const [newCounts, setNewCounts] = useState({})
   const [weekly, setWeekly] = useState({
     events: [], bookings: [], openSignalements: 0, resolvedRecent: 0, openSondages: 0
@@ -176,6 +197,22 @@ export default function Home() {
     { label: 'Documents', path: '/documents', badge: 'documents', img: 'https://lorpxeojlganrirzksff.supabase.co/storage/v1/object/public/documents/documents%20trans.png' }
   ]
 
+  // Rappels : evenements importants dans les 7 jours, non masques par le resident
+  const alerts = weekly.events
+    .filter(ev => ev.event_type in ALERT_PRIORITY)
+    .filter(ev => !dismissedAlerts.includes(String(ev.id)))
+    .sort((a, b) =>
+      (ALERT_PRIORITY[a.event_type] - ALERT_PRIORITY[b.event_type]) ||
+      String(a.event_date).localeCompare(String(b.event_date))
+    )
+    .slice(0, 2)
+
+  function hideAlert(id) {
+    const next = [...dismissedAlerts, String(id)]
+    setDismissedAlerts(next)
+    try { localStorage.setItem(ALERTS_KEY, JSON.stringify(next.slice(-50))) } catch { /* ignore */ }
+  }
+
   // Lignes du bloc « Cette semaine »
   const weekRows = []
   weekly.events.slice(0, 3).forEach(ev => weekRows.push({
@@ -221,7 +258,7 @@ export default function Home() {
       {/* Hero image */}
       <div style={{ position: 'relative', width: '100%' }}>
         <div style={{
-          width: '100%', height: 280,
+          width: '100%', height: 160,
           backgroundImage: 'url(https://lorpxeojlganrirzksff.supabase.co/storage/v1/object/public/documents/logo%20fond%20ecran.png)',
           backgroundSize: 'cover', backgroundPosition: 'center'
         }} />
@@ -234,7 +271,7 @@ export default function Home() {
         marginTop: -30,
         position: 'relative',
         zIndex: 2,
-        minHeight: 'calc(100vh - 250px)'
+        minHeight: 'calc(100vh - 130px)'
       }}>
         <div style={{ padding: '24px 16px 100px' }}>
           {/* Welcome text */}
@@ -251,6 +288,40 @@ export default function Home() {
               </p>
             )}
           </div>
+
+          {/* Rappels : AG, encombrants, travaux, conseil dans les 7 jours */}
+          {alerts.map(ev => {
+            const n = daysUntil(ev.event_date)
+            const urgent = n <= 1
+            return (
+              <div key={'al' + ev.id} style={{
+                display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10,
+                background: urgent ? 'var(--terracotta)' : 'var(--gold)',
+                color: urgent ? '#fff' : 'var(--text-dark)',
+                borderRadius: 'var(--radius-lg)', padding: '12px 14px',
+                boxShadow: 'var(--shadow-sm)'
+              }}>
+                <Bell size={18} style={{ flexShrink: 0 }} />
+                <button onClick={() => navigate('/calendar')} style={{
+                  flex: 1, minWidth: 0, background: 'none', border: 'none', padding: 0,
+                  textAlign: 'left', color: 'inherit', cursor: 'pointer', fontFamily: 'inherit'
+                }}>
+                  <div style={{ fontSize: 13, fontWeight: 600 }}>
+                    {EVENT_TYPE_LABELS[ev.event_type] || 'Événement'} {countdownLabel(n)}
+                  </div>
+                  <div style={{ fontSize: 11, opacity: 0.85, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {ev.title} · {formatDay(ev.event_date)}{ev.event_time ? ` · ${ev.event_time.slice(0, 5)}` : ''}
+                  </div>
+                </button>
+                <button onClick={() => hideAlert(ev.id)} aria-label="Masquer ce rappel" style={{
+                  background: 'none', border: 'none', color: 'inherit', opacity: 0.7,
+                  cursor: 'pointer', padding: 4, flexShrink: 0, display: 'flex'
+                }}>
+                  <X size={15} />
+                </button>
+              </div>
+            )
+          })}
 
           {/* Quick actions */}
           <div style={{
