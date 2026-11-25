@@ -25,9 +25,9 @@ import ScrollToTop from './components/ScrollToTop'
  * dit maintenant ce qui se passe, qu'il soit déconnecté ou que le
  * serveur ne réponde pas.
  */
-function EcranChargement() {
+function EcranChargement({ immediat = false }) {
   const [horsLigne, setHorsLigne] = useState(() => !navigator.onLine)
-  const [tropLong, setTropLong] = useState(false)
+  const [tropLong, setTropLong] = useState(immediat)
 
   useEffect(() => {
     const enLigne = () => setHorsLigne(false)
@@ -78,6 +78,10 @@ function PrivateRoute({ children }) {
   const { user, profile, loading, isApproved, signOut } = useAuth()
   if (loading) return <EcranChargement />
   if (!user) return <Navigate to="/login" />
+  // Connecté mais profil introuvable : c'est presque toujours le réseau.
+  // Afficher l'accueil sans profil ne donnerait qu'une page vide et
+  // muette, alors autant dire ce qui se passe.
+  if (!profile) return <EcranChargement immediat />
   if (profile && !isApproved()) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh', padding: 32, textAlign: 'center', background: 'var(--cream)' }}>

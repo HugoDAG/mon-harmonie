@@ -68,7 +68,8 @@ const SECTIONS = [
     title: "Mon compte",
     items: [
       "La page est en deux parties : « Mon compte », qui ne concerne que vous, et « La résidence », les documents de référence communs.",
-      "Mes informations — Nom, bâtiment, numéro d'appartement (anonyme), email, co-résident lié et changement de mot de passe.",
+      "Mes informations — Nom, bâtiment, numéro d'appartement (anonyme), email, co-résident lié, notifications et changement de mot de passe.",
+      "Notifications — Dans « Mes informations », vous choisissez d'être prévenu ou non sur cet appareil, puis les sujets qui vous intéressent : signalements, annonces, calendrier, sondages, voisinage, réponses à vos publications, réservations. L'activation vaut pour l'appareil utilisé ; les sujets valent pour tous vos appareils. Sur iPhone, il faut d'abord ajouter Mon Harmonie à l'écran d'accueil pour que les notifications soient possibles.",
       "Mes documents — Votre coffre-fort personnel : stockez vos documents liés à la copropriété (acte de vente, assurance, factures, courriers syndic…). Ils sont privés et visibles uniquement par vous.",
       "Ma résidence — Vue de tous les bâtiments et appartements, avec les résidents présents dans l'app (lecture seule pour tous, gestion réservée à l'admin/syndic).",
       "Règles de la copropriété — Les règles issues de l'AG (travaux privatifs, boîtes aux lettres, pétanque…).",
