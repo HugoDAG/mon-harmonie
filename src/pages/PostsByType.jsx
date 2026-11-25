@@ -8,6 +8,9 @@ import CreatePost from '../components/CreatePost'
 import BottomNav from '../components/BottomNav'
 import { ArrowLeft, Building, Home as HomeIcon } from 'lucide-react'
 
+// Publications chargées d'un coup, puis à chaque « Voir plus »
+const TAILLE_PAGE = 30
+
 const TAB_LABELS = {
   signalement: ["Fil d'actualité", 'Mes signalements'],
   voisinage: ["Fil d'actualité", 'Mes discussions'],
@@ -30,6 +33,9 @@ export default function PostsByType() {
   const [subFilter, setSubFilter] = useState('all')
   const [posts, setPosts] = useState([])
   const [loading, setLoading] = useState(true)
+  const [page, setPage] = useState(0)
+  const [encorePlus, setEncorePlus] = useState(false)
+  const [chargementSuite, setChargementSuite] = useState(false)
   const [showCreate, setShowCreate] = useState(false)
 
   const isVoisinage = type === 'voisinage'
@@ -38,17 +44,19 @@ export default function PostsByType() {
   const tabs = TAB_LABELS[type] || ['Tout', 'Les miens']
 
   useEffect(() => { setSubFilter('all') }, [type])
-  useEffect(() => { fetchPosts() }, [channel, profile, type, tab, subFilter])
+  useEffect(() => { fetchPosts(0) }, [channel, profile, type, tab, subFilter])
 
-  async function fetchPosts() {
+  async function fetchPosts(pageVoulue = 0) {
     if (!profile) return
-    setLoading(true)
+    const premiere = pageVoulue === 0
+    if (premiere) setLoading(true)
+    else setChargementSuite(true)
 
     let query = supabase
       .from('posts')
       .select('*, profile:profiles(id, first_name, last_name, building, role, co_resident_id)')
       .order('created_at', { ascending: false })
-      .limit(30)
+      .range(pageVoulue * TAILLE_PAGE, pageVoulue * TAILLE_PAGE + TAILLE_PAGE - 1)
 
     if (isVoisinage) {
       if (subFilter === 'entraide') query = query.eq('type', 'voisinage')
@@ -66,9 +74,16 @@ export default function PostsByType() {
       query = query.eq('channel', CHANNELS.RESIDENCE)
     }
 
-    const { data } = await query
-    setPosts(data || [])
-    setLoading(false)
+    const { data, error } = await query
+    if (error) alert("Les publications n'ont pas pu être chargées : " + error.message)
+
+    const lot = data || []
+    setPosts(prev => (premiere ? lot : [...prev, ...lot]))
+    setEncorePlus(lot.length === TAILLE_PAGE)
+    setPage(pageVoulue)
+
+    if (premiere) setLoading(false)
+    else setChargementSuite(false)
   }
 
   const defaultCreateType = isVoisinage && subFilter === 'covoiturage' ? 'covoiturage' : type
@@ -136,11 +151,30 @@ export default function PostsByType() {
             <p style={{ fontSize: 14 }}>{emptyLabel}</p>
           </div>
         ) : (
-          posts.map(post => <PostCard key={post.id} post={post} onUpdated={fetchPosts} />)
+          <>
+            {posts.map(post => (
+              <PostCard key={post.id} post={post} onUpdated={() => fetchPosts(0)} />
+            ))}
+
+            {encorePlus && (
+              <button
+                onClick={() => fetchPosts(page + 1)}
+                disabled={chargementSuite}
+                style={{
+                  width: '100%', padding: '12px', marginTop: 4,
+                  border: '1px solid var(--border)', borderRadius: 'var(--radius)',
+                  background: 'var(--white)', color: 'var(--text-medium)',
+                  fontSize: 13, fontFamily: 'inherit',
+                  cursor: chargementSuite ? 'default' : 'pointer'
+                }}>
+                {chargementSuite ? 'Chargement...' : 'Voir les publications plus anciennes'}
+              </button>
+            )}
+          </>
         )}
       </div>
 
-      {showCreate && <CreatePost onClose={() => setShowCreate(false)} onCreated={fetchPosts} defaultType={defaultCreateType} />}
+      {showCreate && <CreatePost onClose={() => setShowCreate(false)} onCreated={() => fetchPosts(0)} defaultType={defaultCreateType} />}
       <BottomNav onPlusClick={() => setShowCreate(true)} />
     </div>
   )
