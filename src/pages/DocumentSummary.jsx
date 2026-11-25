@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/AuthContext'
 import BottomNav from '../components/BottomNav'
 import { ArrowLeft, FileText, Save, ChevronDown, Check, X as XIcon } from 'lucide-react'
+import { chargerPdfJs } from '../lib/chargerScript'
 
 export default function DocumentSummary() {
   const { id } = useParams()
@@ -48,7 +49,9 @@ export default function DocumentSummary() {
     if (!doc?.file_url) return
     setExtracting(true)
     try {
-      const pdf = await window.pdfjsLib.getDocument(doc.file_url).promise
+      // Chargée seulement maintenant : c'est la seule page qui lit des PDF.
+      const pdfjsLib = await chargerPdfJs()
+      const pdf = await pdfjsLib.getDocument(doc.file_url).promise
       const extractedPages = []
       for (let i = 1; i <= pdf.numPages; i++) {
         const page = await pdf.getPage(i)

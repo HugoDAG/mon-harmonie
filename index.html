@@ -11,9 +11,10 @@
   </head>
   <body>
     <div id="root"></div>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-    <script>pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';</script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <!-- pdf.js et qrcodejs ne sont plus chargés ici : ils ne servent que
+         dans le résumé de document et dans Ma résidence, et les charger
+         sur chaque page faisait attendre tout le monde pour rien.
+         Voir src/lib/chargerScript.js -->
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
