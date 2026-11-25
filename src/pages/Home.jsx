@@ -16,6 +16,15 @@ const ALERTS_KEY = 'harmonie_alertes_masquees'
 const DAY = 24 * 60 * 60 * 1000
 // Au-dela de ce delai sans mouvement, un signalement ouvert est considere en souffrance
 const STALE_DAYS = 14
+// Nombre de publications chargées d'un coup, puis à chaque « Voir plus »
+const TAILLE_PAGE = 30
+
+// La syntaxe de filtre de Supabase utilise la virgule et les parenthèses
+// comme séparateurs : un terme de recherche qui en contient casserait la
+// requête. On les remplace par des espaces plutôt que de refuser la saisie.
+function nettoyerRecherche(terme) {
+  return (terme || '').replace(/[,()%*\\]/g, ' ').trim()
+}
 
 function readLastSeen() {
   try { return localStorage.getItem(LAST_SEEN_KEY) } catch { return null }
@@ -65,6 +74,11 @@ export default function Home() {
   const [loading, setLoading] = useState(true)
   const [showCreate, setShowCreate] = useState(false)
   const [search, setSearch] = useState('')
+  // Terme réellement envoyé à la base, un court instant après la frappe
+  const [termeRecherche, setTermeRecherche] = useState('')
+  const [page, setPage] = useState(0)
+  const [encorePlus, setEncorePlus] = useState(false)
+  const [chargementSuite, setChargementSuite] = useState(false)
   const [showFeed, setShowFeed] = useState(true)
   const [newResidents, setNewResidents] = useState([])
   const [showWelcome, setShowWelcome] = useState(true)
@@ -92,7 +106,7 @@ export default function Home() {
     if (distance > 0 && distance < 150) setPullDistance(distance)
   }
   async function handleTouchEnd() {
-    if (pullDistance > 80) { setRefreshing(true); await Promise.all([fetchPosts(), fetchSummary()]); setRefreshing(false) }
+    if (pullDistance > 80) { setRefreshing(true); await Promise.all([fetchPosts(0), fetchSummary()]); setRefreshing(false) }
     setTouchStart(null); setPullDistance(0)
   }
 
@@ -111,7 +125,14 @@ export default function Home() {
     return () => clearTimeout(timer)
   }, [])
 
-  useEffect(() => { fetchPosts() }, [channel, profile])
+  // On attend une pause dans la frappe avant d'interroger la base, pour ne
+  // pas lancer une requête à chaque lettre tapée.
+  useEffect(() => {
+    const minuteur = setTimeout(() => setTermeRecherche(search.trim()), 350)
+    return () => clearTimeout(minuteur)
+  }, [search])
+
+  useEffect(() => { fetchPosts(0) }, [channel, profile, termeRecherche])
   useEffect(() => { fetchSummary() }, [profile])
 
   function visibleToMe(p) {
@@ -119,15 +140,49 @@ export default function Home() {
     return p.channel === CHANNELS.RESIDENCE || (p.channel === CHANNELS.BUILDING && p.building === profile.building)
   }
 
-  async function fetchPosts() {
+  // La recherche est faite par la base, pas par le navigateur : sinon elle
+  // ne porterait que sur les publications déjà chargées, et un message
+  // vieux de six mois serait introuvable sans que personne ne comprenne
+  // pourquoi.
+  async function fetchPosts(pageVoulue = 0) {
     if (!profile) return
-    setLoading(true)
-    let query = supabase.from('posts').select('*, profile:profiles(id, first_name, last_name, building, role, co_resident_id)').order('created_at', { ascending: false }).limit(50)
+    const premiere = pageVoulue === 0
+    if (premiere) setLoading(true)
+    else setChargementSuite(true)
+
+    let query = supabase.from('posts')
+      .select('*, profile:profiles(id, first_name, last_name, building, role, co_resident_id)')
+      .order('created_at', { ascending: false })
+      .range(pageVoulue * TAILLE_PAGE, pageVoulue * TAILLE_PAGE + TAILLE_PAGE - 1)
+
     if (channel === CHANNELS.BUILDING) query = query.eq('building', profile.building).eq('channel', CHANNELS.BUILDING)
     else query = query.eq('channel', CHANNELS.RESIDENCE)
-    const { data } = await query
-    setPosts(data || [])
-    setLoading(false)
+
+    const motif = nettoyerRecherche(termeRecherche)
+    if (motif) {
+      // On cherche dans le texte, dans le type, et chez les auteurs dont le
+      // nom correspond — ce dernier cas demande une requête à part, le nom
+      // vivant dans une autre table.
+      // Dans un filtre « or », le joker de Supabase est l'étoile et non le
+      // pourcent : ce dernier serait pris pour un code d'échappement d'URL.
+      const { data: auteurs } = await supabase.from('profiles')
+        .select('id').or(`first_name.ilike.*${motif}*,last_name.ilike.*${motif}*`)
+      const conditions = [`content.ilike.*${motif}*`, `type.ilike.*${motif}*`]
+      const ids = (auteurs || []).map(a => a.id)
+      if (ids.length > 0) conditions.push(`user_id.in.(${ids.join(',')})`)
+      query = query.or(conditions.join(','))
+    }
+
+    const { data, error } = await query
+    if (error) alert("Le fil n'a pas pu être chargé : " + error.message)
+
+    const lot = data || []
+    setPosts(prev => (premiere ? lot : [...prev, ...lot]))
+    setEncorePlus(lot.length === TAILLE_PAGE)
+    setPage(pageVoulue)
+
+    if (premiere) setLoading(false)
+    else setChargementSuite(false)
   }
 
   async function fetchSummary() {
@@ -186,11 +241,9 @@ export default function Home() {
     }))
   }
 
-  const filteredPosts = posts.filter(p => {
-    if (!search.trim()) return true
-    const s = search.toLowerCase()
-    return p.content?.toLowerCase().includes(s) || p.profile?.first_name?.toLowerCase().includes(s) || p.profile?.last_name?.toLowerCase().includes(s) || p.type?.toLowerCase().includes(s)
-  })
+  // Le tri est déjà fait par la base ; il ne reste qu'à écarter les
+  // publications d'un autre bâtiment qui auraient pu passer.
+  const filteredPosts = posts
 
   // Fil mixte : publications + événements récents, du plus récent au plus ancien
   const feedItems = [
@@ -463,7 +516,7 @@ export default function Home() {
                     key={item.key}
                     post={item.data}
                     isNew={!!lastSeen && item.data.created_at > lastSeen}
-                    onUpdated={() => { fetchPosts(); fetchSummary() }}
+                    onUpdated={() => { fetchPosts(0); fetchSummary() }}
                   />
                 ) : (
                   <button key={item.key} onClick={() => navigate('/calendar')} className="card" style={{
@@ -490,12 +543,27 @@ export default function Home() {
                   </button>
                 ))
               )}
+
+              {encorePlus && (
+                <button
+                  onClick={() => fetchPosts(page + 1)}
+                  disabled={chargementSuite}
+                  style={{
+                    width: '100%', padding: '12px', marginTop: 4, marginBottom: 8,
+                    border: '1px solid var(--border)', borderRadius: 'var(--radius)',
+                    background: 'var(--white)', color: 'var(--text-medium)',
+                    fontSize: 13, fontFamily: 'inherit',
+                    cursor: chargementSuite ? 'default' : 'pointer'
+                  }}>
+                  {chargementSuite ? 'Chargement...' : 'Voir les publications plus anciennes'}
+                </button>
+              )}
             </>
           )}
         </div>
       </div>
 
-      {showCreate && <CreatePost onClose={() => setShowCreate(false)} onCreated={() => { fetchPosts(); fetchSummary() }} />}
+      {showCreate && <CreatePost onClose={() => setShowCreate(false)} onCreated={() => { fetchPosts(0); fetchSummary() }} />}
       <BottomNav onPlusClick={() => setShowCreate(true)} />
     </div>
   )
