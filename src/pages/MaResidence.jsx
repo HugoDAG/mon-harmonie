@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom'
 import BottomNav from '../components/BottomNav'
 import { ArrowLeft, ChevronDown, Home, QrCode, Printer } from 'lucide-react'
 import { BUILDINGS } from '../lib/constants'
+import { chargerQRCode } from '../lib/chargerScript'
 
 const REGISTER_URL = 'https://mon-harmonie.vercel.app/register'
 
@@ -41,14 +42,28 @@ export default function MaResidence() {
   // Génère le QR code une fois la librairie et la page prêtes
   useEffect(() => {
     if (!isAdmin || loading) return
-    const el = document.getElementById('qr-box')
-    if (el && window.QRCode) {
+    let annule = false
+
+    // La bibliothèque n'est téléchargée qu'ici, et seulement pour l'admin :
+    // un résident ordinaire n'a jamais besoin de générer un QR code.
+    chargerQRCode().then(QRCode => {
+      if (annule) return
+      const el = document.getElementById('qr-box')
+      if (!el) return
       el.innerHTML = ''
-      new window.QRCode(el, {
+      new QRCode(el, {
         text: REGISTER_URL, width: 170, height: 170,
         colorDark: '#4A5B3A', colorLight: '#ffffff'
       })
-    }
+    }).catch(() => {
+      const el = document.getElementById('qr-box')
+      if (el && !annule) {
+        el.innerHTML = '<div style="font-size:12px;color:#8A9580;padding:16px;text-align:center">' +
+          'Le QR code n\'a pas pu être généré. Vérifiez votre connexion et rechargez la page.</div>'
+      }
+    })
+
+    return () => { annule = true }
   }, [isAdmin, loading])
 
   function qrDataUrl() {
