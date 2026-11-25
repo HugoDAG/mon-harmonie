@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase'
 import { useNavigate } from 'react-router-dom'
 import BottomNav from '../components/BottomNav'
 import ChangePassword from '../components/ChangePassword'
+import ReglagesNotifications from '../components/ReglagesNotifications'
 import { LogOut, User, AlertTriangle, ChevronDown, LinkIcon, Building, Mail, Home } from 'lucide-react'
 
 export default function Profile() {
@@ -288,6 +289,7 @@ export default function Profile() {
                         )}
                       </div>
                     </div>
+                    <ReglagesNotifications />
                     <div style={{ marginTop: 12 }}>
                       <ChangePassword />
                     </div>
