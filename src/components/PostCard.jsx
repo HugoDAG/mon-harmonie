@@ -159,14 +159,24 @@ export default function PostCard({ post, onUpdated, isNew = false }) {
     e.preventDefault()
     if (!newComment.trim()) return
     setSendingComment(true)
-    await supabase.from('comments').insert({ post_id: post.id, user_id: user.id, content: newComment.trim() })
-    setNewComment('')
+    const { error } = await supabase.from('comments')
+      .insert({ post_id: post.id, user_id: user.id, content: newComment.trim() })
     setSendingComment(false)
+    if (error) {
+      // Le commentaire reste dans le champ : la personne ne perd pas son texte
+      alert("Votre commentaire n'a pas pu être publié : " + error.message)
+      return
+    }
+    setNewComment('')
     fetchComments()
   }
 
   async function deleteComment(commentId) {
-    await supabase.from('comments').delete().eq('id', commentId)
+    const { error } = await supabase.from('comments').delete().eq('id', commentId)
+    if (error) {
+      alert("Le commentaire n'a pas pu être supprimé : " + error.message)
+      return
+    }
     fetchComments()
   }
 
@@ -208,23 +218,36 @@ export default function PostCard({ post, onUpdated, isNew = false }) {
   async function handleSave() {
     if (!editContent.trim()) return
     setSaving(true)
-    await supabase.from('posts').update({ content: editContent.trim() }).eq('id', post.id)
+    const { error } = await supabase.from('posts')
+      .update({ content: editContent.trim() }).eq('id', post.id)
     setSaving(false)
+    if (error) {
+      alert("Votre modification n'a pas pu être enregistrée : " + error.message)
+      return
+    }
     setEditing(false)
     onUpdated?.()
   }
 
   async function handleDelete() {
-    await supabase.from('posts').delete().eq('id', post.id)
+    const { error } = await supabase.from('posts').delete().eq('id', post.id)
+    if (error) {
+      alert("La publication n'a pas pu être supprimée : " + error.message)
+      return
+    }
     onUpdated?.()
   }
 
   async function handleStatusChange(newStatus) {
     // On horodate le changement : c'est ce qui permet de remonter
     // les signalements résolus récemment sur l'accueil.
-    await supabase.from('posts')
+    const { error } = await supabase.from('posts')
       .update({ status: newStatus, status_updated_at: new Date().toISOString() })
       .eq('id', post.id)
+    if (error) {
+      alert("Le statut n'a pas pu être modifié : " + error.message)
+      return
+    }
     setShowStatusMenu(false)
     onUpdated?.()
   }

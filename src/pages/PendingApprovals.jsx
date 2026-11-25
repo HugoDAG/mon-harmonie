@@ -12,22 +12,48 @@ export default function PendingApprovals() {
   useEffect(() => { fetchPending() }, [])
 
   async function fetchPending() {
-    const { data } = await supabase.from('profiles')
+    const { data, error } = await supabase.from('profiles')
       .select('*')
       .eq('account_status', 'pending')
       .order('created_at', { ascending: false })
+    if (error) alert('La liste des demandes n\'a pas pu être chargée : ' + error.message)
     setPending(data || [])
     setLoading(false)
   }
 
-  async function handleApprove(id) {
-    await supabase.from('profiles').update({ account_status: 'approved' }).eq('id', id)
+  // La base annule silencieusement un changement de statut demandé par
+  // quelqu'un qui n'y a pas droit : elle ne renvoie pas d'erreur, elle
+  // remet simplement l'ancienne valeur. Vérifier l'absence d'erreur ne
+  // suffit donc pas, il faut relire ce qui a réellement été enregistré.
+  async function changeStatus(id, status, participe) {
+    const { data, error } = await supabase.from('profiles')
+      .update({ account_status: status })
+      .eq('id', id)
+      .select('id, account_status')
+
+    if (error) {
+      alert(`La demande n'a pas pu être ${participe} : ` + error.message)
+      return
+    }
+
+    if (!data || data.length === 0 || data[0].account_status !== status) {
+      alert(
+        `La demande n'a pas été ${participe}.\n\n` +
+        `Seuls un administrateur ou le syndic peuvent valider ou refuser une inscription. ` +
+        `Si vous pensez en faire partie, signalez-le à l'administrateur de la résidence.`
+      )
+      return
+    }
+
     fetchPending()
   }
 
+  async function handleApprove(id) {
+    changeStatus(id, 'approved', 'approuvée')
+  }
+
   async function handleReject(id) {
-    await supabase.from('profiles').update({ account_status: 'rejected' }).eq('id', id)
-    fetchPending()
+    changeStatus(id, 'rejected', 'refusée')
   }
 
   return (

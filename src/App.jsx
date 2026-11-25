@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from './lib/AuthContext'
 import Home from './pages/Home'
@@ -17,9 +18,65 @@ import MaResidence from './pages/MaResidence'
 import PendingApprovals from './pages/PendingApprovals'
 import ScrollToTop from './components/ScrollToTop'
 
+/* Écran de chargement honnête.
+ *
+ * Depuis que l'application s'ouvre hors ligne grâce au service worker,
+ * un résident sans réseau voyait « Chargement... » indéfiniment. On lui
+ * dit maintenant ce qui se passe, qu'il soit déconnecté ou que le
+ * serveur ne réponde pas.
+ */
+function EcranChargement() {
+  const [horsLigne, setHorsLigne] = useState(() => !navigator.onLine)
+  const [tropLong, setTropLong] = useState(false)
+
+  useEffect(() => {
+    const enLigne = () => setHorsLigne(false)
+    const deconnecte = () => setHorsLigne(true)
+    window.addEventListener('online', enLigne)
+    window.addEventListener('offline', deconnecte)
+    const minuteur = setTimeout(() => setTropLong(true), 12000)
+    return () => {
+      window.removeEventListener('online', enLigne)
+      window.removeEventListener('offline', deconnecte)
+      clearTimeout(minuteur)
+    }
+  }, [])
+
+  if (!horsLigne && !tropLong) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', color: 'var(--text-muted)' }}>
+        Chargement...
+      </div>
+    )
+  }
+
+  return (
+    <div style={{
+      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+      height: '100vh', padding: 32, textAlign: 'center', background: 'var(--cream)'
+    }}>
+      <div style={{ fontSize: 42, marginBottom: 14 }} aria-hidden="true">🌿</div>
+      <h1 style={{ fontSize: 19, fontWeight: 600, fontFamily: "'Cinzel', serif", color: 'var(--green-dark)', marginBottom: 10 }}>
+        {horsLigne ? 'Pas de connexion' : 'Le service ne répond pas'}
+      </h1>
+      <p style={{ fontSize: 14, color: 'var(--text-light)', lineHeight: 1.6, marginBottom: 22, maxWidth: 320 }}>
+        {horsLigne
+          ? "Mon Harmonie a besoin d'internet pour afficher la résidence. Vos données sont intactes, tout reviendra avec la connexion."
+          : "L'application n'arrive pas à joindre le serveur. Réessayez dans un instant ; si cela dure, prévenez le conseil syndical."}
+      </p>
+      <button onClick={() => window.location.reload()} style={{
+        background: 'var(--green-dark)', color: 'var(--cream)', border: 'none',
+        borderRadius: 'var(--radius)', padding: '11px 26px', cursor: 'pointer', fontSize: 14, fontFamily: 'inherit'
+      }}>
+        Réessayer
+      </button>
+    </div>
+  )
+}
+
 function PrivateRoute({ children }) {
   const { user, profile, loading, isApproved, signOut } = useAuth()
-  if (loading) return <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', color: 'var(--text-muted)' }}>Chargement...</div>
+  if (loading) return <EcranChargement />
   if (!user) return <Navigate to="/login" />
   if (profile && !isApproved()) {
     return (

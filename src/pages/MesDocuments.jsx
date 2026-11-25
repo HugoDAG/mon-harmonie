@@ -65,13 +65,21 @@ export default function MesDocuments() {
       ? `${(form.file.size / 1024).toFixed(0)} Ko`
       : `${(form.file.size / (1024 * 1024)).toFixed(1)} Mo`
 
-    await supabase.from('personal_documents').insert({
+    const { error: insertError } = await supabase.from('personal_documents').insert({
       user_id: user.id,
       title: form.title,
       category: form.category,
       file_url: filePath,
       file_size: fileSize
     })
+    if (insertError) {
+      // Le fichier est parti dans le stockage mais n'est rattaché à rien :
+      // on le retire pour ne pas laisser de document fantôme.
+      await supabase.storage.from('personal').remove([filePath])
+      alert("Le document n'a pas pu être enregistré : " + insertError.message)
+      setUploading(false)
+      return
+    }
 
     setShowUpload(false)
     setForm({ title: '', category: 'autre', file: null })
@@ -107,7 +115,11 @@ export default function MesDocuments() {
     if (!doc.file_url.startsWith('http')) {
       await supabase.storage.from('personal').remove([doc.file_url])
     }
-    await supabase.from('personal_documents').delete().eq('id', doc.id)
+    const { error } = await supabase.from('personal_documents').delete().eq('id', doc.id)
+    if (error) {
+      alert("Le document n'a pas pu être supprimé : " + error.message)
+      return
+    }
     setDeletingId(null)
     fetchDocs()
   }
