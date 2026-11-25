@@ -30,9 +30,19 @@ export default function Profile() {
     if (!file) return
     const fileExt = file.name.split('.').pop()
     const fileName = `avatar-${user.id}.${fileExt}`
-    await supabase.storage.from('documents').upload(`avatars/${fileName}`, file, { upsert: true })
+    const { error: uploadError } = await supabase.storage
+      .from('documents').upload(`avatars/${fileName}`, file, { upsert: true })
+    if (uploadError) {
+      alert("La photo n'a pas pu être envoyée : " + uploadError.message)
+      return
+    }
     const { data: urlData } = supabase.storage.from('documents').getPublicUrl(`avatars/${fileName}`)
-    await supabase.from('profiles').update({ avatar_url: urlData.publicUrl }).eq('id', user.id)
+    const { error } = await supabase.from('profiles')
+      .update({ avatar_url: urlData.publicUrl }).eq('id', user.id)
+    if (error) {
+      alert("La photo a été envoyée mais n'a pas pu être enregistrée : " + error.message)
+      return
+    }
     window.location.reload()
   }
   async function saveApartment() {
@@ -42,13 +52,23 @@ export default function Profile() {
     const buildingMatch = apt.match(/^([A-Z]+\d)/)
     const building = buildingMatch ? buildingMatch[1] : profile?.building
 
-    await supabase.from('profiles').update({ apartment: apt, building }).eq('id', user.id)
+    const { error } = await supabase.from('profiles')
+      .update({ apartment: apt, building }).eq('id', user.id)
+    if (error) {
+      alert("Le numéro d'appartement n'a pas pu être enregistré : " + error.message)
+      return
+    }
 
     if (building) {
-      await supabase.rpc('create_apartment_if_not_exists', {
+      // Crée le logement dans « Ma résidence » s'il n'y figure pas encore
+      const { error: aptError } = await supabase.rpc('create_apartment_if_not_exists', {
         p_building: building,
         p_number: apt
       })
+      if (aptError) {
+        alert("Votre appartement est enregistré, mais il n'a pas pu être ajouté à « Ma résidence » : "
+          + aptError.message)
+      }
     }
 
     setEditingApartment(false)
@@ -69,14 +89,37 @@ export default function Profile() {
   async function handleDeleteAccount() {
     if (deleteText !== 'SUPPRIMER') return
     setDeleting(true)
-    if (profile?.co_resident_id) {
-      await supabase.from('profiles').update({ co_resident_id: null }).eq('id', profile.co_resident_id)
+
+    // 1. Les fichiers déposés dans le stockage : la base ne peut pas
+    //    les effacer elle-même, et il faut le faire tant que la
+    //    session est encore valide.
+    const { data: docs } = await supabase
+      .from('personal_documents').select('file_url').eq('user_id', user.id)
+    const paths = (docs || [])
+      .map(d => d.file_url)
+      .filter(p => p && !p.startsWith('http'))
+    if (paths.length > 0) {
+      await supabase.storage.from('personal').remove(paths)
     }
-    await supabase.from('comments').delete().eq('user_id', user.id)
-    await supabase.from('post_likes').delete().eq('user_id', user.id)
-    await supabase.from('posts').delete().eq('user_id', user.id)
-    await supabase.from('bookings').delete().eq('user_id', user.id)
-    await supabase.from('profiles').delete().eq('id', user.id)
+    if (profile?.avatar_url) {
+      const name = profile.avatar_url.split('/').pop()
+      if (name) await supabase.storage.from('documents').remove([`avatars/${name}`])
+    }
+
+    // 2. Tout le reste en une seule opération côté base : contenu
+    //    personnel, liens de co-résidence, puis le compte lui-même,
+    //    ce qui libère l'adresse email pour une réinscription.
+    const { error } = await supabase.rpc('delete_my_account')
+    if (error) {
+      setDeleting(false)
+      alert(
+        "Votre compte n'a pas pu être supprimé : " + error.message +
+        "\n\nVos documents personnels ont en revanche bien été effacés." +
+        "\nSignalez ce message à l'administrateur de la résidence."
+      )
+      return
+    }
+
     await signOut()
     navigate('/login')
   }

@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#4A5B3A" />
+    <title>Mon Harmonie — hors ligne</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600&family=Montserrat:wght@400;500&display=swap" rel="stylesheet" />
+    <style>
+      :root {
+        --green-dark: #4A5B3A;
+        --green-sage: #7E8E69;
+        --cream: #F2E9DC;
+        --white: #FFFDF9;
+        --text-medium: #5A6650;
+        --text-light: #8A9580;
+        --border-light: #EDE6DB;
+      }
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      body {
+        font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, sans-serif;
+        background: var(--cream);
+        color: var(--text-medium);
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 24px 16px;
+      }
+      .card {
+        background: var(--white);
+        border: 1px solid var(--border-light);
+        border-radius: 16px;
+        padding: 32px 24px;
+        max-width: 420px;
+        width: 100%;
+        text-align: center;
+        box-shadow: 0 2px 8px rgba(74, 91, 58, 0.08);
+      }
+      h1 {
+        font-family: 'Cinzel', Georgia, serif;
+        color: var(--green-dark);
+        font-size: 22px;
+        margin-bottom: 12px;
+      }
+      p { font-size: 14px; line-height: 1.6; margin-bottom: 8px; }
+      .hint { font-size: 12px; color: var(--text-light); margin-top: 18px; }
+      button {
+        margin-top: 22px;
+        width: 100%;
+        padding: 12px;
+        border: none;
+        border-radius: 12px;
+        background: var(--green-dark);
+        color: var(--cream);
+        font-family: inherit;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+      }
+      .leaf { font-size: 34px; margin-bottom: 14px; }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <div class="leaf" aria-hidden="true">🌿</div>
+      <h1>Pas de connexion</h1>
+      <p>Mon Harmonie a besoin d'internet pour afficher le fil de la résidence, le calendrier et l'annuaire.</p>
+      <p>Vos données sont intactes&nbsp;: tout reviendra dès que la connexion sera rétablie.</p>
+      <button onclick="location.reload()">Réessayer</button>
+      <p class="hint">Si le problème persiste alors que vos autres applications fonctionnent, prévenez le conseil syndical.</p>
+    </div>
+  </body>
+</html>
