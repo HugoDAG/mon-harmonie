@@ -8,6 +8,8 @@ export default function PendingApprovals() {
   const navigate = useNavigate()
   const [pending, setPending] = useState([])
   const [loading, setLoading] = useState(true)
+  // Occupants déjà validés, rangés par numéro d'appartement
+  const [occupants, setOccupants] = useState({})
 
   useEffect(() => { fetchPending() }, [])
 
@@ -18,6 +20,27 @@ export default function PendingApprovals() {
       .order('created_at', { ascending: false })
     if (error) alert('La liste des demandes n\'a pas pu être chargée : ' + error.message)
     setPending(data || [])
+
+    // Qui habite déjà les logements revendiqués ? C'est la seule chose qui
+    // permet de distinguer un conjoint légitime d'un inconnu qui a recopié
+    // un numéro d'appartement sur une boîte aux lettres.
+    const logements = [...new Set((data || []).map(p => p.apartment).filter(Boolean))]
+    if (logements.length > 0) {
+      const { data: deja } = await supabase.from('profiles')
+        .select('first_name, last_name, apartment')
+        .eq('account_status', 'approved')
+        .in('apartment', logements)
+
+      const parLogement = {}
+      ;(deja || []).forEach(o => {
+        parLogement[o.apartment] = parLogement[o.apartment] || []
+        parLogement[o.apartment].push(o)
+      })
+      setOccupants(parLogement)
+    } else {
+      setOccupants({})
+    }
+
     setLoading(false)
   }
 
@@ -96,6 +119,38 @@ export default function PendingApprovals() {
                   <div style={{ fontWeight: 500 }}>{p.apartment || 'Non renseigné'}</div>
                 </div>
               </div>
+
+              {/* Le point décisif : ce logement est-il déjà habité ? */}
+              {p.apartment && (() => {
+                const deja = occupants[p.apartment] || []
+                if (deja.length === 0) {
+                  return (
+                    <div style={{
+                      fontSize: 12, color: 'var(--text-light)', marginBottom: 10,
+                      padding: '8px 12px', borderRadius: 'var(--radius)',
+                      background: 'var(--green-sage-10)', lineHeight: 1.5
+                    }}>
+                      Ce logement n'est encore attribué à personne dans l'application.
+                    </div>
+                  )
+                }
+                const noms = deja
+                  .map(o => `${o.first_name} ${o.last_name ? o.last_name[0] + '.' : ''}`.trim())
+                  .join(', ')
+                return (
+                  <div style={{
+                    fontSize: 12, color: 'var(--text-medium)', marginBottom: 10,
+                    padding: '10px 12px', borderRadius: 'var(--radius)',
+                    background: 'var(--amber-50)', border: '1px solid var(--border-light)',
+                    lineHeight: 1.5
+                  }}>
+                    <strong>Logement déjà occupé par {noms}.</strong><br />
+                    N'approuvez que s'il s'agit bien d'une personne du même foyer.
+                    Les comptes d'un même logement sont liés automatiquement et partagent
+                    une seule voix dans les sondages.
+                  </div>
+                )
+              })()}
 
               {p.proof_photo_url && (
                 <div style={{ marginBottom: 10 }}>
